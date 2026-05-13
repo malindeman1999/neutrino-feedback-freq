@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -139,15 +139,15 @@
       \Re[\lambda_i(M_t)]<0,\ \forall i.
       \]</p>
       <p>Soft goal: choose \(P_0/P_{\mathrm{bif}}\) close to 1 from below.</p>
-      <p>Python: <a href="../python/sensor.py"><code>Sensor.core_rule1_left_ratio</code></a>, <a href="../python/sensor.py"><code>Sensor.core_rule1_right_ratio</code></a>, <a href="../python/sensor.py"><code>Sensor.core_rule1_ok</code></a>, <a href="../python/sensor.py"><code>Sensor.core_rule2_ok</code></a>, <a href="../python/sensor.py"><code>Sensor.core_rule2_ratio</code></a>, <a href="../python/sensor.py"><code>Sensor.core_rule3_ok</code></a>, <a href="../python/sensor.py"><code>Sensor.core_rule4_ok</code></a>, <a href="../python/sensor.py"><code>Sensor.core_rule5_ok</code></a>, <a href="../python/sensor.py"><code>Sensor.core_rule6_ok</code></a>, <a href="../python/sensor.py"><code>Sensor.core_rule7_ok</code></a>, <a href="../python/sensor.py"><code>Sensor.core_rule8_ok</code></a>, <a href="../python/sensor.py"><code>Sensor.core_rule9_ok</code></a>, <a href="../python/sensor.py"><code>Sensor.core_rule10_ok</code></a>, <a href="../python/sensor.py"><code>Sensor.core_rule11_ok</code></a>, <a href="../python/sensor.py"><code>Sensor.core_rule12_ok</code></a>, <a href="../python/sensor.py"><code>Sensor.bifurcation_power_ratio</code></a>.</p>
+      <p>Python: <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule1_left_ratio</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule1_right_ratio</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule1_ok</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule2_ok</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule2_ratio</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule3_ok</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule4_ok</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule5_ok</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule6_ok</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule7_ok</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule8_ok</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule9_ok</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule10_ok</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule11_ok</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule12_ok</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.bifurcation_power_ratio</code></a>.</p>
     </section>
 
     <section class="card">
       <h2>Python Model Links</h2>
-      <p>Implementation: <a href="../python/sensor.py"><code>python/sensor.py</code></a> (<code>Sensor</code>, <code>version_1_sensor()</code>).</p>
+      <p>Implementation: <a href="../python-simple-abs/sensor.py"><code>python-simple-abs/sensor.py</code></a> (<code>Sensor</code>, <code>version_1_sensor()</code>).</p>
       <p>Model convention: absorber volume is derived from count rate and Ho activity; absorber is cubic; membrane dimensions are derived from absorber + KID + margin; cap and membrane thickness are basic parameters; leg thickness is derived from membrane thickness.</p>
       <p>With leg width fixed as a basic parameter, leg length is the geometric knob used to tune \(G\).</p>
-      <p>Generated estimates: <a href="python-estimates.html">Python-Derived Estimates</a> via <a href="../python/generate_wiki_estimates.py"><code>python/generate_wiki_estimates.py</code></a>.</p>
+      <p>Generated estimates: <a href="python-estimates.html">Python-Derived Estimates</a> via <a href="../python-simple-abs/plotting/generate_wiki_estimates.py"><code>python-simple-abs/plotting/generate_wiki_estimates.py</code></a>.</p>
     </section>
 
     <section class="card" id="source-activity-formulas">
@@ -161,7 +161,7 @@
       a_{\mathrm{abs}}=V_{\mathrm{abs}}^{1/3},\qquad
       L_{\mathrm{abs}}=W_{\mathrm{abs}}=t_{\mathrm{abs}}=a_{\mathrm{abs}}.
       \]</p>
-      <p>Python: <a href="../python/sensor.py"><code>Sensor.absorber_volume_m3</code></a>, <a href="../python/sensor.py"><code>Sensor.absorber_edge_m</code></a>.</p>
+      <p>Python: <a href="../python-simple-abs/sensor.py"><code>Sensor.absorber_volume_m3</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.absorber_edge_m</code></a>.</p>
     </section>
 
     <section class="card" id="membrane-geometry-formulas">
@@ -175,11 +175,12 @@
       <p>\[
       S_{\mathrm{mem}}=\max(L_{\mathrm{mem}},W_{\mathrm{mem}}).
       \]</p>
-      <p>Python: <a href="../python/sensor.py"><code>Sensor.membrane_length_m</code></a>, <a href="../python/sensor.py"><code>Sensor.membrane_width_m</code></a>, <a href="../python/sensor.py"><code>Sensor.membrane_span_m</code></a>.</p>
+      <p>Python: <a href="../python-simple-abs/sensor.py"><code>Sensor.membrane_length_m</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.membrane_width_m</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.membrane_span_m</code></a>.</p>
     </section>
   </main>
 </body>
 </html>
+
 
 
 

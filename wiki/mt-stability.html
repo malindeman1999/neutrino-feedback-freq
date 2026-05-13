@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -40,7 +40,7 @@
       M_t = -D_1^{-1}D_0.
       \]</p>
       <p>Paper in this repo: <a href="../papers/2014-Resonator-bolometer_theory_microwave_read_out_and_kinetic_inductance_bolometers.pdf">2014 resonator-bolometer theory PDF</a>.</p>
-      <p>Python: <a href="../python/sensor.py"><code>Sensor.d0_matrix</code></a>, <a href="../python/sensor.py"><code>Sensor.d1_matrix</code></a>, <a href="../python/sensor.py"><code>Sensor.mt_matrix</code></a>.</p>
+      <p>Python: <a href="../python-simple-abs/sensor.py"><code>Sensor.d0_matrix</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.d1_matrix</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.mt_matrix</code></a>.</p>
     </section>
 
     <section class="card" id="stability-criterion">
@@ -54,7 +54,7 @@
         <li>\(\max\Re[\lambda(M_t)]\)</li>
         <li>Boolean pass flag \(\mathbb{1}_{\mathrm{stable}}\)</li>
       </ul>
-      <p>Python: <a href="../python/sensor.py"><code>Sensor.mt_eigenvalues</code></a>, <a href="../python/sensor.py"><code>Sensor.mt_max_real_part</code></a>, <a href="../python/sensor.py"><code>Sensor.mt_stable</code></a>.</p>
+      <p>Python: <a href="../python-simple-abs/sensor.py"><code>Sensor.mt_eigenvalues</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.mt_max_real_part</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.mt_stable</code></a>.</p>
     </section>
 
     <section class="card" id="pulse-shortening">
@@ -64,8 +64,9 @@
       \rho_{\mathrm{short}}=\frac{G/C}{\min_i|\lambda_i(M_t)|}.
       \]</p>
       <p>This is reported only when \(\Re[\lambda_i(M_t)]<0\ \forall i\). Values below 1 indicate shortening.</p>
-      <p>Python: <a href="../python/sensor.py"><code>Sensor.mt_pulse_shortening_ratio</code></a>.</p>
+      <p>Python: <a href="../python-simple-abs/sensor.py"><code>Sensor.mt_pulse_shortening_ratio</code></a>.</p>
     </section>
   </main>
 </body>
 </html>
+

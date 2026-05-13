@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -47,7 +47,7 @@
 
     <section class="card">
       <h2>State and Measurement Vectors</h2>
-      <p>Use the paper’s normalized demodulated state vector:</p>
+      <p>Use the paperâ€™s normalized demodulated state vector:</p>
       <p>\[
       Y(\omega)=
       \begin{bmatrix}
@@ -64,7 +64,7 @@
 
     <section class="card">
       <h2>Linearized Forward Model</h2>
-      <p>The theory used here follows the paper’s sideband-to-demodulated linear system and normalized matrix form (Eq. (8)–(13)) rather than an external factorized \(R/H\) state-space model.</p>
+      <p>The theory used here follows the paperâ€™s sideband-to-demodulated linear system and normalized matrix form (Eq. (8)â€“(13)) rather than an external factorized \(R/H\) state-space model.</p>
       <p>For implementation details of the matrix coefficients, see <a href="m-matrix.html">M Matrix</a>.</p>
     </section>
 
@@ -117,7 +117,7 @@
       \mathrm{NEP}_{\phi}(\omega)=\left|\frac{[Y_{\mathrm{RMS}}(\omega)]_{\phi}}{(M^{-1})_{\phi,\,P}}\right|.
       \]</p>
       <p>This is the core equation to convert modeled/measured phase noise into calorimeter-equivalent input power noise.</p>
-      <p>Python methods: <a href="../python/sensor.py"><code>Sensor.phase_responsivity_complex_rad_per_W_at_hz()</code></a>, <a href="../python/sensor.py"><code>Sensor.phase_responsivity_mag_rad_per_W_at_hz()</code></a>, <a href="../python/sensor.py"><code>Sensor.phase_responsivity_rad_per_W</code></a>, <a href="../python/sensor.py"><code>Sensor.nep_from_phase_asd_W_per_rtHz()</code></a>.</p>
+      <p>Python methods: <a href="../python-simple-abs/sensor.py"><code>Sensor.phase_responsivity_complex_rad_per_W_at_hz()</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.phase_responsivity_mag_rad_per_W_at_hz()</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.phase_responsivity_rad_per_W</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.nep_from_phase_asd_W_per_rtHz()</code></a>.</p>
     </section>
 
     <section class="card">
@@ -130,7 +130,7 @@
         <li>Compute \(\mathrm{NEP}_{\phi}\) with Eq. (20), then feed the resulting PSD into the optimal filter on the Signal Processing page.</li>
       </ul>
       <p>Notation convention used here: \(T_b\) is bath temperature and \(T_0\) is bolometer operating-point temperature under bias.</p>
-      <p>Python implementation links: <a href="../python/sensor.py"><code>Sensor.estimates()</code></a>, <a href="../python/sensor.py"><code>Sensor.tau_res_s</code></a>, <a href="../python/sensor.py"><code>Sensor.tau_th_s</code></a>, <a href="../python/sensor.py"><code>Sensor.sphi_total_per_hz</code></a>, and <a href="../python/sensor.py"><code>Sensor.nep_phi_total_W_per_rtHz</code></a>.</p>
+      <p>Python implementation links: <a href="../python-simple-abs/sensor.py"><code>Sensor.estimates()</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.tau_res_s</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.tau_th_s</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.sphi_total_per_hz</code></a>, and <a href="../python-simple-abs/sensor.py"><code>Sensor.nep_phi_total_W_per_rtHz</code></a>.</p>
     </section>
 
     <section class="card" id="kid-lumped-formulas">
@@ -149,7 +149,7 @@
       Z_0=(2\pi f_0)L_{\mathrm{tot}},\qquad
       R_0=\frac{Z_0}{Q_r}.
       \]</p>
-      <p>Python: <a href="../python/sensor.py"><code>Sensor.L_geo_H</code></a>, <a href="../python/sensor.py"><code>Sensor.L_total_H</code></a>, <a href="../python/sensor.py"><code>Sensor.C_res_F</code></a>, <a href="../python/sensor.py"><code>Sensor.Z0_res_Ohm</code></a>, <a href="../python/sensor.py"><code>Sensor.R0_Ohm</code></a>.</p>
+      <p>Python: <a href="../python-simple-abs/sensor.py"><code>Sensor.L_geo_H</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.L_total_H</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.C_res_F</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.Z0_res_Ohm</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.R0_Ohm</code></a>.</p>
     </section>
 
     <section class="card" id="gap-formulas">
@@ -158,11 +158,12 @@
       <p>\[
       \Delta=1.764\,k_BT_c,\qquad E_{qp}=\Delta.
       \]</p>
-      <p>Python: <a href="../python/sensor.py"><code>Sensor.delta_J</code></a>, <a href="../python/sensor.py"><code>Sensor.eqp_J</code></a>.</p>
+      <p>Python: <a href="../python-simple-abs/sensor.py"><code>Sensor.delta_J</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.eqp_J</code></a>.</p>
     </section>
   </main>
 </body>
 </html>
+
 
 
 

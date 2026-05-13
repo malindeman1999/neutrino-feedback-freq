@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -56,8 +56,8 @@
       <h2>Connection to the Python Model</h2>
       <p>In code, TLS is injected as a phase-like source vector and propagated through \(M^{-1}\):</p>
       <ul>
-        <li><a href="../python/sensor.py"><code>Sensor.n_tls_phi()</code></a> defines the TLS source vector.</li>
-        <li><a href="../python/sensor.py"><code>Sensor._propagate_noise_vector()</code></a> applies matrix propagation.</li>
+        <li><a href="../python-simple-abs/sensor.py"><code>Sensor.n_tls_phi()</code></a> defines the TLS source vector.</li>
+        <li><a href="../python-simple-abs/sensor.py"><code>Sensor._propagate_noise_vector()</code></a> applies matrix propagation.</li>
         <li>The GUI computes both phase and amplitude channel outputs versus frequency and converts each to NEP using channel-specific responsivity.</li>
       </ul>
       <p>Practical implication: in amplitude-readout mode, a TLS trace can be nonzero even when TLS is modeled as phase-like at injection.</p>
@@ -65,4 +65,5 @@
   </main>
 </body>
 </html>
+
 
