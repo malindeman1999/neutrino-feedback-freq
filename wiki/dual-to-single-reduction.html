@@ -1,0 +1,149 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dual-to-Single Reduction | TKID Neutrino Detector Docs</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['\\(', '\\)'], ['$', '$']] }
+    };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+</head>
+<body>
+  <header class="hero">
+    <h1>Dual-to-Single Matrix Reduction</h1>
+    <p>Start from the single-KID 3x3 model, split into the code's two-KID 4x4 form, then reduce with \(T_2=T_1\) to recover the original 3x3.</p>
+  </header>
+
+  <nav class="nav">
+    <a href="index.html">Home</a>
+    <a href="theory.html">Theory</a>
+    <a href="m-matrix.html">M Matrix</a>
+    <a href="dual-to-single-reduction.html" class="active">Dual->Single Reduction</a>
+    <a href="power-partitioning.html">Power Partitioning</a>
+  </nav>
+
+  <main class="container">
+    <section class="card">
+      <h2>Step 1: Original Single-KID 3x3</h2>
+      <p>Use states \([r,\phi,T]^T\) and write:</p>
+      <p>\[
+      M_{3}\,Y_3=N_3,
+      \quad
+      M_3=
+      \begin{bmatrix}
+      m_{11} & m_{12} & m_{13}^{(s)}\\
+      m_{21} & m_{22} & m_{23}^{(s)}\\
+      m_{31}^{(s)} & m_{32}^{(s)} & m_{33}^{(s)}
+      \end{bmatrix}.
+      \]</p>
+      <p>The single thermal coefficients are:</p>
+      <p>\[
+      m_{31}^{(s)}=-\left(1+\frac{\beta_A}{2}\right)P,
+      \quad
+      m_{32}^{(s)}=Qx(\beta_A+2)P,
+      \]</p>
+      <p>\[
+      m_{33}^{(s)}=i\omega C+G-\frac{P\alpha_A}{T_0},
+      \quad
+      m_{13}^{(s)}=\frac{2\alpha_A}{T_0}-2Qx\beta_A,
+      \quad
+      m_{23}^{(s)}=-\frac{2\alpha_\phi}{T_0}.
+      \]</p>
+    </section>
+
+    <section class="card">
+      <h2>Step 2: Split into Two KIDs (Code Form)</h2>
+      <p>Code state is \([r,\phi,T_1,T_2]^T\) with:</p>
+      <p>\[
+      M_{4}=
+      \begin{bmatrix}
+      m_{11} & m_{12} & m_{13} & m_{14}\\
+      m_{21} & m_{22} & m_{23} & m_{24}\\
+      m_{31} & m_{32} & m_{33} & 0\\
+      m_{41} & m_{42} & 0 & m_{44}
+      \end{bmatrix}.
+      \]</p>
+      <p>For the symmetric half/half split used in this project:</p>
+      <p>\[
+      P_1=P_2=\frac{P}{2},\;
+      C_1=C_2=\frac{C}{2},\;
+      G_1=G_2=\frac{G}{2},\;
+      \alpha_{A1}=\alpha_{A2}=\alpha_A,\;
+      \alpha_{\phi1}=\alpha_{\phi2}=\alpha_\phi,\;
+      T_{01}=T_{02}=T_0,\;
+      K_{fb}=0.
+      \]</p>
+      <p>This implies the pairwise equalities:</p>
+      <p>\[
+      m_{14}=m_{13},\quad m_{24}=m_{23},\quad m_{41}=m_{31},\quad m_{42}=m_{32},\quad m_{44}=m_{33}.
+      \]</p>
+    </section>
+
+    <section class="card">
+      <h2>Step 3: Enforce \(T_2=T_1=T\) and Reduce</h2>
+      <p>Start from rows 1-2:</p>
+      <p>\[
+      m_{11}r+m_{12}\phi+m_{13}T_1+m_{14}T_2=N_r,
+      \]</p>
+      <p>\[
+      m_{21}r+m_{22}\phi+m_{23}T_1+m_{24}T_2=N_\phi.
+      \]</p>
+      <p>With \(T_1=T_2=T\) and symmetry \(m_{14}=m_{13}\), \(m_{24}=m_{23}\):</p>
+      <p>\[
+      m_{11}r+m_{12}\phi+2m_{13}T=N_r,
+      \]</p>
+      <p>\[
+      m_{21}r+m_{22}\phi+2m_{23}T=N_\phi.
+      \]</p>
+      <p>Now add thermal rows 3 and 4 and use \(T_1=T_2=T\):</p>
+      <p>\[
+      (m_{31}+m_{41})r+(m_{32}+m_{42})\phi+(m_{33}+m_{44})T=N_{T1}+N_{T2}.
+      \]</p>
+      <p>With symmetry:</p>
+      <p>\[
+      2m_{31}r+2m_{32}\phi+(m_{33}+m_{44})T=N_T.
+      \]</p>
+      <p>Evaluate coefficients:</p>
+      <p>\[
+      2m_{31}=-\left(1+\frac{\beta_A}{2}\right)P=m_{31}^{(s)},
+      \quad
+      2m_{32}=Qx(\beta_A+2)P=m_{32}^{(s)},
+      \]</p>
+      <p>\[
+      m_{33}+m_{44}=
+      \left(i\omega\frac{C}{2}+\frac{G}{2}-\frac{P}{2}\frac{\alpha_A}{T_0}\right)+
+      \left(i\omega\frac{C}{2}+\frac{G}{2}-\frac{P}{2}\frac{\alpha_A}{T_0}\right)
+      =i\omega C+G-\frac{P\alpha_A}{T_0}=m_{33}^{(s)}.
+      \]</p>
+      <p>Also:</p>
+      <p>\[
+      2m_{13}=\frac{2\alpha_A}{T_0}-2Qx\beta_A=m_{13}^{(s)},
+      \quad
+      2m_{23}=-\frac{2\alpha_\phi}{T_0}=m_{23}^{(s)}.
+      \]</p>
+    </section>
+
+    <section class="card">
+      <h2>Step 4: Full Circle Back to the Original 3x3</h2>
+      <p>The reduced equations are exactly:</p>
+      <p>\[
+      \begin{bmatrix}
+      m_{11} & m_{12} & m_{13}^{(s)}\\
+      m_{21} & m_{22} & m_{23}^{(s)}\\
+      m_{31}^{(s)} & m_{32}^{(s)} & m_{33}^{(s)}
+      \end{bmatrix}
+      \begin{bmatrix}r\\\phi\\T\end{bmatrix}
+      =
+      \begin{bmatrix}N_r\\N_\phi\\N_T\end{bmatrix},
+      \]</p>
+      <p>which is the same single-KID 3x3 model from Step 1.</p>
+      <p>So the dual half/half split closes algebraically back to the original single-KID matrix when \(T_2=T_1\) and one thermal equation is removed by reduction.</p>
+      <p>Related pages: <a href="m-matrix.html">M Matrix</a>, <a href="power-partitioning.html">Power Partitioning</a>, <a href="feedback-nep-invariance.html">Feedback NEP Invariance</a>.</p>
+    </section>
+  </main>
+</body>
+</html>

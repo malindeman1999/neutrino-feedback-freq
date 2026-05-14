@@ -77,6 +77,7 @@ class SensorInputs:
     # Readout condition
     detuning_widths: float
     nep_sufficiency_percent: float
+    event_power_fraction_kid1: float
     # Optional second series KID / second island parameters
     T02_K: float = 0.0
     heat_capacity2_eV_per_mK: float = 0.0
@@ -129,6 +130,7 @@ class Version1SensorInputs(SensorInputs):
     thermal_energy_resolution_target_eV: float = 0.1
     detuning_widths: float = 0.1
     nep_sufficiency_percent: float = 10.0
+    event_power_fraction_kid1: float = 1.0
     T02_K: float = 0.070
     heat_capacity2_eV_per_mK: float = 60.0
     G2_W_per_K: float = 2.1021957e-12
@@ -253,10 +255,11 @@ class Sensor:
 
     @cached_property
     def G_W_per_K(self) -> float:
-        """Thermal conductance set by operating-point temperature elevation."""
+        """KID1 thermal conductance set by branch power and operating elevation."""
         if self.deltaT_abs_over_bath_setpoint_K <= 0.0:
             raise ValueError("T0_K must be greater than Tb_K to define positive thermal elevation")
-        return self.P0_W / self.deltaT_abs_over_bath_setpoint_K
+        p1 = self.P1_W if self.second_kid_active else self.P0_W
+        return p1 / self.deltaT_abs_over_bath_setpoint_K
 
     @cached_property
     def deltaT_abs_over_bath_setpoint_K(self) -> float:
@@ -275,8 +278,23 @@ class Sensor:
 
     @cached_property
     def deltaT_event_full_absorption_K(self) -> float:
-        """Island temperature step from a fully absorbed Ho decay event."""
-        return self.ho_decay_energy_J / self.C_J_per_K
+        """KID1 island temperature step for the configured event-power partition."""
+        return self.event_power_fraction_kid1_clamped * self.ho_decay_energy_J / self.C_J_per_K
+
+    @cached_property
+    def event_power_fraction_kid1_clamped(self) -> float:
+        return float(min(1.0, max(0.0, self.event_power_fraction_kid1)))
+
+    @cached_property
+    def event_power_fraction_kid2(self) -> float:
+        return 1.0 - self.event_power_fraction_kid1_clamped
+
+    @cached_property
+    def deltaT2_event_full_absorption_K(self) -> float:
+        c2 = max(self.heat_capacity2_eV_per_mK, 0.0) * 1.0e3 * J_PER_EV
+        if c2 <= 0.0:
+            return 0.0
+        return self.event_power_fraction_kid2 * self.ho_decay_energy_J / c2
 
     @cached_property
     def C_eV_per_mK(self) -> float:
@@ -413,14 +431,19 @@ class Sensor:
 
     @cached_property
     def johnson_voltage_rms_V(self) -> float:
-        return sqrt(4.0 * K_B * self.T0_K * self.R0_Ohm)
+        return sqrt(self.johnson_sv_V2_per_Hz)
 
     @cached_property
     def johnson_sv_V2_per_Hz(self) -> float:
-        return 4.0 * K_B * self.T0_K * self.R0_Ohm
+        r1 = max(self.R1_series_Ohm, 0.0)
+        r2 = max(self.series_R2_Ohm, 0.0)
+        if r2 <= 0.0 or not self.second_kid_active:
+            return 4.0 * K_B * self.T0_K * (r1 + r2)
+        return 4.0 * K_B * ((self.T0_K * r1) + (self.T02_eff_K * r2))
 
     @cached_property
     def me_electronic(self) -> float:
+        """Legacy scalar electronic factor (KID1 convention)."""
         return sqrt(self.eqp_J / (K_B * self.T0_K))
 
     @cached_property
@@ -435,11 +458,100 @@ class Sensor:
 
     @cached_property
     def nj_scale(self) -> float:
+        """Legacy total Johnson IQ scale (kept for backward-compatible outputs)."""
         return sqrt(16.0 * K_B * self.T0_K / self.P0_W)
 
     @cached_property
     def nj_thermal_scale(self) -> float:
+        """Legacy total Johnson thermal-power scale (backward-compatible output)."""
         return sqrt(4.0 * K_B * self.T0_K * self.P0_W)
+
+    @cached_property
+    def iq_voltage_normalization_V(self) -> float:
+        """Shared resonator voltage normalization for USB/LSB -> IQ mapping."""
+        return self.I0_rms_A * self.R0_Ohm
+
+    @cached_property
+    def sb_to_iq_normalization_matrix(self) -> np.ndarray:
+        """Linear map from sideband voltage basis [USB, LSB] to normalized [r, phi]."""
+        vnorm = self.iq_voltage_normalization_V
+        if vnorm <= 0.0:
+            return np.zeros((2, 2), dtype=complex)
+        # Matrix is chosen so symmetric SB excitation maps to amplitude-like noise,
+        # antisymmetric SB excitation maps to phase-like noise.
+        return np.array(
+            (
+                (2.0 / vnorm, 2.0 / vnorm),
+                (-2.0j / vnorm, 2.0j / vnorm),
+            ),
+            dtype=complex,
+        )
+
+    def _iq_from_sb(self, v_usb: complex, v_lsb: complex) -> tuple[complex, complex]:
+        iq = self.sb_to_iq_normalization_matrix @ np.array((v_usb, v_lsb), dtype=complex)
+        return complex(iq[0]), complex(iq[1])
+
+    def _johnson_iq_components_from_scale(self, nj_scale: float, phase_like: bool) -> tuple[complex, complex]:
+        """Construct IQ Johnson source components from explicit SB vectors.
+
+        The SB amplitude is selected so that mapped IQ magnitudes match nj_scale.
+        """
+        a_sb = 0.25 * float(nj_scale) * self.iq_voltage_normalization_V
+        if phase_like:
+            # Antisymmetric SB excitation -> phase-like IQ component.
+            return self._iq_from_sb(-a_sb + 0.0j, +a_sb + 0.0j)
+        # Symmetric SB excitation -> amplitude-like IQ component.
+        return self._iq_from_sb(+a_sb + 0.0j, +a_sb + 0.0j)
+
+    @staticmethod
+    def _assert_noise_vector_agreement(
+        label: str,
+        vec_legacy: tuple[complex, complex, complex, complex],
+        vec_sb: tuple[complex, complex, complex, complex],
+        rtol: float = 1.0e-9,
+        atol: float = 1.0e-24,
+    ) -> None:
+        a = np.array(vec_legacy, dtype=complex)
+        b = np.array(vec_sb, dtype=complex)
+        if not np.allclose(a, b, rtol=rtol, atol=atol):
+            diff = np.max(np.abs(a - b))
+            raise ValueError(f"{label}: legacy and SB-derived noise vectors disagree (max |delta|={diff:.3e})")
+
+    def _n_johnson_A_1_legacy(self) -> tuple[complex, complex, complex, complex]:
+        return (self.nj1_scale + 0.0j, 0.0 + 0.0j, -self.nj1_thermal_scale + 0.0j, 0.0 + 0.0j)
+
+    def _n_johnson_A_1_sb(self) -> tuple[complex, complex, complex, complex]:
+        n_r, n_phi = self._johnson_iq_components_from_scale(self.nj1_scale, phase_like=False)
+        return (n_r, n_phi, -self.nj1_thermal_scale + 0.0j, 0.0 + 0.0j)
+
+    def _n_johnson_A_2_legacy(self) -> tuple[complex, complex, complex, complex]:
+        if not self.second_kid_active:
+            return (0.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j)
+        return (self.nj2_scale + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j, -self.nj2_thermal_scale + 0.0j)
+
+    def _n_johnson_A_2_sb(self) -> tuple[complex, complex, complex, complex]:
+        if not self.second_kid_active:
+            return (0.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j)
+        n_r, n_phi = self._johnson_iq_components_from_scale(self.nj2_scale, phase_like=False)
+        return (n_r, n_phi, 0.0 + 0.0j, -self.nj2_thermal_scale + 0.0j)
+
+    def _n_johnson_phi_1_legacy(self) -> tuple[complex, complex, complex, complex]:
+        return (0.0 + 0.0j, 1j * self.nj1_scale, 0.0 + 0.0j, 0.0 + 0.0j)
+
+    def _n_johnson_phi_1_sb(self) -> tuple[complex, complex, complex, complex]:
+        n_r, n_phi = self._johnson_iq_components_from_scale(self.nj1_scale, phase_like=True)
+        return (n_r, n_phi, 0.0 + 0.0j, 0.0 + 0.0j)
+
+    def _n_johnson_phi_2_legacy(self) -> tuple[complex, complex, complex, complex]:
+        if not self.second_kid_active:
+            return (0.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j)
+        return (0.0 + 0.0j, 1j * self.nj2_scale, 0.0 + 0.0j, 0.0 + 0.0j)
+
+    def _n_johnson_phi_2_sb(self) -> tuple[complex, complex, complex, complex]:
+        if not self.second_kid_active:
+            return (0.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j)
+        n_r, n_phi = self._johnson_iq_components_from_scale(self.nj2_scale, phase_like=True)
+        return (n_r, n_phi, 0.0 + 0.0j, 0.0 + 0.0j)
 
     @cached_property
     def T02_eff_K(self) -> float:
@@ -484,21 +596,41 @@ class Sensor:
 
     @cached_property
     def nj1_scale(self) -> float:
-        if self.R1_fraction <= 0.0:
+        """KID1 Johnson IQ scale from branch USB voltage via shared resonator normalization."""
+        if not self.second_kid_active:
+            if self.P0_W <= 0.0 or self.T0_K <= 0.0:
+                return 0.0
+            # Preserve legacy single-KID normalization.
+            return sqrt(16.0 * K_B * self.T0_K / self.P0_W)
+        if self.P0_W <= 0.0 or self.T0_K <= 0.0:
             return 0.0
-        return self.nj_scale * sqrt(self.R1_fraction)
+        return sqrt(16.0 * K_B * self.T0_K / self.P0_W) * sqrt(max(self.R1_fraction, 0.0))
 
     @cached_property
     def nj2_scale(self) -> float:
-        if self.R2_fraction <= 0.0:
+        """KID2 Johnson IQ scale from branch USB voltage via shared resonator normalization."""
+        if self.P0_W <= 0.0 or self.T02_eff_K <= 0.0 or self.T0_K <= 0.0:
             return 0.0
-        return self.nj_scale * sqrt(self.R2_fraction * (self.T02_eff_K / self.T0_K))
+        return sqrt(16.0 * K_B * self.T0_K / self.P0_W) * sqrt(max(self.R2_fraction * (self.T02_eff_K / self.T0_K), 0.0))
+
+    @cached_property
+    def me_electronic_1(self) -> float:
+        if self.T0_K <= 0.0:
+            return float("nan")
+        return sqrt(self.eqp_J / (K_B * self.T0_K))
+
+    @cached_property
+    def me_electronic_2(self) -> float:
+        if self.T02_eff_K <= 0.0:
+            return float("nan")
+        return sqrt(self.eqp_J / (K_B * self.T02_eff_K))
 
     @cached_property
     def nj1_thermal_scale(self) -> float:
-        if self.P1_W <= 0.0:
+        p = self.P0_W if not self.second_kid_active else self.P1_W
+        if p <= 0.0:
             return 0.0
-        return sqrt(4.0 * K_B * self.T0_K * self.P1_W)
+        return sqrt(4.0 * K_B * self.T0_K * p)
 
     @cached_property
     def nj2_thermal_scale(self) -> float:
@@ -684,12 +816,16 @@ class Sensor:
         return tuple(ai + bi for ai, bi in zip(a, b))
 
     def n_johnson_A_1(self) -> Tuple[complex, complex, complex, complex]:
-        return (self.nj1_scale + 0.0j, 0.0 + 0.0j, -self.nj1_thermal_scale + 0.0j, 0.0 + 0.0j)
+        legacy = self._n_johnson_A_1_legacy()
+        sb = self._n_johnson_A_1_sb()
+        self._assert_noise_vector_agreement("n_johnson_A_1", legacy, sb)
+        return sb
 
     def n_johnson_A_2(self) -> Tuple[complex, complex, complex, complex]:
-        if not self.second_kid_active:
-            return (0.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j)
-        return (self.nj2_scale + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j, -self.nj2_thermal_scale + 0.0j)
+        legacy = self._n_johnson_A_2_legacy()
+        sb = self._n_johnson_A_2_sb()
+        self._assert_noise_vector_agreement("n_johnson_A_2", legacy, sb)
+        return sb
 
     def n_johnson_A(self) -> Tuple[complex, complex, complex, complex]:
         a = self.n_johnson_A_1()
@@ -697,12 +833,16 @@ class Sensor:
         return tuple(ai + bi for ai, bi in zip(a, b))
 
     def n_johnson_phi_1(self) -> Tuple[complex, complex, complex, complex]:
-        return (0.0 + 0.0j, 1j * self.nj1_scale, 0.0 + 0.0j, 0.0 + 0.0j)
+        legacy = self._n_johnson_phi_1_legacy()
+        sb = self._n_johnson_phi_1_sb()
+        self._assert_noise_vector_agreement("n_johnson_phi_1", legacy, sb)
+        return sb
 
     def n_johnson_phi_2(self) -> Tuple[complex, complex, complex, complex]:
-        if not self.second_kid_active:
-            return (0.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j)
-        return (0.0 + 0.0j, 1j * self.nj2_scale, 0.0 + 0.0j, 0.0 + 0.0j)
+        legacy = self._n_johnson_phi_2_legacy()
+        sb = self._n_johnson_phi_2_sb()
+        self._assert_noise_vector_agreement("n_johnson_phi_2", legacy, sb)
+        return sb
 
     def n_johnson_phi(self) -> Tuple[complex, complex, complex, complex]:
         a = self.n_johnson_phi_1()
@@ -769,7 +909,15 @@ class Sensor:
     def phase_responsivity_complex_rad_per_W_at_hz(self, f_hz: float) -> complex:
         """Complex phase responsivity to power source: (M^-1)_{phi,power}."""
         m = self.m_matrix_array(f_hz)
-        e_power = np.array((0.0 + 0.0j, 0.0 + 0.0j, 1.0 + 0.0j, 0.0 + 0.0j), dtype=complex)
+        e_power = np.array(
+            (
+                0.0 + 0.0j,
+                0.0 + 0.0j,
+                self.event_power_fraction_kid1_clamped + 0.0j,
+                self.event_power_fraction_kid2 + 0.0j,
+            ),
+            dtype=complex,
+        )
         y_unit_power = np.linalg.solve(m, e_power)
         return complex(y_unit_power[1])
 
@@ -1139,14 +1287,18 @@ class Sensor:
         return (0.0 + 0.0j, 1j * self.tls_iq_source_asd_at_hz_per_rtHz(nu_eval_hz), 0.0 + 0.0j, 0.0 + 0.0j)
 
     def n_electronic_A_1(self) -> Tuple[complex, complex, complex, complex]:
-        a1, a2, a3, a4 = self.n_johnson_A_1()
-        me = self.me_electronic
-        return (me * a1, me * a2, me * a3, me * a4)
+        me = self.me_electronic_1
+        legacy = tuple(me * v for v in self._n_johnson_A_1_legacy())
+        sb = tuple(me * v for v in self._n_johnson_A_1_sb())
+        self._assert_noise_vector_agreement("n_electronic_A_1", legacy, sb)
+        return sb
 
     def n_electronic_A_2(self) -> Tuple[complex, complex, complex, complex]:
-        a1, a2, a3, a4 = self.n_johnson_A_2()
-        me = self.me_electronic
-        return (me * a1, me * a2, me * a3, me * a4)
+        me = self.me_electronic_2
+        legacy = tuple(me * v for v in self._n_johnson_A_2_legacy())
+        sb = tuple(me * v for v in self._n_johnson_A_2_sb())
+        self._assert_noise_vector_agreement("n_electronic_A_2", legacy, sb)
+        return sb
 
     def n_electronic_A(self) -> Tuple[complex, complex, complex, complex]:
         a = self.n_electronic_A_1()
@@ -1154,14 +1306,18 @@ class Sensor:
         return tuple(ai + bi for ai, bi in zip(a, b))
 
     def n_electronic_phi_1(self) -> Tuple[complex, complex, complex, complex]:
-        p1, p2, p3, p4 = self.n_johnson_phi_1()
-        me = self.me_electronic
-        return (me * p1, me * p2, me * p3, me * p4)
+        me = self.me_electronic_1
+        legacy = tuple(me * v for v in self._n_johnson_phi_1_legacy())
+        sb = tuple(me * v for v in self._n_johnson_phi_1_sb())
+        self._assert_noise_vector_agreement("n_electronic_phi_1", legacy, sb)
+        return sb
 
     def n_electronic_phi_2(self) -> Tuple[complex, complex, complex, complex]:
-        p1, p2, p3, p4 = self.n_johnson_phi_2()
-        me = self.me_electronic
-        return (me * p1, me * p2, me * p3, me * p4)
+        me = self.me_electronic_2
+        legacy = tuple(me * v for v in self._n_johnson_phi_2_legacy())
+        sb = tuple(me * v for v in self._n_johnson_phi_2_sb())
+        self._assert_noise_vector_agreement("n_electronic_phi_2", legacy, sb)
+        return sb
 
     def n_electronic_phi(self) -> Tuple[complex, complex, complex, complex]:
         a = self.n_electronic_phi_1()
@@ -1506,6 +1662,7 @@ class Sensor:
             "x": self.x,
             "f_demod_Hz": self.f_demod_Hz,
             "nep_sufficiency_percent": self.nep_sufficiency_percent,
+            "event_power_fraction_kid1": self.event_power_fraction_kid1_clamped,
             "count_rate_Hz": self.count_rate_Hz,
             "pileup_probability_max": self.pileup_probability_max,
             "nep_sufficient_frequency_hz": self.nep_sufficient_frequency_hz,
@@ -1537,6 +1694,7 @@ class Sensor:
             "deltaT_abs_over_bath_K": self.deltaT_abs_over_bath_K,
             "tbath_from_link_K": self.tbath_from_link_K,
             "deltaT_event_full_absorption_K": self.deltaT_event_full_absorption_K,
+            "deltaT2_event_full_absorption_K": self.deltaT2_event_full_absorption_K,
             "kid2_thermal_headroom_K": self.kid2_thermal_headroom_K,
             "kid2_thermal_headroom_over_event_ratio": self.kid2_thermal_headroom_over_event_ratio,
             "dL1_dT_H_per_K": self.dL1_dT_H_per_K,

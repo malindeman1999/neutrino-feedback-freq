@@ -37,6 +37,7 @@ INPUT_SECTIONS = [
             "f0_Hz",
             "detuning_widths",
             "nep_sufficiency_percent",
+            "event_power_fraction_kid1",
         ],
     ),
     (
@@ -68,12 +69,12 @@ INPUT_SECTIONS = [
         "KID2 / Island2",
         [
             "T02_K",
-            "heat_capacity2_eV_per_mK",
-            "G2_W_per_K",
+            "heat_capacity2_ratio",
+            "G2_ratio",
             "alpha_A2",
             "alpha_phi2",
-            "series_L2_H",
-            "series_R2_Ohm",
+            "series_L2_ratio",
+            "series_R2_ratio",
             "feedback_heater_gain_W_per_rad",
         ],
     ),
@@ -81,12 +82,12 @@ INPUT_SECTIONS = [
 INPUT_KEYS = [k for _, keys in INPUT_SECTIONS for k in keys]
 KID2_KEYS = (
     "T02_K",
-    "heat_capacity2_eV_per_mK",
-    "G2_W_per_K",
+    "heat_capacity2_ratio",
+    "G2_ratio",
     "alpha_A2",
     "alpha_phi2",
-    "series_L2_H",
-    "series_R2_Ohm",
+    "series_L2_ratio",
+    "series_R2_ratio",
     "feedback_heater_gain_W_per_rad",
 )
 
@@ -101,6 +102,7 @@ LABELS = {
     "f0_Hz": "f0 [Hz]",
     "detuning_widths": "Detuning [widths]",
     "nep_sufficiency_percent": "NEP suff [%]",
+    "event_power_fraction_kid1": "Event frac KID1",
     "heat_capacity_eV_per_mK": "C [eV/mK]",
     "ho_in_au_atomic_fraction": "Ho/Au frac",
     "tls_phi_asd_100hz_per_rtHz": "TLS ASD @100Hz",
@@ -112,12 +114,12 @@ LABELS = {
     "alpha_A": "alpha_A",
     "alpha_phi": "alpha_phi",
     "T02_K": "T02 [K]",
-    "heat_capacity2_eV_per_mK": "C2 [eV/mK]",
-    "G2_W_per_K": "G2 [W/K]",
+    "heat_capacity2_ratio": "C2/C1",
+    "G2_ratio": "G2/G1",
     "alpha_A2": "alpha_A2",
     "alpha_phi2": "alpha_phi2",
-    "series_L2_H": "L2 [H]",
-    "series_R2_Ohm": "R2 [Ohm]",
+    "series_L2_ratio": "L2/L1",
+    "series_R2_ratio": "R2/R1",
     "feedback_heater_gain_W_per_rad": "Kfb [W/rad]",
 }
 
@@ -189,8 +191,18 @@ class NoiseGui:
     def __init__(self) -> None:
         SAVES_DIR.mkdir(parents=True, exist_ok=True)
         self.defaults = asdict(Version1SensorInputs())
-        self.current, self.last_loaded, self.last_loaded_name = self._load_startup_settings()
+        self.defaults.setdefault("event_power_fraction_kid1", 1.0)
+        self.defaults["heat_capacity2_ratio"] = self.defaults["heat_capacity2_eV_per_mK"] / max(
+            self.defaults["heat_capacity_eV_per_mK"], 1.0e-30
+        )
+        # Use physical baseline from a default sensor for L1, R1, G1 ratio anchors.
+        s0 = Sensor(Version1SensorInputs())
+        self.defaults["G2_ratio"] = self.defaults["G2_W_per_K"] / max(float(s0.G_W_per_K), 1.0e-30)
+        self.defaults["series_L2_ratio"] = self.defaults["series_L2_H"] / max(float(s0.L_total_H), 1.0e-30)
+        self.defaults["series_R2_ratio"] = self.defaults["series_R2_Ohm"] / max(float(s0.R1_series_Ohm), 1.0e-30)
+        self.current, self.last_loaded, self.last_loaded_name, self.startup_ui_state = self._load_startup_settings()
         self.undo_stack: list[dict[str, float]] = []
+        self.single_mode_snapshot: dict[str, float] | None = None
 
         self.root = tk.Tk()
         self.root.title("Noise ASD / NEP Plotter")
@@ -207,6 +219,7 @@ class NoiseGui:
         self.entry_widgets: dict[str, ttk.Entry] = {}
 
         self._build_layout()
+        self._apply_ui_state(self.startup_ui_state)
         self._recompute_and_draw()
 
     @staticmethod
@@ -325,31 +338,96 @@ class NoiseGui:
             try:
                 with SETTINGS_FILE.open("rb") as f:
                     loaded = pickle.load(f)
-                if isinstance(loaded, dict):
+                loaded_settings = self._extract_settings_dict(loaded)
+                if isinstance(loaded_settings, dict):
                     merged = dict(self.defaults)
                     for k in INPUT_KEYS:
-                        if k in loaded:
-                            merged[k] = float(loaded[k])
+                        if k in loaded_settings:
+                            merged[k] = float(loaded_settings[k])
+                    self._backfill_ratio_fields_from_absolute(merged, loaded_settings)
                     return merged
             except Exception:
                 pass
         return dict(self.defaults)
 
+    def _backfill_ratio_fields_from_absolute(self, merged: dict[str, float], loaded: dict) -> None:
+        if (
+            "heat_capacity2_ratio" in loaded
+            and "G2_ratio" in loaded
+            and "series_L2_ratio" in loaded
+            and "series_R2_ratio" in loaded
+        ):
+            return
+        ctor_keys = set(asdict(Version1SensorInputs()).keys())
+        base_kwargs = {k: float(merged[k]) for k in ctor_keys if k in merged}
+        base_kwargs["heat_capacity2_eV_per_mK"] = 0.0
+        base_kwargs["G2_W_per_K"] = 0.0
+        base_kwargs["series_L2_H"] = 0.0
+        base_kwargs["series_R2_Ohm"] = 0.0
+        s1 = Sensor(Version1SensorInputs(**base_kwargs))
+        merged["heat_capacity2_ratio"] = float(loaded.get("heat_capacity2_eV_per_mK", merged["heat_capacity2_eV_per_mK"])) / max(
+            float(merged.get("heat_capacity_eV_per_mK", 0.0)), 1.0e-30
+        )
+        merged["G2_ratio"] = float(loaded.get("G2_W_per_K", merged["G2_W_per_K"])) / max(float(s1.G_W_per_K), 1.0e-30)
+        merged["series_L2_ratio"] = float(loaded.get("series_L2_H", merged["series_L2_H"])) / max(float(s1.L_total_H), 1.0e-30)
+        merged["series_R2_ratio"] = float(loaded.get("series_R2_Ohm", merged["series_R2_Ohm"])) / max(float(s1.R1_series_Ohm), 1.0e-30)
+
     def _load_settings_file(self, path: Path) -> dict[str, float] | None:
         try:
             with path.open("rb") as f:
                 loaded = pickle.load(f)
-            if not isinstance(loaded, dict):
+            loaded_settings = self._extract_settings_dict(loaded)
+            if not isinstance(loaded_settings, dict):
                 return None
             vals = dict(self.defaults)
             for k in INPUT_KEYS:
-                if k in loaded:
-                    vals[k] = float(loaded[k])
+                if k in loaded_settings:
+                    vals[k] = float(loaded_settings[k])
+            self._backfill_ratio_fields_from_absolute(vals, loaded_settings)
             return vals
         except Exception:
             return None
 
-    def _load_startup_settings(self) -> tuple[dict[str, float], dict[str, float], str | None]:
+    @staticmethod
+    def _extract_settings_dict(loaded: object) -> dict | None:
+        if not isinstance(loaded, dict):
+            return None
+        if "settings" in loaded and isinstance(loaded["settings"], dict):
+            return loaded["settings"]
+        return loaded
+
+    @staticmethod
+    def _extract_ui_state(loaded: object) -> dict[str, str]:
+        if isinstance(loaded, dict) and isinstance(loaded.get("ui"), dict):
+            ui = loaded["ui"]
+            out: dict[str, str] = {}
+            for k in ("mode", "readout", "kid2_mode"):
+                v = ui.get(k)
+                if isinstance(v, str):
+                    out[k] = v
+            return out
+        return {}
+
+    def _current_ui_state(self) -> dict[str, str]:
+        return {
+            "mode": self.mode_var.get(),
+            "readout": self.readout_var.get(),
+            "kid2_mode": self.kid2_mode_var.get(),
+        }
+
+    def _apply_ui_state(self, ui: dict[str, str]) -> None:
+        mode = ui.get("mode")
+        if mode in ("Noise ASD", "NEP"):
+            self.mode_var.set(mode)
+        readout = ui.get("readout")
+        if readout in ("Phase", "Amplitude"):
+            self.readout_var.set(readout)
+        kid2_mode = ui.get("kid2_mode")
+        if kid2_mode in ("Single KID", "Dual KID"):
+            self.kid2_mode_var.set(kid2_mode)
+        self._set_kid2_fields_enabled()
+
+    def _load_startup_settings(self) -> tuple[dict[str, float], dict[str, float], str | None, dict[str, str]]:
         if STARTUP_STATE_FILE.exists():
             try:
                 with STARTUP_STATE_FILE.open("rb") as f:
@@ -360,13 +438,20 @@ class NoiseGui:
                         source_path = Path(source)
                         vals = self._load_settings_file(source_path)
                         if vals is not None:
-                            return vals, dict(vals), source_path.name
+                            ui_state: dict[str, str] = {}
+                            try:
+                                with source_path.open("rb") as sf:
+                                    loaded = pickle.load(sf)
+                                ui_state = self._extract_ui_state(loaded)
+                            except Exception:
+                                ui_state = {}
+                            return vals, dict(vals), source_path.name, ui_state
             except Exception:
                 pass
 
         vals = self._load_saved_or_defaults()
         name = SETTINGS_FILE.name if SETTINGS_FILE.exists() else None
-        return vals, dict(vals), name
+        return vals, dict(vals), name, {}
 
     def _persist_startup_state(self, source_path: Path) -> None:
         try:
@@ -426,9 +511,43 @@ class NoiseGui:
     def _build_sensor(self, settings: dict[str, float]) -> Sensor:
         kwargs = dict(self.defaults)
         kwargs.update(settings)
+        # Convert KID2 ratio controls to physical KID2 parameters.
+        c1 = float(kwargs.get("heat_capacity_eV_per_mK", 0.0))
+        ctor_keys = set(asdict(Version1SensorInputs()).keys())
+        base_kwargs = {k: v for k, v in kwargs.items() if k in ctor_keys}
+        base_kwargs.pop("heat_capacity2_eV_per_mK", None)
+        base_kwargs.pop("G2_W_per_K", None)
+        base_kwargs.pop("series_L2_H", None)
+        base_kwargs.pop("series_R2_Ohm", None)
+        base_kwargs["heat_capacity2_eV_per_mK"] = 0.0
+        base_kwargs["G2_W_per_K"] = 0.0
+        base_kwargs["series_L2_H"] = 0.0
+        base_kwargs["series_R2_Ohm"] = 0.0
+        s1 = Sensor(Version1SensorInputs(**base_kwargs))
+        dt = max(float(kwargs.get("T0_K", 0.0)) - float(kwargs.get("Tb_K", 0.0)), 1.0e-30)
+        r2_ratio = max(float(kwargs.get("series_R2_ratio", 0.0)), 0.0)
+        r1_frac = 1.0 if r2_ratio <= 0.0 else 1.0 / (1.0 + r2_ratio)
+        p1_anchor = float(s1.P0_W) * r1_frac
+        g1 = p1_anchor / dt
+        l1 = float(s1.L_total_H)
+        r1 = float(s1.R1_series_Ohm)
+        kwargs["heat_capacity2_eV_per_mK"] = float(kwargs.get("heat_capacity2_ratio", 0.0)) * c1
+        kwargs["G2_W_per_K"] = float(kwargs.get("G2_ratio", 0.0)) * g1
+        kwargs["series_L2_H"] = float(kwargs.get("series_L2_ratio", 0.0)) * l1
+        kwargs["series_R2_Ohm"] = float(kwargs.get("series_R2_ratio", 0.0)) * r1
+        kwargs.pop("heat_capacity2_ratio", None)
+        kwargs.pop("G2_ratio", None)
+        kwargs.pop("series_L2_ratio", None)
+        kwargs.pop("series_R2_ratio", None)
         if self.kid2_mode_var.get() == "Single KID":
-            for k in KID2_KEYS:
-                kwargs[k] = 0.0
+            kwargs["T02_K"] = 0.0
+            kwargs["heat_capacity2_eV_per_mK"] = 0.0
+            kwargs["G2_W_per_K"] = 0.0
+            kwargs["alpha_A2"] = 0.0
+            kwargs["alpha_phi2"] = 0.0
+            kwargs["series_L2_H"] = 0.0
+            kwargs["series_R2_Ohm"] = 0.0
+            kwargs["feedback_heater_gain_W_per_rad"] = 0.0
         return Sensor(Version1SensorInputs(**kwargs))
 
     def _set_kid2_fields_enabled(self) -> None:
@@ -445,55 +564,110 @@ class NoiseGui:
             return
         base = dict(self.current)
         base["T02_K"] = float(base.get("T0_K", 0.04))
-        base["heat_capacity2_eV_per_mK"] = float(base.get("heat_capacity_eV_per_mK", 150.0))
-        base["G2_W_per_K"] = float(g1)
+        base["heat_capacity2_ratio"] = 1.0
+        base["G2_ratio"] = 1.0
         base["alpha_A2"] = float(base.get("alpha_A", 0.1))
         base["alpha_phi2"] = float(base.get("alpha_phi", 140.0))
-        base["series_L2_H"] = float(l1)
-        base["series_R2_Ohm"] = float(r1)
+        base["series_L2_ratio"] = 1.0
+        base["series_R2_ratio"] = 1.0
+        base["event_power_fraction_kid1"] = 0.5
         base["feedback_heater_gain_W_per_rad"] = 0.0
         self.current = base
         self._write_fields(self.current)
 
+    def _collapse_dual_to_single_equivalent(self) -> None:
+        """Map current dual-KID settings to an equivalent single-KID parameter set."""
+        s = self._build_sensor(self.current)
+        c1 = float(self.current.get("heat_capacity_eV_per_mK", 0.0))
+        c2 = float(self.current.get("heat_capacity2_ratio", 0.0)) * c1
+        g1 = float(s.G_W_per_K)
+        g2 = float(self.current.get("G2_ratio", 0.0)) * g1
+        l1 = float(s.L_total_H)
+        l2 = float(self.current.get("series_L2_ratio", 0.0)) * l1
+        r1 = float(s.R1_series_Ohm)
+        r2 = float(self.current.get("series_R2_ratio", 0.0)) * r1
+
+        lsum = max(l1 + l2, 1.0e-30)
+        rsum = max(r1 + r2, 1.0e-30)
+        psum = max(float(s.P1_W + s.P2_W), 1.0e-30)
+        qieq = (2.0 * pi * float(self.current.get("f0_Hz", 1.0e9)) * lsum) / rsum
+        kfrac_eq = 1.0 - (float(s.L_geo_H) / lsum)
+        kfrac_eq = min(max(kfrac_eq, 0.0), 0.999999)
+
+        alpha_a1 = float(self.current.get("alpha_A", 0.0))
+        alpha_a2 = float(self.current.get("alpha_A2", alpha_a1))
+        alpha_p1 = float(self.current.get("alpha_phi", 0.0))
+        alpha_p2 = float(self.current.get("alpha_phi2", alpha_p1))
+        alpha_a_eq = (alpha_a1 * float(s.P1_W) + alpha_a2 * float(s.P2_W)) / psum
+        alpha_p_eq = (alpha_p1 * l1 + alpha_p2 * l2) / lsum
+
+        self.current["heat_capacity_eV_per_mK"] = c1 + c2
+        self.current["kinetic_inductance_fraction"] = kfrac_eq
+        self.current["Qi"] = qieq
+        self.current["alpha_A"] = alpha_a_eq
+        self.current["alpha_phi"] = alpha_p_eq
+        self.current["event_power_fraction_kid1"] = 1.0
+
     def _on_kid2_mode(self) -> None:
-        if self.kid2_mode_var.get() == "Dual KID":
+        mode = self.kid2_mode_var.get()
+        if mode == "Dual KID":
             try:
                 # Sync from latest user-edited values before mirroring.
                 self.current = self._read_fields()
+                self.single_mode_snapshot = dict(self.current)
+                # Always apply equal-split match when entering Dual mode,
+                # so toggling Single<->Dual cycles deterministically.
+                self.current["heat_capacity_eV_per_mK"] = 0.5 * float(self.current.get("heat_capacity_eV_per_mK", 0.0))
+                # Split KID1 inductance in half so L1+L2 matches prior single-KID L.
+                # With fixed L_geo, this maps k -> k' = 2k - 1 (clamped to [0,1)).
+                k_old = float(self.current.get("kinetic_inductance_fraction", 0.0))
+                self.current["kinetic_inductance_fraction"] = min(max((2.0 * k_old) - 1.0, 0.0), 0.999999)
+                self.current["T02_K"] = float(self.current.get("T0_K", 0.04))
+                self.current["heat_capacity2_ratio"] = 1.0
+                self.current["G2_ratio"] = 1.0
+                self.current["alpha_A2"] = float(self.current.get("alpha_A", 0.1))
+                self.current["alpha_phi2"] = float(self.current.get("alpha_phi", 140.0))
+                self.current["series_L2_ratio"] = 1.0
+                self.current["series_R2_ratio"] = 1.0
+                self.current["event_power_fraction_kid1"] = 0.5
+                self.current["feedback_heater_gain_W_per_rad"] = 0.0
+                self._write_fields(self.current)
             except Exception:
                 pass
-            # Build a temporary sensor so derived mirror quantities are available.
-            g1 = 0.0
-            l1 = 0.0
-            r1 = 0.0
+        else:
             try:
-                s = self._build_sensor(self.current)
-                g1 = float(s.G_W_per_K)
-                l1 = float(s.L_total_H)
-                r1 = float(s.R1_series_Ohm)
+                if self.single_mode_snapshot is not None:
+                    self.current = dict(self.single_mode_snapshot)
+                    self._write_fields(self.current)
+                else:
+                    self.current = self._read_fields()
+                    self._collapse_dual_to_single_equivalent()
+                    self._write_fields(self.current)
             except Exception:
                 pass
-            self._populate_kid2_from_kid1(g1=g1, l1=l1, r1=r1)
         self._set_kid2_fields_enabled()
         self._recompute_and_draw()
 
     def _match_kid2_to_kid1(self) -> None:
         try:
             self.current = self._read_fields()
-            s = self._build_sensor(self.current)
+            self.current["heat_capacity_eV_per_mK"] = 0.5 * float(self.current.get("heat_capacity_eV_per_mK", 0.0))
+            k_old = float(self.current.get("kinetic_inductance_fraction", 0.0))
+            self.current["kinetic_inductance_fraction"] = min(max((2.0 * k_old) - 1.0, 0.0), 0.999999)
             self.current["T02_K"] = float(self.current.get("T0_K", 0.04))
-            self.current["heat_capacity2_eV_per_mK"] = float(self.current.get("heat_capacity_eV_per_mK", 150.0))
-            self.current["G2_W_per_K"] = float(s.G_W_per_K)
+            self.current["heat_capacity2_ratio"] = 1.0
+            self.current["G2_ratio"] = 1.0
             self.current["alpha_A2"] = float(self.current.get("alpha_A", 0.1))
             self.current["alpha_phi2"] = float(self.current.get("alpha_phi", 140.0))
-            self.current["series_L2_H"] = float(s.L_total_H)
-            self.current["series_R2_Ohm"] = float(s.R1_series_Ohm)
+            self.current["series_L2_ratio"] = 1.0
+            self.current["series_R2_ratio"] = 1.0
+            self.current["event_power_fraction_kid1"] = 0.5
             self.current["feedback_heater_gain_W_per_rad"] = 0.0
             self.kid2_mode_var.set("Dual KID")
             self._write_fields(self.current)
             self._set_kid2_fields_enabled()
             self._recompute_and_draw()
-            self._set_status("KID2 parameters matched to KID1")
+            self._set_status("KID2 set to equal split (ratios=1, event split=0.5/0.5)")
         except Exception as exc:
             self._set_status(f"Match KID2->KID1 failed: {exc}")
 
@@ -551,7 +725,15 @@ class NoiseGui:
             phase_resp[i] = s.phase_responsivity_mag_rad_per_W_at_hz(float(f_hz))
             y_unit_power = np.linalg.solve(
                 s.m_matrix_array(float(f_hz)),
-                np.array((0.0 + 0.0j, 0.0 + 0.0j, 1.0 + 0.0j, 0.0 + 0.0j), dtype=complex),
+                np.array(
+                    (
+                        0.0 + 0.0j,
+                        0.0 + 0.0j,
+                        s.event_power_fraction_kid1_clamped + 0.0j,
+                        s.event_power_fraction_kid2 + 0.0j,
+                    ),
+                    dtype=complex,
+                ),
             )
             amp_resp[i] = abs(y_unit_power[0])
 
@@ -823,7 +1005,13 @@ class NoiseGui:
                 return
             save_path = Path(path)
             with save_path.open("wb") as f:
-                pickle.dump({k: self.current[k] for k in INPUT_KEYS}, f)
+                pickle.dump(
+                    {
+                        "settings": {k: self.current[k] for k in INPUT_KEYS},
+                        "ui": self._current_ui_state(),
+                    },
+                    f,
+                )
             self.last_loaded = dict(self.current)
             self.last_loaded_name = save_path.name
             self._persist_startup_state(save_path)
@@ -844,6 +1032,8 @@ class NoiseGui:
                 self._set_status("Load cancelled")
                 return
             load_path = Path(path)
+            with load_path.open("rb") as f:
+                loaded = pickle.load(f)
             vals = self._load_settings_file(load_path)
             if vals is None:
                 raise ValueError("invalid settings file")
@@ -853,6 +1043,7 @@ class NoiseGui:
             self.last_loaded_name = load_path.name
             self._persist_startup_state(load_path)
             self._write_fields(self.current)
+            self._apply_ui_state(self._extract_ui_state(loaded))
             self._recompute_and_draw()
             self._push_undo(prev)
             self._update_loaded_name()

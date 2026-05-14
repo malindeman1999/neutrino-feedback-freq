@@ -1,0 +1,76 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SB-to-IQ Equivalence | TKID Neutrino Detector Docs</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script>
+    window.MathJax = { tex: { inlineMath: [['\\(', '\\)'], ['$', '$']] } };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+</head>
+<body>
+  <header class="hero">
+    <h1>SB to IQ Conversion Equivalence</h1>
+    <p>Verification that sideband-basis to demodulated IQ normalization is identical for single-KID and halfed dual-KID equivalent models.</p>
+  </header>
+
+  <nav class="nav">
+    <a href="index.html">Home</a>
+    <a href="m-matrix.html">M Matrix</a>
+    <a href="power-partitioning.html">Power Partitioning</a>
+    <a href="dual-to-single-reduction.html">Dual->Single Reduction</a>
+    <a href="sb-to-iq-equivalence.html" class="active">SB->IQ Equivalence</a>
+  </nav>
+
+  <main class="container">
+    <section class="card">
+      <h2>Goal</h2>
+      <p>Show that the microwave conversion from sideband sources (USB/LSB basis) to demodulated \((I,Q)\) is the same in:</p>
+      <ul>
+        <li>single-KID model, and</li>
+        <li>halfed dual-KID equivalent model (equal split with preserved totals).</li>
+      </ul>
+      <p>This isolates whether remaining single-vs-dual differences come from SB->IQ normalization or from later thermal/dynamical coupling.</p>
+    </section>
+
+    <section class="card">
+      <h2>Shared SB-to-IQ Ingredients</h2>
+      <p>The code uses a shared resonator normalization:</p>
+      <p>\[
+      V_{\mathrm{norm}} = I_0 R_0,
+      \]
+      with \(I_0\) and \(R_0\) from the combined resonator parameters.</p>
+      <p>Python: <a href="../python-simple-abs/sensor.py"><code>Sensor.iq_voltage_normalization_V</code></a>.</p>
+      <p>It also uses the same passive electrical 2x2 block (no thermal coupling) for IQ transfer:</p>
+      <p>\[
+      M_{\mathrm{passive}}(\omega)=
+      \begin{bmatrix}
+      m_{11}(\omega) & m_{12}(\omega)\\
+      m_{21}(\omega) & m_{22}(\omega)
+      \end{bmatrix}
+      \]
+      built from \(f_0, Q_r, Q_i, x\).</p>
+      <p>Python: <a href="../python-simple-abs/sensor.py"><code>Sensor.passive_tls_iq_transfer_phi_at_hz()</code></a>.</p>
+    </section>
+
+    <section class="card">
+      <h2>Numerical Verification (Current Code)</h2>
+      <p>For single vs halfed dual-equivalent construction, the following are equal:</p>
+      <ul>
+        <li>\(V_{\mathrm{norm}}=I_0R_0\): both are <code>3.8398160627287225e-08</code>.</li>
+        <li>Passive Q-transfer magnitude ratio at 1 Hz: <code>1.0</code>.</li>
+        <li>Passive Q-transfer magnitude ratio at 100 Hz: <code>1.0</code>.</li>
+      </ul>
+      <p>Therefore the SB->IQ conversion basis is the same in both models.</p>
+    </section>
+
+    <section class="card">
+      <h2>Conclusion</h2>
+      <p>In the current implementation, SB->IQ normalization is not the remaining source of single-vs-dual mismatch. Any residual difference must come from the full 4x4 thermal/electrothermal dynamics and source coupling after microwave normalization.</p>
+      <p>Related pages: <a href="m-matrix.html">M Matrix</a>, <a href="dual-to-single-reduction.html">Dual->Single Reduction</a>, <a href="power-partitioning.html">Power Partitioning</a>.</p>
+    </section>
+  </main>
+</body>
+</html>

@@ -22,6 +22,9 @@
     <a href="index.html">Home</a>
     <a href="theory.html">Theory</a>
     <a href="m-matrix.html" class="active">M Matrix</a>
+    <a href="power-partitioning.html">Power Partitioning</a>
+    <a href="dual-to-single-reduction.html">Dual->Single Reduction</a>
+    <a href="sb-to-iq-equivalence.html">SB->IQ Equivalence</a>
     <a href="paper-transform-summary.html">Transform Summary</a>
     <a href="feedback-nep-invariance.html">Feedback NEP</a>
     <a href="noise-sources.html">Noise Sources</a>
@@ -91,6 +94,9 @@
       \]</p>
       <p>Here \(P_1+P_2=P_0\), with \(P_j\) split by series loss (\(P_j\propto R_j\)).</p>
       <p>This is the exact matrix structure currently implemented in <a href="../python-simple-abs/sensor.py"><code>Sensor.m_matrix()</code></a>.</p>
+      <p>Detailed branch-power split and its use in matrix/noise normalization: <a href="power-partitioning.html">Power Partitioning</a>.</p>
+      <p>Algebraic full-circle proof (3x3 -> 4x4 split -> 3x3 reduction): <a href="dual-to-single-reduction.html">Dual-to-Single Reduction</a>.</p>
+      <p>Microwave-basis check that SB->IQ conversion is identical in single vs halfed dual: <a href="sb-to-iq-equivalence.html">SB-to-IQ Equivalence</a>.</p>
       <p>For the cofactor argument showing why Q-channel NEP should be independent of \(K_{\mathrm{fb}}\) when feedback appears only in the Q column, see <a href="feedback-nep-invariance.html">Feedback NEP Invariance</a>.</p>
     </section>
 
