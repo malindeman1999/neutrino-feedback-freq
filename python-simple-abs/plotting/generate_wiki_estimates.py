@@ -79,6 +79,8 @@ def main() -> None:
         "thermal_link_exponent_n": "1",
         "tls_phi_asd_100hz_per_rtHz": "1/Hz^(1/2)",
         "tls_beta": "1",
+        "passive_tls_iq_transfer_phi_100hz_abs": "1",
+        "tls_iq_source_asd_100hz_per_rtHz": "1/Hz^(1/2)",
         "f0_Hz": "Hz",
         "Qr": "1",
         "Qi": "1",
@@ -92,6 +94,7 @@ def main() -> None:
         "beta_phi": "1",
         "Tc_K": "K",
         "P0_W": "W",
+        "P0_undetuned_W": "W",
         "Pg_W": "W",
         "pg_to_p0_factor": "1",
         "p0_over_pbif_target": "1",
@@ -106,6 +109,14 @@ def main() -> None:
         "detuning_Hz": "Hz",
         "x": "1",
         "f_demod_Hz": "Hz",
+        "T02_K": "K",
+        "heat_capacity2_eV_per_mK": "eV/mK",
+        "G2_W_per_K": "W/K",
+        "alpha_A2": "1",
+        "alpha_phi2": "1",
+        "series_L2_H": "H",
+        "series_R2_Ohm": "Ohm",
+        "feedback_heater_gain_W_per_rad": "W/rad",
         "absorber_volume_m3": "m^3",
         "membrane_length_m": "m",
         "membrane_width_m": "m",
@@ -118,6 +129,13 @@ def main() -> None:
         "deltaT_abs_over_bath_K": "K",
         "tbath_from_link_K": "K",
         "deltaT_event_full_absorption_K": "K",
+        "kid2_thermal_headroom_K": "K",
+        "kid2_thermal_headroom_over_event_ratio": "1",
+        "dL1_dT_H_per_K": "H/K",
+        "dL2_dT_H_per_K": "H/K",
+        "deltaL1_event_H": "H",
+        "deltaL2_compensation_headroom_H": "H",
+        "kid2_inductance_headroom_over_event_ratio": "1",
         "dfr_dT_Hz_per_K": "Hz/K",
         "dT_dE_K_per_J": "K/J",
         "dphi_dE_rad_per_J": "rad/J",
@@ -149,7 +167,6 @@ def main() -> None:
         "core_rule8_ok": "1",
         "core_rule9_ok": "1",
         "core_rule10_ok": "1",
-        "core_rule11_ok": "1",
         "core_rule12_ok": "1",
         "core_rule13_ok": "1",
         "L_geo_H": "H",
@@ -181,7 +198,10 @@ def main() -> None:
         "sv_usb_johnson_V2_per_Hz": "V^2/Hz",
         "asd_v_usb_johnson_V_per_rtHz": "V/Hz^(1/2)",
         "m_usb_tls_over_johnson_1hz": "1",
-        "m_tls": "1",
+        "P1_W": "W",
+        "P2_W": "W",
+        "heater2_dc_power_W": "W",
+        "heater2_dc_power_dBm": "dBm",
         "phonon_power_rms_W": "W",
         "johnson_voltage_rms_V": "V",
         "johnson_sv_V2_per_Hz": "V^2/Hz",
@@ -191,6 +211,7 @@ def main() -> None:
         "mt_eig1_per_s": "1/s",
         "mt_eig2_per_s": "1/s",
         "mt_eig3_per_s": "1/s",
+        "mt_eig4_per_s": "1/s",
         "mt_max_real_part_per_s": "1/s",
         "mt_stable": "1",
         "mt_pulse_shortening_ratio": "1",
@@ -225,6 +246,8 @@ def main() -> None:
         "thermal_link_exponent_n": r"\(n_{\mathrm{link}}\)",
         "tls_phi_asd_100hz_per_rtHz": r"\(\sqrt{S_{\phi,\mathrm{TLS}}}(100\,\mathrm{Hz})\)",
         "tls_beta": r"\(\beta_{\mathrm{TLS}}\)",
+        "passive_tls_iq_transfer_phi_100hz_abs": r"\(|H_{\mathrm{TLS,passive}}(100\,\mathrm{Hz})|\)",
+        "tls_iq_source_asd_100hz_per_rtHz": r"\(\sqrt{S_{N,\mathrm{TLS}}}(100\,\mathrm{Hz})\)",
         "f0_Hz": r"\(f_0\)",
         "Qr": r"\(Q_r\)",
         "Qi": r"\(Q_i\)",
@@ -239,9 +262,10 @@ def main() -> None:
         "Tc_K": r"\(T_c\)",
         "R0_Ohm": r"\(R_0\)",
         "P0_W": r"\(P_0\)",
+        "P0_undetuned_W": r"\(P_{0,x=0}\)",
         "Pg_W": r"\(P_g\)",
         "pg_to_p0_factor": r"\(P_0/P_g\)",
-        "p0_over_pbif_target": r"\((P_0/P_{\mathrm{bif}})_{\mathrm{target}}\)",
+        "p0_over_pbif_target": r"\(P_{0,x=0}/P_{\mathrm{bif}}\)",
         "bifurcation_energy_scale_J": r"\(E_*\)",
         "pbif_typical_min_dBm": r"\(P_{\mathrm{bif,min}}^{\mathrm{typ}}\)",
         "pbif_typical_max_dBm": r"\(P_{\mathrm{bif,max}}^{\mathrm{typ}}\)",
@@ -253,6 +277,14 @@ def main() -> None:
         "detuning_Hz": r"\(\delta f\)",
         "x": r"\(x\)",
         "f_demod_Hz": r"\(f_{\mathrm{demod}}\)",
+        "T02_K": r"\(T_{02}\)",
+        "heat_capacity2_eV_per_mK": r"\(C_2\)",
+        "G2_W_per_K": r"\(G_2\)",
+        "alpha_A2": r"\(\alpha_{A2}\)",
+        "alpha_phi2": r"\(\alpha_{\phi2}\)",
+        "series_L2_H": r"\(L_2\)",
+        "series_R2_Ohm": r"\(R_2\)",
+        "feedback_heater_gain_W_per_rad": r"\(K_{\mathrm{fb}}\)",
         "absorber_volume_m3": r"\(V_{\mathrm{abs}}\)",
         "membrane_length_m": r"\(L_{\mathrm{mem}}\)",
         "membrane_width_m": r"\(W_{\mathrm{mem}}\)",
@@ -265,6 +297,13 @@ def main() -> None:
         "deltaT_abs_over_bath_K": r"\(\Delta T_{\mathrm{abs-bath}}\)",
         "tbath_from_link_K": r"\(T_{\mathrm{bath}}\)",
         "deltaT_event_full_absorption_K": r"\(\Delta T_{\mathrm{event}}\)",
+        "kid2_thermal_headroom_K": r"\(\Delta T_{2,\mathrm{head}}\)",
+        "kid2_thermal_headroom_over_event_ratio": r"\(\Delta T_{2,\mathrm{head}}/\Delta T_{\mathrm{event}}\)",
+        "dL1_dT_H_per_K": r"\(dL_1/dT_1\)",
+        "dL2_dT_H_per_K": r"\(dL_2/dT_2\)",
+        "deltaL1_event_H": r"\(\Delta L_{1,\mathrm{event}}\)",
+        "deltaL2_compensation_headroom_H": r"\(\Delta L_{2,\mathrm{head}}\)",
+        "kid2_inductance_headroom_over_event_ratio": r"\(\Delta L_{2,\mathrm{head}}/\Delta L_{1,\mathrm{event}}\)",
         "dfr_dT_Hz_per_K": r"\(df_r/dT\)",
         "dT_dE_K_per_J": r"\(dT/dE\)",
         "dphi_dE_rad_per_J": r"\(d\phi/dE\)",
@@ -296,7 +335,6 @@ def main() -> None:
         "core_rule8_ok": r"\(\mathbb{1}_{\mathrm{rule8}}\)",
         "core_rule9_ok": r"\(\mathbb{1}_{\mathrm{rule9}}\)",
         "core_rule10_ok": r"\(\mathbb{1}_{\mathrm{rule10}}\)",
-        "core_rule11_ok": r"\(\mathbb{1}_{\mathrm{rule11}}\)",
         "core_rule12_ok": r"\(\mathbb{1}_{\mathrm{rule12}}\)",
         "core_rule13_ok": r"\(\mathbb{1}_{\mathrm{rule13}}\)",
         "L_geo_H": r"\(L_g\)",
@@ -307,7 +345,7 @@ def main() -> None:
         "Qc": r"\(Q_c\)",
         "p_bifurcation_W": r"\(P_{\mathrm{bif}}\)",
         "p_bifurcation_dBm": r"\(P_{\mathrm{bif,dBm}}\)",
-        "bifurcation_power_ratio": r"\(P_g/P_{\mathrm{bif}}\)",
+        "bifurcation_power_ratio": r"\(P_{0,x=0}/P_{\mathrm{bif}}\)",
         "sphi_johnson_full_per_hz": r"\(S_{\phi,J}^{\mathrm{full}}\)",
         "sphi_tls_per_hz": r"\(S_{\phi,\mathrm{TLS}}\)",
         "asd_phi_tls_per_rtHz": r"\(\sqrt{S_{\phi,\mathrm{TLS}}}\)",
@@ -328,7 +366,10 @@ def main() -> None:
         "sv_usb_johnson_V2_per_Hz": r"\(S_{V,\mathrm{USB},J}\)",
         "asd_v_usb_johnson_V_per_rtHz": r"\(\sqrt{S_{V,\mathrm{USB},J}}\)",
         "m_usb_tls_over_johnson_1hz": r"\(M_{\mathrm{USB},\mathrm{TLS}/J}(1\,\mathrm{Hz})\)",
-        "m_tls": r"\(M_{\mathrm{TLS}}\)",
+        "P1_W": r"\(P_1\)",
+        "P2_W": r"\(P_2\)",
+        "heater2_dc_power_W": r"\(P_{\mathrm{heater},2}\)",
+        "heater2_dc_power_dBm": r"\(P_{\mathrm{heater},2,\mathrm{dBm}}\)",
         "phonon_power_rms_W": r"\(P_{\mathrm{ph,RMS}}\)",
         "johnson_voltage_rms_V": r"\(V_{e}\)",
         "johnson_sv_V2_per_Hz": r"\(S_{V,J}\)",
@@ -338,6 +379,7 @@ def main() -> None:
         "mt_eig1_per_s": r"\(\lambda_1(M_t)\)",
         "mt_eig2_per_s": r"\(\lambda_2(M_t)\)",
         "mt_eig3_per_s": r"\(\lambda_3(M_t)\)",
+        "mt_eig4_per_s": r"\(\lambda_4(M_t)\)",
         "mt_max_real_part_per_s": r"\(\max\Re[\lambda(M_t)]\)",
         "mt_stable": r"\(\mathbb{1}_{\mathrm{stable}}\)",
         "mt_pulse_shortening_ratio": r"\(\rho_{\mathrm{short}}\)",
@@ -364,6 +406,13 @@ def main() -> None:
         "deltaT_abs_over_bath_K": r"\(\Delta T_{\mathrm{abs-bath}}=\dfrac{P_0}{G}\)",
         "tbath_from_link_K": r"\(T_{\mathrm{bath}}=T_0-\Delta T_{\mathrm{abs-bath}}\)",
         "deltaT_event_full_absorption_K": r"\(\Delta T_{\mathrm{event}}=\dfrac{E_{\mathrm{Ho}}}{C}\)",
+        "kid2_thermal_headroom_K": r"\(\Delta T_{2,\mathrm{head}}=T_{02}-T_b\)",
+        "kid2_thermal_headroom_over_event_ratio": r"\(\Delta T_{2,\mathrm{head}}/\Delta T_{\mathrm{event}}\)",
+        "dL1_dT_H_per_K": r"\(\dfrac{dL_1}{dT_1}\propto\dfrac{\alpha_{\phi1}L_1}{T_1}\)",
+        "dL2_dT_H_per_K": r"\(\dfrac{dL_2}{dT_2}\propto\dfrac{\alpha_{\phi2}L_2}{T_2}\)",
+        "deltaL1_event_H": r"\(\Delta L_{1,\mathrm{event}}=\dfrac{dL_1}{dT_1}\Delta T_{\mathrm{event}}\)",
+        "deltaL2_compensation_headroom_H": r"\(\Delta L_{2,\mathrm{head}}=\dfrac{dL_2}{dT_2}(T_{02}-T_b)\)",
+        "kid2_inductance_headroom_over_event_ratio": r"\(\Delta L_{2,\mathrm{head}}/\Delta L_{1,\mathrm{event}}\)",
         "dfr_dT_Hz_per_K": r"\(\dfrac{df_r}{dT}=-\dfrac{\alpha_\phi f_r}{2Q_iT_0}\approx-\dfrac{\alpha_\phi f_0}{2Q_iT_0}\)",
         "dT_dE_K_per_J": r"\(\dfrac{dT}{dE}=\dfrac{1}{C}\)",
         "dphi_dE_rad_per_J": r"\(\dfrac{d\phi}{dE}=\dfrac{d\phi}{df}\dfrac{df_r}{dT}\dfrac{dT}{dE}\)",
@@ -390,14 +439,13 @@ def main() -> None:
         "core_rule2_ratio": r"\(\dfrac{\tau_{\mathrm{res}}}{\tau_{\mathrm{th}}}\)",
         "core_rule2_ok": r"\(\text{Pass if } \tau_{\mathrm{res}}/\tau_{\mathrm{th}}<1\)",
         "core_rule3_ok": r"\(\text{Pass if } \sqrt{S_{\phi,\mathrm{ph}}}^{\,\mathrm{simple}}>\sqrt{S_{\phi,\mathrm{TLS}}}(100\,\mathrm{Hz})\)",
-        "core_rule4_ok": r"\(\text{Pass if } P_0 \lt P_{\mathrm{bif}}\)",
-        "core_rule5_ok": r"\(\text{Pass if } P_0/P_{\mathrm{bif}} \gt 0.5\)",
+        "core_rule4_ok": r"\(\text{Pass if } P_{0,x=0} \lt P_{\mathrm{bif}}\)",
+        "core_rule5_ok": r"\(\text{Pass if } P_{0,x=0}/P_{\mathrm{bif}} \gt 0.5\)",
         "core_rule6_ok": r"\(\text{Pass if } P_{\mathrm{bif,min}}^{\mathrm{typ}} \le P_{\mathrm{bif,dBm}} \le P_{\mathrm{bif,max}}^{\mathrm{typ}}\)",
         "core_rule7_ok": r"\(\text{Pass if } \Delta T_{\mathrm{event}} \gt 1\,\mathrm{mK}\)",
         "core_rule8_ok": r"\(\text{Pass if } \Delta T_{\mathrm{event}} \lt 100\,\mathrm{mK}\)",
         "core_rule9_ok": r"\(\text{Pass if } \sigma_{E,\mathrm{th,eV}} \lt \sigma_{E,\mathrm{target}}\)",
-        "core_rule10_ok": r"\(\text{Pass if } T_{\mathrm{bath}} \gt 10\,\mathrm{mK}\)",
-        "core_rule11_ok": r"\(\text{Pass if } \Delta T_{\mathrm{event}} \lt \Delta T_{\mathrm{abs-bath}}\)",
+        "core_rule10_ok": r"\(\text{Pass if } \Delta L_{2,\mathrm{head}} \ge \Delta L_{1,\mathrm{event}}\)",
         "core_rule12_ok": r"\(\text{Pass if } \Re[\lambda_i(M_t)]<0,\ \forall i\)",
         "core_rule13_ok": r"\(\text{Pass if } P_{\mathrm{pileup,reject}} < 0.5\)",
         "phonon_power_rms_W": r"\(P_{\mathrm{ph,RMS}}=\sqrt{4k_BT_b^2G}\)",
@@ -409,10 +457,11 @@ def main() -> None:
         "Pg_W": r"\(P_g=\left(P_g/P_{\mathrm{bif}}\right)_{\mathrm{target}}\,P_{\mathrm{bif}}\)",
         "pg_to_p0_factor": r"\(P_0/P_g=\dfrac{1}{2}\dfrac{1}{1+4Q_r^2x^2}\dfrac{4Q_cQ_i}{(Q_c+Q_i)^2}\)",
         "P0_W": r"\(P_0=\left(P_0/P_g\right)P_g\)",
+        "P0_undetuned_W": r"\(P_{0,x=0}=\dfrac{1}{2}\dfrac{4Q_cQ_i}{(Q_c+Q_i)^2}P_g\)",
         "Qc": r"\(Q_c=\left(\dfrac{1}{Q_r}-\dfrac{1}{Q_i}\right)^{-1}\)",
         "p_bifurcation_W": r"\(P_{\mathrm{bif}}=\dfrac{Q_c\omega_0E_*}{2Q_r^3}\)",
         "p_bifurcation_dBm": r"\(P_{\mathrm{bif,dBm}}=10\log_{10}(P_{\mathrm{bif}}/1\,\mathrm{mW})\)",
-        "bifurcation_power_ratio": r"\(\dfrac{P_g}{P_{\mathrm{bif}}}\)",
+        "bifurcation_power_ratio": r"\(\dfrac{P_{0,x=0}}{P_{\mathrm{bif}}}\)",
         "delta_J": r"\(\Delta=1.764\,k_BT_c\)",
         "eqp_J": r"\(E_{qp}=\Delta\)",
         "x": r"\(x=\delta f/f_0\)",
@@ -424,9 +473,12 @@ def main() -> None:
         "mt_eig1_per_s": r"\(\lambda_1(M_t)\)",
         "mt_eig2_per_s": r"\(\lambda_2(M_t)\)",
         "mt_eig3_per_s": r"\(\lambda_3(M_t)\)",
+        "mt_eig4_per_s": r"\(\lambda_4(M_t)\)",
         "mt_max_real_part_per_s": r"\(\max\Re[\lambda(M_t)]\)",
         "mt_stable": r"\(1\ \mathrm{if}\ \Re[\lambda_i(M_t)]<0\ \forall i\)",
         "mt_pulse_shortening_ratio": r"\(\rho_{\mathrm{short}}=\dfrac{G/C}{\min_i|\lambda_i(M_t)|}\ \mathrm{if\ stable}\)",
+        "passive_tls_iq_transfer_phi_100hz_abs": r"\(|H_{\mathrm{TLS,passive}}|=\left|[M_{\mathrm{passive}}^{-1}(0,i)^T]_{\phi}\right|\)",
+        "tls_iq_source_asd_100hz_per_rtHz": r"\(\sqrt{S_{N,\mathrm{TLS}}}=\sqrt{S_{\phi,\mathrm{TLS}}}/|H_{\mathrm{TLS,passive}}|\)",
         "sphi_johnson_full_per_hz": r"\(S_{\phi,J}^{\mathrm{full}}=\left|[Y_{J,A}]_{\phi}\right|^2+\left|[Y_{J,\phi}]_{\phi}\right|^2\)",
         "sphi_tls_per_hz": r"\(S_{\phi,\mathrm{TLS}}=\left|[Y_{\mathrm{TLS}}]_{\phi}\right|^2\)",
         "asd_phi_tls_per_rtHz": r"\(\sqrt{S_{\phi,\mathrm{TLS}}}\)",
@@ -447,7 +499,6 @@ def main() -> None:
         "sv_usb_johnson_V2_per_Hz": r"\(S_{V,\mathrm{USB},J}=\dfrac{1}{2}S_{V,J}\)",
         "asd_v_usb_johnson_V_per_rtHz": r"\(\sqrt{S_{V,\mathrm{USB},J}}\)",
         "m_usb_tls_over_johnson_1hz": r"\(M_{\mathrm{USB},\mathrm{TLS}/J}(1\,\mathrm{Hz})=\dfrac{\sqrt{S_{V,\mathrm{USB},\mathrm{TLS}}(1\,\mathrm{Hz})}}{\sqrt{S_{V,\mathrm{USB},J}}}\)",
-        "m_tls": r"\(M_{\mathrm{TLS}}=\sqrt{\dfrac{(S_f/f_0^2)_{\mathrm{TLS}}}{(S_f/f_0^2)_{J,\mathrm{full}}}}\)",
     }
     # Enforce: every non-constant symbol in an output formula must correspond
     # to an input or output quantity key in this model.
@@ -473,6 +524,19 @@ def main() -> None:
         "deltaT_abs_over_bath_K": {"P0_W", "G_W_per_K"},
         "tbath_from_link_K": {"T0_K", "deltaT_abs_over_bath_K"},
         "deltaT_event_full_absorption_K": {"ho_decay_energy_J", "C_J_per_K"},
+        "kid2_thermal_headroom_K": {"T02_K", "Tb_K"},
+        "kid2_thermal_headroom_over_event_ratio": {
+            "kid2_thermal_headroom_K",
+            "deltaT_event_full_absorption_K",
+        },
+        "dL1_dT_H_per_K": {"alpha_phi", "L_total_H", "T0_K"},
+        "dL2_dT_H_per_K": {"alpha_phi2", "series_L2_H", "T02_K"},
+        "deltaL1_event_H": {"dL1_dT_H_per_K", "deltaT_event_full_absorption_K"},
+        "deltaL2_compensation_headroom_H": {"dL2_dT_H_per_K", "kid2_thermal_headroom_K"},
+        "kid2_inductance_headroom_over_event_ratio": {
+            "deltaL2_compensation_headroom_H",
+            "deltaL1_event_H",
+        },
         "dfr_dT_Hz_per_K": {"alpha_phi", "f0_Hz", "Qi", "T0_K"},
         "dT_dE_K_per_J": {"C_J_per_K"},
         "dphi_dE_rad_per_J": {"dphi_df_detuning_per_hz", "dfr_dT_Hz_per_K", "dT_dE_K_per_J"},
@@ -501,10 +565,11 @@ def main() -> None:
         "Pg_W": {"pg_drive_dBm"},
         "pg_to_p0_factor": {"Qr", "Qi", "Qc", "x"},
         "P0_W": {"Pg_W", "pg_to_p0_factor"},
+        "P0_undetuned_W": {"Pg_W", "Qi", "Qc"},
         "Qc": set(),
         "p_bifurcation_W": {"Qc", "f0_Hz", "bifurcation_energy_scale_J", "Qr"},
         "p_bifurcation_dBm": {"p_bifurcation_W"},
-        "bifurcation_power_ratio": {"Pg_W", "p_bifurcation_W"},
+        "bifurcation_power_ratio": {"P0_undetuned_W", "p_bifurcation_W"},
         "delta_J": {"Tc_K"},
         "eqp_J": {"delta_J"},
         "johnson_voltage_rms_V": {"T0_K", "R0_Ohm"},
@@ -515,6 +580,7 @@ def main() -> None:
         "mt_eig1_per_s": set(),
         "mt_eig2_per_s": set(),
         "mt_eig3_per_s": set(),
+        "mt_eig4_per_s": set(),
         "mt_max_real_part_per_s": set(),
         "mt_stable": set(),
         "mt_pulse_shortening_ratio": {
@@ -522,18 +588,18 @@ def main() -> None:
             "mt_eig1_per_s",
             "mt_eig2_per_s",
             "mt_eig3_per_s",
+            "mt_eig4_per_s",
             "G_W_per_K",
             "C_J_per_K",
         },
         "core_rule3_ok": {"asd_phi_phonon_simple_per_rtHz", "asd_phi_tls_100hz_model_per_rtHz"},
-        "core_rule4_ok": {"P0_W", "p_bifurcation_W"},
+        "core_rule4_ok": {"P0_undetuned_W", "p_bifurcation_W"},
         "core_rule5_ok": {"bifurcation_power_ratio"},
         "core_rule6_ok": {"pbif_typical_min_dBm", "p_bifurcation_dBm", "pbif_typical_max_dBm"},
         "core_rule7_ok": {"deltaT_event_full_absorption_K"},
         "core_rule8_ok": {"deltaT_event_full_absorption_K"},
         "core_rule9_ok": {"thermal_energy_fluct_rms_eV", "thermal_energy_resolution_target_eV"},
-        "core_rule10_ok": {"tbath_from_link_K"},
-        "core_rule11_ok": {"deltaT_event_full_absorption_K", "deltaT_abs_over_bath_K"},
+        "core_rule10_ok": {"deltaL2_compensation_headroom_H", "deltaL1_event_H"},
         "core_rule12_ok": {"mt_stable"},
         "core_rule13_ok": {"pileup_probability_max"},
         "sphi_johnson_full_per_hz": set(),
@@ -541,6 +607,11 @@ def main() -> None:
         "asd_phi_tls_per_rtHz": {"sphi_tls_per_hz"},
         "asd_phi_tls_100hz_model_per_rtHz": {
             "tls_phi_asd_100hz_per_rtHz",
+        },
+        "passive_tls_iq_transfer_phi_100hz_abs": {"f0_Hz", "Qr", "Qi", "detuning_Hz"},
+        "tls_iq_source_asd_100hz_per_rtHz": {
+            "tls_phi_asd_100hz_per_rtHz",
+            "passive_tls_iq_transfer_phi_100hz_abs",
         },
         "asd_phi_phonon_full_per_rtHz": set(),
         "dphi_df_detuning_per_hz": {"Qr", "f0_Hz", "detuning_Hz"},
@@ -569,7 +640,10 @@ def main() -> None:
         "sv_usb_johnson_V2_per_Hz": {"johnson_sv_V2_per_Hz"},
         "asd_v_usb_johnson_V_per_rtHz": {"sv_usb_johnson_V2_per_Hz"},
         "m_usb_tls_over_johnson_1hz": {"asd_v_usb_tls_1hz_V_per_rtHz", "asd_v_usb_johnson_V_per_rtHz"},
-        "m_tls": {"sf_over_f0sq_tls_model", "sf_over_f0sq_johnson_full"},
+        "P1_W": {"P0_W", "R0_Ohm"},
+        "P2_W": {"P0_W", "series_R2_Ohm"},
+        "heater2_dc_power_W": {"G2_W_per_K", "T02_K", "Tb_K", "P2_W"},
+        "heater2_dc_power_dBm": {"heater2_dc_power_W"},
     }
     wiki_links = {
         "au_number_density_per_m3": "project.html#source-activity-formulas",
@@ -593,6 +667,13 @@ def main() -> None:
         "deltaT_abs_over_bath_K": "physics.html#thermal-derived-formulas",
         "tbath_from_link_K": "physics.html#thermal-derived-formulas",
         "deltaT_event_full_absorption_K": "physics.html#thermal-derived-formulas",
+        "kid2_thermal_headroom_K": "project.html#core-rule-checks",
+        "kid2_thermal_headroom_over_event_ratio": "project.html#core-rule-checks",
+        "dL1_dT_H_per_K": "project.html#core-rule-checks",
+        "dL2_dT_H_per_K": "project.html#core-rule-checks",
+        "deltaL1_event_H": "project.html#core-rule-checks",
+        "deltaL2_compensation_headroom_H": "project.html#core-rule-checks",
+        "kid2_inductance_headroom_over_event_ratio": "project.html#core-rule-checks",
         "dfr_dT_Hz_per_K": "simple-estimates.html",
         "dT_dE_K_per_J": "simple-estimates.html",
         "dphi_dE_rad_per_J": "simple-estimates.html",
@@ -625,7 +706,6 @@ def main() -> None:
         "core_rule8_ok": "project.html#core-rule-checks",
         "core_rule9_ok": "project.html#core-rule-checks",
         "core_rule10_ok": "project.html#core-rule-checks",
-        "core_rule11_ok": "project.html#core-rule-checks",
         "core_rule12_ok": "project.html#core-rule-checks",
         "phonon_power_rms_W": "noise-phonon.html#physical-expression",
         "L_geo_H": "theory.html#kid-lumped-formulas",
@@ -649,6 +729,7 @@ def main() -> None:
         "mt_eig1_per_s": "mt-stability.html#stability-criterion",
         "mt_eig2_per_s": "mt-stability.html#stability-criterion",
         "mt_eig3_per_s": "mt-stability.html#stability-criterion",
+        "mt_eig4_per_s": "mt-stability.html#stability-criterion",
         "mt_max_real_part_per_s": "mt-stability.html#stability-criterion",
         "mt_stable": "mt-stability.html#stability-criterion",
         "mt_pulse_shortening_ratio": "mt-stability.html#pulse-shortening",
@@ -656,6 +737,8 @@ def main() -> None:
         "sphi_tls_per_hz": "noise-tls.html#use-in-total-budget",
         "asd_phi_tls_per_rtHz": "noise-tls.html#use-in-total-budget",
         "asd_phi_tls_100hz_model_per_rtHz": "project.html#core-rule-checks",
+        "passive_tls_iq_transfer_phi_100hz_abs": "noise-tls.html",
+        "tls_iq_source_asd_100hz_per_rtHz": "noise-tls.html",
         "dphi_df_detuning_per_hz": "noise-johnson-sf.html",
         "sf_over_f0sq_johnson_full": "noise-johnson-sf.html",
         "sf_over_f0sq_johnson_simple": "noise-johnson-sf.html",
@@ -671,12 +754,11 @@ def main() -> None:
         "sv_usb_johnson_V2_per_Hz": "noise-johnson.html#sideband-vector-derivation-eq-17",
         "asd_v_usb_johnson_V_per_rtHz": "noise-johnson.html#sideband-vector-derivation-eq-17",
         "m_usb_tls_over_johnson_1hz": "tls-capacitor-to-phase.html#practical-c-to-usb-mapping",
-        "m_tls": "noise-tls.html#design-scaling-and-geometry-controls",
+        "P1_W": "m-matrix.html",
+        "P2_W": "m-matrix.html",
+        "heater2_dc_power_W": "m-matrix.html",
+        "heater2_dc_power_dBm": "m-matrix.html",
     }
-
-    # TLS multiplier from modeled TLS PSD and full-model Johnson PSD.
-    sf_f2_tls = s.sf_over_f0sq_tls()
-    m_tls = s.m_tls_from_ratio(sf_f2_tls, s.sf_over_f0sq_johnson_full)
 
     vectors = {
         "N_ph": [complex(v).real if complex(v).imag == 0 else [complex(v).real, complex(v).imag] for v in s.n_phonon()],
@@ -684,16 +766,16 @@ def main() -> None:
         "N_J_phi": [complex(v).real if complex(v).imag == 0 else [complex(v).real, complex(v).imag] for v in s.n_johnson_phi()],
         "N_g_A": [complex(v).real if complex(v).imag == 0 else [complex(v).real, complex(v).imag] for v in s.n_electronic_A()],
         "N_g_phi": [complex(v).real if complex(v).imag == 0 else [complex(v).real, complex(v).imag] for v in s.n_electronic_phi()],
-        "N_TLS_phi_example": [complex(v).real if complex(v).imag == 0 else [complex(v).real, complex(v).imag] for v in s.n_tls_phi(m_tls)],
+        "N_TLS_phi_example": [complex(v).real if complex(v).imag == 0 else [complex(v).real, complex(v).imag] for v in s.n_tls_phi_at_hz(1.0)],
     }
     vector_component_units = {
-        "basis": ["r-channel", "phi-channel", "thermal-channel"],
-        "N_ph": ["r-units", "phi-units", "W/Hz^(1/2)"],
-        "N_J_A": ["r-units", "phi-units", "W/Hz^(1/2)"],
-        "N_J_phi": ["r-units", "phi-units", "thermal-units"],
-        "N_g_A": ["r-units", "phi-units", "W/Hz^(1/2)"],
-        "N_g_phi": ["r-units", "phi-units", "thermal-units"],
-        "N_TLS_phi_example": ["r-units", "phi-units", "thermal-units"],
+        "basis": ["r-channel", "phi-channel", "thermal1-channel", "thermal2-channel"],
+        "N_ph": ["r-units", "phi-units", "W/Hz^(1/2)", "W/Hz^(1/2)"],
+        "N_J_A": ["r-units", "phi-units", "W/Hz^(1/2)", "W/Hz^(1/2)"],
+        "N_J_phi": ["r-units", "phi-units", "thermal-units", "thermal-units"],
+        "N_g_A": ["r-units", "phi-units", "W/Hz^(1/2)", "W/Hz^(1/2)"],
+        "N_g_phi": ["r-units", "phi-units", "thermal-units", "thermal-units"],
+        "N_TLS_phi_example": ["r-units", "phi-units", "thermal-units", "thermal-units"],
     }
     m_1hz = s.m_matrix(1.0)
     m_1hz_serialized = [[[z.real, z.imag] for z in row] for row in m_1hz]
@@ -706,6 +788,7 @@ def main() -> None:
     model_outputs["mt_eig1_per_s"] = _fmt_complex(complex(eigs[0]))
     model_outputs["mt_eig2_per_s"] = _fmt_complex(complex(eigs[1]))
     model_outputs["mt_eig3_per_s"] = _fmt_complex(complex(eigs[2]))
+    model_outputs["mt_eig4_per_s"] = _fmt_complex(complex(eigs[3])) if len(eigs) > 3 else "n/a"
 
     # Validate formula dependencies against available model quantities.
     allowed = set(model_inputs.keys()) | set(model_outputs.keys())
@@ -730,11 +813,6 @@ def main() -> None:
         "units": units,
         "model_inputs": model_inputs,
         "model_outputs": model_outputs,
-        "tls_ratio_example": {
-            "Sf_over_f0sq_J": s.sf_over_f0sq_johnson_full,
-            "Sf_over_f0sq_TLS": sf_f2_tls,
-            "M_TLS": m_tls,
-        },
         "vectors": vectors,
         "vector_component_units": vector_component_units,
         "M_matrix_1Hz": {
@@ -796,6 +874,18 @@ def main() -> None:
             "beta_phi",
             "Tc_K",
         ],
+        "KID2 / Island2": [
+            "T02_K",
+            "heat_capacity2_eV_per_mK",
+            "G2_W_per_K",
+            "heater2_dc_power_W",
+            "heater2_dc_power_dBm",
+            "alpha_A2",
+            "alpha_phi2",
+            "series_L2_H",
+            "series_R2_Ohm",
+            "feedback_heater_gain_W_per_rad",
+        ],
         "Material and Activity": [
             "ho_in_au_atomic_fraction",
             "ho_decay_energy_J",
@@ -805,6 +895,8 @@ def main() -> None:
         "Capacitor TLS": [
             "tls_phi_asd_100hz_per_rtHz",
             "tls_beta",
+            "passive_tls_iq_transfer_phi_100hz_abs",
+            "tls_iq_source_asd_100hz_per_rtHz",
         ],
     }
 
@@ -883,6 +975,7 @@ def main() -> None:
             "Z0_res_Ohm",
             "R0_Ohm",
             "P0_W",
+            "P0_undetuned_W",
             "Pg_W",
             "pg_to_p0_factor",
             "Qc",
@@ -905,6 +998,8 @@ def main() -> None:
             "sphi_tls_per_hz",
             "asd_phi_tls_per_rtHz",
             "asd_phi_tls_100hz_model_per_rtHz",
+            "passive_tls_iq_transfer_phi_100hz_abs",
+            "tls_iq_source_asd_100hz_per_rtHz",
             "dphi_df_detuning_per_hz",
             "sf_over_f0sq_johnson_full",
             "sf_over_f0sq_johnson_simple",
@@ -923,7 +1018,6 @@ def main() -> None:
             "m_phonon_over_johnson_phi",
             "m_phonon_over_tls_phi",
             "m_usb_tls_over_johnson_1hz",
-            "m_tls",
         ],
         "Design Verification": [
             "tau_res_s",
@@ -933,10 +1027,18 @@ def main() -> None:
             "core_rule2_ratio",
             "thermal_energy_fluct_rms_eV",
             "deltaT_event_full_absorption_K",
+            "kid2_thermal_headroom_K",
+            "kid2_thermal_headroom_over_event_ratio",
+            "dL1_dT_H_per_K",
+            "dL2_dT_H_per_K",
+            "deltaL1_event_H",
+            "deltaL2_compensation_headroom_H",
+            "kid2_inductance_headroom_over_event_ratio",
             "p_bifurcation_W",
             "mt_eig1_per_s",
             "mt_eig2_per_s",
             "mt_eig3_per_s",
+            "mt_eig4_per_s",
             "mt_max_real_part_per_s",
             "bifurcation_power_ratio",
             "mt_pulse_shortening_ratio",
@@ -952,7 +1054,6 @@ def main() -> None:
             "core_rule8_ok",
             "core_rule9_ok",
             "core_rule10_ok",
-            "core_rule11_ok",
             "core_rule12_ok",
             "core_rule13_ok",
         ],
@@ -1092,9 +1193,10 @@ def main() -> None:
         <tr><td>Detuning</td><td><code>{_fmt(model_inputs['detuning_widths'])}</code> widths (<code>{_fmt(model_outputs['detuning_Hz'])}</code> Hz)</td></tr>
         <tr><td>NEP sufficiency threshold</td><td><code>{_fmt(model_inputs['nep_sufficiency_percent'])}</code> %</td></tr>
         <tr><td>Demod frequency</td><td><code>{_fmt(model_inputs['f_demod_Hz'])}</code> Hz</td></tr>
-        <tr><td>\\((P_g/P_{{bif}})_{{target}}\\)</td><td><code>{_fmt(model_outputs['p0_over_pbif_target'])}</code></td></tr>
+        <tr><td>\\(P_{{0,x=0}}/P_{{bif}}\\)</td><td><code>{_fmt(model_outputs['p0_over_pbif_target'])}</code></td></tr>
         <tr><td>\\(P_g\\)</td><td><code>{_fmt(model_outputs['Pg_W'])}</code> W</td></tr>
         <tr><td>\\(P_0\\)</td><td><code>{_fmt(model_outputs['P0_W'])}</code> W</td></tr>
+        <tr><td>\\(P_{{0,x=0}}\\)</td><td><code>{_fmt(model_outputs['P0_undetuned_W'])}</code> W</td></tr>
         <tr><td>\\(E_*\\)</td><td><code>{_fmt(model_inputs['bifurcation_energy_scale_J'])}</code> J</td></tr>
       </table>
     </section>
@@ -1152,14 +1254,14 @@ def main() -> None:
         <tr><td>Rule 8</td><td><code>{_pf_html(model_outputs['core_rule8_ok'])}</code></td></tr>
         <tr><td>Rule 9</td><td><code>{_pf_html(model_outputs['core_rule9_ok'])}</code></td></tr>
         <tr><td>Rule 10</td><td><code>{_pf_html(model_outputs['core_rule10_ok'])}</code></td></tr>
-        <tr><td>Rule 11</td><td><code>{_pf_html(model_outputs['core_rule11_ok'])}</code></td></tr>
         <tr><td>Rule 12</td><td><code>{_pf_html(model_outputs['core_rule12_ok'])}</code></td></tr>
         <tr><td>Rule 13</td><td><code>{_pf_html(model_outputs['core_rule13_ok'])}</code></td></tr>
         <tr><td><strong>Bifurcation Metrics</strong></td><td></td></tr>
         <tr><td>\\(\\Delta T_{{event}}\\)</td><td><code>{_fmt(model_outputs['deltaT_event_full_absorption_K'])}</code> K</td></tr>
+        <tr><td>\\(\\Delta L_{{2,head}}/\\Delta L_{{1,event}}\\)</td><td><code>{_fmt(model_outputs['kid2_inductance_headroom_over_event_ratio'])}</code></td></tr>
         <tr><td>\\(P_{{bif}}\\)</td><td><code>{_fmt(model_outputs['p_bifurcation_W'])}</code> W</td></tr>
         <tr><td>\\(P_{{bif,dBm}}\\)</td><td><code>{_fmt(model_outputs['p_bifurcation_dBm'])}</code> dBm</td></tr>
-        <tr><td>\\(P_g/P_{{bif}}\\)</td><td><code>{_fmt(model_outputs['bifurcation_power_ratio'])}</code></td></tr>
+        <tr><td>\\(P_{{0,x=0}}/P_{{bif}}\\)</td><td><code>{_fmt(model_outputs['bifurcation_power_ratio'])}</code></td></tr>
         <tr><td>\\(\\max \\Re[\\lambda(M_t)]\\)</td><td><code>{_fmt(model_outputs['mt_max_real_part_per_s'])}</code> 1/s</td></tr>
         <tr><td>\\(\\rho_{{short}}\\)</td><td><code>{_fmt(model_outputs['mt_pulse_shortening_ratio'])}</code></td></tr>
       </table>

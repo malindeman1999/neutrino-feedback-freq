@@ -60,11 +60,39 @@ INPUT_SECTIONS = [
             "Qc",
             "tau_qp_s",
             "kinetic_inductance_fraction",
+            "alpha_A",
             "alpha_phi",
+        ],
+    ),
+    (
+        "KID2 / Island2",
+        [
+            "T02_K",
+            "heat_capacity2_eV_per_mK",
+            "G2_W_per_K",
+            "alpha_A2",
+            "alpha_phi2",
+            "series_L2_H",
+            "series_R2_Ohm",
+            "feedback_heater_gain_W_per_rad",
         ],
     ),
 ]
 INPUT_KEYS = [k for _, keys in INPUT_SECTIONS for k in keys]
+KID2_KEYS = (
+    "T02_K",
+    "heat_capacity2_eV_per_mK",
+    "G2_W_per_K",
+    "alpha_A2",
+    "alpha_phi2",
+    "series_L2_H",
+    "series_R2_Ohm",
+    "feedback_heater_gain_W_per_rad",
+)
+
+
+def _all_kid2_zero(settings: dict[str, float]) -> bool:
+    return all(abs(float(settings.get(k, 0.0))) == 0.0 for k in KID2_KEYS)
 
 LABELS = {
     "T0_K": "T0 [K]",
@@ -81,7 +109,16 @@ LABELS = {
     "Qc": "Qc",
     "tau_qp_s": "tau_qp [s]",
     "kinetic_inductance_fraction": "kinetic frac",
+    "alpha_A": "alpha_A",
     "alpha_phi": "alpha_phi",
+    "T02_K": "T02 [K]",
+    "heat_capacity2_eV_per_mK": "C2 [eV/mK]",
+    "G2_W_per_K": "G2 [W/K]",
+    "alpha_A2": "alpha_A2",
+    "alpha_phi2": "alpha_phi2",
+    "series_L2_H": "L2 [H]",
+    "series_R2_Ohm": "R2 [Ohm]",
+    "feedback_heater_gain_W_per_rad": "Kfb [W/rad]",
 }
 
 
@@ -104,6 +141,14 @@ def _resolution_threshold_markers(
     """
     f = np.asarray(f_hz, dtype=float)
     nep = np.asarray(nep_w_per_rthz, dtype=float)
+    valid = np.isfinite(f) & np.isfinite(nep) & (f > 0.0) & (nep > 0.0)
+    if np.count_nonzero(valid) < 2:
+        return []
+    f = f[valid]
+    nep = nep[valid]
+    order = np.argsort(f)
+    f = f[order]
+    nep = nep[order]
     integ = 4.0 / (nep * nep)
     df = np.diff(f)
     trap = 0.5 * (integ[:-1] + integ[1:]) * df
@@ -129,6 +174,17 @@ def _resolution_threshold_markers(
     return out
 
 
+def _safe_sigma_energy_mev(s: Sensor, f_hz: np.ndarray, nep_w_per_rthz: np.ndarray) -> float:
+    """Return sigma_E in meV, or NaN when a readout has no finite NEP."""
+    f = np.asarray(f_hz, dtype=float)
+    nep = np.asarray(nep_w_per_rthz, dtype=float)
+    valid = np.isfinite(f) & np.isfinite(nep) & (f > 0.0) & (nep > 0.0)
+    if np.count_nonzero(valid) < 2:
+        return float("nan")
+    order = np.argsort(f[valid])
+    return 1.0e3 * s.sigma_energy_from_nep_spectrum_eV(f[valid][order], nep[valid][order])
+
+
 class NoiseGui:
     def __init__(self) -> None:
         SAVES_DIR.mkdir(parents=True, exist_ok=True)
@@ -142,10 +198,13 @@ class NoiseGui:
 
         self.mode_var = tk.StringVar(value="Noise ASD")
         self.readout_var = tk.StringVar(value="Phase")
+        kid2_active_default = any(abs(float(self.current.get(k, 0.0))) > 0.0 for k in KID2_KEYS)
+        self.kid2_mode_var = tk.StringVar(value="Dual KID" if kid2_active_default else "Single KID")
         self.status_var = tk.StringVar(value="")
         self.summary_var = tk.StringVar(value="")
         self.loaded_name_var = tk.StringVar(value="")
         self.entry_vars: dict[str, tk.StringVar] = {}
+        self.entry_widgets: dict[str, ttk.Entry] = {}
 
         self._build_layout()
         self._recompute_and_draw()
@@ -205,7 +264,16 @@ class NoiseGui:
             readout_frame, text="Amplitude", variable=self.readout_var, value="Amplitude", command=self._on_mode
         ).grid(row=0, column=1, sticky="w", padx=(12, 0))
 
-        row = 4
+        kid_mode_frame = ttk.LabelFrame(controls, text="Configuration", padding=6)
+        kid_mode_frame.grid(row=4, column=0, columnspan=2, sticky="ew", pady=(0, 8))
+        ttk.Radiobutton(
+            kid_mode_frame, text="Single KID", variable=self.kid2_mode_var, value="Single KID", command=self._on_kid2_mode
+        ).grid(row=0, column=0, sticky="w")
+        ttk.Radiobutton(
+            kid_mode_frame, text="Dual KID", variable=self.kid2_mode_var, value="Dual KID", command=self._on_kid2_mode
+        ).grid(row=0, column=1, sticky="w", padx=(12, 0))
+
+        row = 5
         for section_name, keys in INPUT_SECTIONS:
             section = ttk.LabelFrame(controls, text=section_name, padding=6)
             section.grid(row=row, column=0, columnspan=2, sticky="ew", pady=(0, 8))
@@ -218,6 +286,9 @@ class NoiseGui:
                 ent.bind("<Return>", self._on_field_commit)
                 ent.bind("<FocusOut>", self._on_field_commit)
                 self.entry_vars[key] = var
+                self.entry_widgets[key] = ent
+
+        self._set_kid2_fields_enabled()
 
         button_frame = ttk.Frame(controls)
         button_frame.grid(row=row, column=0, columnspan=2, sticky="ew", pady=(2, 6))
@@ -228,6 +299,9 @@ class NoiseGui:
         ttk.Button(button_frame, text="Save", command=self._save_current).grid(row=0, column=2, padx=2, pady=2, sticky="ew")
         ttk.Button(button_frame, text="Load", command=self._load_saved).grid(row=1, column=0, padx=2, pady=2, sticky="ew")
         ttk.Button(button_frame, text="Restore", command=self._restore_last_loaded).grid(row=1, column=1, padx=2, pady=2, sticky="ew")
+        ttk.Button(button_frame, text="Match KID2->KID1", command=self._match_kid2_to_kid1).grid(
+            row=1, column=2, padx=2, pady=2, sticky="ew"
+        )
 
         for i in range(3):
             button_frame.columnconfigure(i, weight=1)
@@ -320,6 +394,7 @@ class NoiseGui:
         rate_hz = float(s.count_rate_Hz)
         pileup_pct = 100.0 * float(s.pileup_probability_max)
         shorten = float(s.mt_pulse_shortening_ratio)
+        heater2_pW = 1.0e12 * float(s.heater2_dc_power_W)
         self.summary_var.set(
             "Event dT (island): "
             f"{delta_t_mk:.3g} mK\n"
@@ -328,7 +403,9 @@ class NoiseGui:
             "Pileup probability: "
             f"{pileup_pct:.3g}%\n"
             "Pulse shortening factor: "
-            f"{shorten:.3g}"
+            f"{shorten:.3g}\n"
+            "KID2 heater power: "
+            f"{heater2_pW:.3g} pW"
         )
 
     @staticmethod
@@ -349,7 +426,76 @@ class NoiseGui:
     def _build_sensor(self, settings: dict[str, float]) -> Sensor:
         kwargs = dict(self.defaults)
         kwargs.update(settings)
+        if self.kid2_mode_var.get() == "Single KID":
+            for k in KID2_KEYS:
+                kwargs[k] = 0.0
         return Sensor(Version1SensorInputs(**kwargs))
+
+    def _set_kid2_fields_enabled(self) -> None:
+        dual = self.kid2_mode_var.get() == "Dual KID"
+        state = "normal" if dual else "disabled"
+        for k in KID2_KEYS:
+            w = self.entry_widgets.get(k)
+            if w is not None:
+                w.configure(state=state)
+
+    def _populate_kid2_from_kid1(self, g1: float, l1: float, r1: float) -> None:
+        """Initialize KID2 parameters to a nonzero mirror of KID1-side values."""
+        if not _all_kid2_zero(self.current):
+            return
+        base = dict(self.current)
+        base["T02_K"] = float(base.get("T0_K", 0.04))
+        base["heat_capacity2_eV_per_mK"] = float(base.get("heat_capacity_eV_per_mK", 150.0))
+        base["G2_W_per_K"] = float(g1)
+        base["alpha_A2"] = float(base.get("alpha_A", 0.1))
+        base["alpha_phi2"] = float(base.get("alpha_phi", 140.0))
+        base["series_L2_H"] = float(l1)
+        base["series_R2_Ohm"] = float(r1)
+        base["feedback_heater_gain_W_per_rad"] = 0.0
+        self.current = base
+        self._write_fields(self.current)
+
+    def _on_kid2_mode(self) -> None:
+        if self.kid2_mode_var.get() == "Dual KID":
+            try:
+                # Sync from latest user-edited values before mirroring.
+                self.current = self._read_fields()
+            except Exception:
+                pass
+            # Build a temporary sensor so derived mirror quantities are available.
+            g1 = 0.0
+            l1 = 0.0
+            r1 = 0.0
+            try:
+                s = self._build_sensor(self.current)
+                g1 = float(s.G_W_per_K)
+                l1 = float(s.L_total_H)
+                r1 = float(s.R1_series_Ohm)
+            except Exception:
+                pass
+            self._populate_kid2_from_kid1(g1=g1, l1=l1, r1=r1)
+        self._set_kid2_fields_enabled()
+        self._recompute_and_draw()
+
+    def _match_kid2_to_kid1(self) -> None:
+        try:
+            self.current = self._read_fields()
+            s = self._build_sensor(self.current)
+            self.current["T02_K"] = float(self.current.get("T0_K", 0.04))
+            self.current["heat_capacity2_eV_per_mK"] = float(self.current.get("heat_capacity_eV_per_mK", 150.0))
+            self.current["G2_W_per_K"] = float(s.G_W_per_K)
+            self.current["alpha_A2"] = float(self.current.get("alpha_A", 0.1))
+            self.current["alpha_phi2"] = float(self.current.get("alpha_phi", 140.0))
+            self.current["series_L2_H"] = float(s.L_total_H)
+            self.current["series_R2_Ohm"] = float(s.R1_series_Ohm)
+            self.current["feedback_heater_gain_W_per_rad"] = 0.0
+            self.kid2_mode_var.set("Dual KID")
+            self._write_fields(self.current)
+            self._set_kid2_fields_enabled()
+            self._recompute_and_draw()
+            self._set_status("KID2 parameters matched to KID1")
+        except Exception as exc:
+            self._set_status(f"Match KID2->KID1 failed: {exc}")
 
     def _compute_data(self, s: Sensor) -> dict[str, object]:
         eigs = np.array(s.mt_eigenvalues, dtype=complex)
@@ -359,35 +505,54 @@ class NoiseGui:
         freqs_hz = np.logspace(np.log10(f_min_hz), np.log10(f_max_hz), 1000)
 
         asd_phase_johnson = np.zeros_like(freqs_hz)
+        asd_phase_johnson_2 = np.zeros_like(freqs_hz)
         asd_phase_phonon = np.zeros_like(freqs_hz)
+        asd_phase_phonon_2 = np.zeros_like(freqs_hz)
         asd_phase_tls = np.zeros_like(freqs_hz)
         asd_phase_electronic = np.zeros_like(freqs_hz)
+        asd_phase_electronic_2 = np.zeros_like(freqs_hz)
         asd_amp_johnson = np.zeros_like(freqs_hz)
+        asd_amp_johnson_2 = np.zeros_like(freqs_hz)
         asd_amp_phonon = np.zeros_like(freqs_hz)
+        asd_amp_phonon_2 = np.zeros_like(freqs_hz)
         asd_amp_tls = np.zeros_like(freqs_hz)
         asd_amp_electronic = np.zeros_like(freqs_hz)
+        asd_amp_electronic_2 = np.zeros_like(freqs_hz)
         phase_resp = np.zeros_like(freqs_hz)
         amp_resp = np.zeros_like(freqs_hz)
 
         for i, f_hz in enumerate(freqs_hz):
-            y_j_a = s._propagate_noise_vector(s.n_johnson_A(), f_hz)
-            y_j_phi = s._propagate_noise_vector(s.n_johnson_phi(), f_hz)
-            y_ph = s._propagate_noise_vector(s.n_phonon(), f_hz)
-            m_tls_f = s.m_tls_from_ratio(s.sf_over_f0sq_tls_at_hz(float(f_hz)), s.sf_over_f0sq_johnson_full)
-            y_tls = s._propagate_noise_vector(s.n_tls_phi(m_tls_f), f_hz)
-            y_e_a = s._propagate_noise_vector(s.n_electronic_A(), f_hz)
-            y_e_phi = s._propagate_noise_vector(s.n_electronic_phi(), f_hz)
+            y_j_a1 = s._propagate_noise_vector(s.n_johnson_A_1(), f_hz)
+            y_j_phi1 = s._propagate_noise_vector(s.n_johnson_phi_1(), f_hz)
+            y_j_a_2 = s._propagate_noise_vector(s.n_johnson_A_2(), f_hz)
+            y_j_phi_2 = s._propagate_noise_vector(s.n_johnson_phi_2(), f_hz)
+            y_ph1 = s._propagate_noise_vector(s.n_phonon_1(), f_hz)
+            y_ph_2 = s._propagate_noise_vector(s.n_phonon_2(), f_hz)
+            y_tls = s._propagate_noise_vector(s.n_tls_phi_at_hz(float(f_hz)), f_hz)
+            y_e_a1 = s._propagate_noise_vector(s.n_electronic_A_1(), f_hz)
+            y_e_phi1 = s._propagate_noise_vector(s.n_electronic_phi_1(), f_hz)
+            y_e_a_2 = s._propagate_noise_vector(s.n_electronic_A_2(), f_hz)
+            y_e_phi_2 = s._propagate_noise_vector(s.n_electronic_phi_2(), f_hz)
 
-            asd_phase_johnson[i] = np.sqrt(abs(y_j_a[1]) ** 2 + abs(y_j_phi[1]) ** 2)
-            asd_phase_phonon[i] = abs(y_ph[1])
+            asd_phase_johnson[i] = np.sqrt(abs(y_j_a1[1]) ** 2 + abs(y_j_phi1[1]) ** 2 + abs(y_j_a_2[1]) ** 2 + abs(y_j_phi_2[1]) ** 2)
+            asd_phase_johnson_2[i] = np.sqrt(abs(y_j_a_2[1]) ** 2 + abs(y_j_phi_2[1]) ** 2)
+            asd_phase_phonon[i] = np.sqrt(abs(y_ph1[1]) ** 2 + abs(y_ph_2[1]) ** 2)
+            asd_phase_phonon_2[i] = abs(y_ph_2[1])
             asd_phase_tls[i] = abs(y_tls[1])
-            asd_phase_electronic[i] = np.sqrt(abs(y_e_a[1]) ** 2 + abs(y_e_phi[1]) ** 2)
-            asd_amp_johnson[i] = np.sqrt(abs(y_j_a[0]) ** 2 + abs(y_j_phi[0]) ** 2)
-            asd_amp_phonon[i] = abs(y_ph[0])
+            asd_phase_electronic[i] = np.sqrt(abs(y_e_a1[1]) ** 2 + abs(y_e_phi1[1]) ** 2 + abs(y_e_a_2[1]) ** 2 + abs(y_e_phi_2[1]) ** 2)
+            asd_phase_electronic_2[i] = np.sqrt(abs(y_e_a_2[1]) ** 2 + abs(y_e_phi_2[1]) ** 2)
+            asd_amp_johnson[i] = np.sqrt(abs(y_j_a1[0]) ** 2 + abs(y_j_phi1[0]) ** 2 + abs(y_j_a_2[0]) ** 2 + abs(y_j_phi_2[0]) ** 2)
+            asd_amp_johnson_2[i] = np.sqrt(abs(y_j_a_2[0]) ** 2 + abs(y_j_phi_2[0]) ** 2)
+            asd_amp_phonon[i] = np.sqrt(abs(y_ph1[0]) ** 2 + abs(y_ph_2[0]) ** 2)
+            asd_amp_phonon_2[i] = abs(y_ph_2[0])
             asd_amp_tls[i] = abs(y_tls[0])
-            asd_amp_electronic[i] = np.sqrt(abs(y_e_a[0]) ** 2 + abs(y_e_phi[0]) ** 2)
+            asd_amp_electronic[i] = np.sqrt(abs(y_e_a1[0]) ** 2 + abs(y_e_phi1[0]) ** 2 + abs(y_e_a_2[0]) ** 2 + abs(y_e_phi_2[0]) ** 2)
+            asd_amp_electronic_2[i] = np.sqrt(abs(y_e_a_2[0]) ** 2 + abs(y_e_phi_2[0]) ** 2)
             phase_resp[i] = s.phase_responsivity_mag_rad_per_W_at_hz(float(f_hz))
-            y_unit_power = np.linalg.solve(s.m_matrix_array(float(f_hz)), np.array((0.0 + 0.0j, 0.0 + 0.0j, 1.0 + 0.0j), dtype=complex))
+            y_unit_power = np.linalg.solve(
+                s.m_matrix_array(float(f_hz)),
+                np.array((0.0 + 0.0j, 0.0 + 0.0j, 1.0 + 0.0j, 0.0 + 0.0j), dtype=complex),
+            )
             amp_resp[i] = abs(y_unit_power[0])
 
         asd_phase_total = np.sqrt(asd_phase_johnson**2 + asd_phase_phonon**2 + asd_phase_tls**2 + asd_phase_electronic**2)
@@ -395,18 +560,24 @@ class NoiseGui:
         asd_tls_direct = s.tls_phi_asd_100hz_per_rtHz * ((freqs_hz / 100.0) ** (-s.tls_beta / 2.0))
         asd_johnson_simple = abs(s.f0_Hz * s.dphi_df_detuning_per_hz) * np.sqrt(s.sf_over_f0sq_johnson_simple)
         nep_phase_johnson = np.where(phase_resp > 0.0, asd_phase_johnson / phase_resp, np.nan)
+        nep_phase_johnson_2 = np.where(phase_resp > 0.0, asd_phase_johnson_2 / phase_resp, np.nan)
         nep_phase_phonon = np.where(phase_resp > 0.0, asd_phase_phonon / phase_resp, np.nan)
+        nep_phase_phonon_2 = np.where(phase_resp > 0.0, asd_phase_phonon_2 / phase_resp, np.nan)
         nep_phase_tls = np.where(phase_resp > 0.0, asd_phase_tls / phase_resp, np.nan)
         nep_phase_electronic = np.where(phase_resp > 0.0, asd_phase_electronic / phase_resp, np.nan)
+        nep_phase_electronic_2 = np.where(phase_resp > 0.0, asd_phase_electronic_2 / phase_resp, np.nan)
         nep_phase_total = np.where(phase_resp > 0.0, asd_phase_total / phase_resp, np.nan)
         nep_amp_johnson = np.where(amp_resp > 0.0, asd_amp_johnson / amp_resp, np.nan)
+        nep_amp_johnson_2 = np.where(amp_resp > 0.0, asd_amp_johnson_2 / amp_resp, np.nan)
         nep_amp_phonon = np.where(amp_resp > 0.0, asd_amp_phonon / amp_resp, np.nan)
+        nep_amp_phonon_2 = np.where(amp_resp > 0.0, asd_amp_phonon_2 / amp_resp, np.nan)
         nep_amp_tls = np.where(amp_resp > 0.0, asd_amp_tls / amp_resp, np.nan)
         nep_amp_electronic = np.where(amp_resp > 0.0, asd_amp_electronic / amp_resp, np.nan)
+        nep_amp_electronic_2 = np.where(amp_resp > 0.0, asd_amp_electronic_2 / amp_resp, np.nan)
         nep_amp_total = np.where(amp_resp > 0.0, asd_amp_total / amp_resp, np.nan)
 
-        sigma_e_phase_mev = 1.0e3 * s.sigma_energy_from_nep_spectrum_eV(freqs_hz, nep_phase_total)
-        sigma_e_amp_mev = 1.0e3 * s.sigma_energy_from_nep_spectrum_eV(freqs_hz, nep_amp_total)
+        sigma_e_phase_mev = _safe_sigma_energy_mev(s, freqs_hz, nep_phase_total)
+        sigma_e_amp_mev = _safe_sigma_energy_mev(s, freqs_hz, nep_amp_total)
 
         marker_specs = [
             (float(s.count_rate_Hz), "f_rate", ":"),
@@ -430,10 +601,14 @@ class NoiseGui:
             "sensor": s,
             "freqs": freqs_hz,
             "asd_phase": (asd_phase_johnson, asd_phase_phonon, asd_phase_tls, asd_phase_electronic, asd_phase_total),
+            "asd_phase_2": (asd_phase_johnson_2, asd_phase_phonon_2, asd_phase_electronic_2),
             "asd_amp": (asd_amp_johnson, asd_amp_phonon, asd_amp_tls, asd_amp_electronic, asd_amp_total),
+            "asd_amp_2": (asd_amp_johnson_2, asd_amp_phonon_2, asd_amp_electronic_2),
             "asd_tls_direct": asd_tls_direct,
             "nep_phase": (nep_phase_johnson, nep_phase_phonon, nep_phase_tls, nep_phase_electronic, nep_phase_total),
+            "nep_phase_2": (nep_phase_johnson_2, nep_phase_phonon_2, nep_phase_electronic_2),
             "nep_amp": (nep_amp_johnson, nep_amp_phonon, nep_amp_tls, nep_amp_electronic, nep_amp_total),
+            "nep_amp_2": (nep_amp_johnson_2, nep_amp_phonon_2, nep_amp_electronic_2),
             "res_threshold_phase": _resolution_threshold_markers(freqs_hz, nep_phase_total),
             "res_threshold_amp": _resolution_threshold_markers(freqs_hz, nep_amp_total),
             "asd_johnson_simple": asd_johnson_simple,
@@ -453,26 +628,52 @@ class NoiseGui:
         readout = self.readout_var.get()
         is_phase = readout == "Phase"
         asd_johnson, asd_phonon, asd_tls, asd_electronic, asd_total = d["asd_phase"] if is_phase else d["asd_amp"]
+        asd_johnson_2, asd_phonon_2, asd_electronic_2 = d["asd_phase_2"] if is_phase else d["asd_amp_2"]
         nep_johnson, nep_phonon, nep_tls, nep_electronic, nep_total = d["nep_phase"] if is_phase else d["nep_amp"]
+        nep_johnson_2, nep_phonon_2, nep_electronic_2 = d["nep_phase_2"] if is_phase else d["nep_amp_2"]
 
         self.ax.clear()
         mode = self.mode_var.get()
+        dual = self.kid2_mode_var.get() == "Dual KID"
         if mode == "NEP":
             ysets = (nep_johnson, nep_phonon, nep_tls, nep_electronic, nep_total)
+            branch1 = (
+                np.sqrt(np.maximum(nep_johnson**2 - nep_johnson_2**2, 0.0)),
+                np.sqrt(np.maximum(nep_phonon**2 - nep_phonon_2**2, 0.0)),
+                nep_tls,
+                np.sqrt(np.maximum(nep_electronic**2 - nep_electronic_2**2, 0.0)),
+            )
+            branch2 = (nep_johnson_2, nep_phonon_2, nep_electronic_2)
             ylab = "NEP [W/rtHz]"
             title = f"Noise-Equivalent Power vs Frequency ({readout} readout)"
             self.ax.set_ylim(*(d["nep_phase_ylim"] if is_phase else d["nep_amp_ylim"]))
         else:
             ysets = (asd_johnson, asd_phonon, asd_tls, asd_electronic, asd_total)
+            branch1 = (
+                np.sqrt(np.maximum(asd_johnson**2 - asd_johnson_2**2, 0.0)),
+                np.sqrt(np.maximum(asd_phonon**2 - asd_phonon_2**2, 0.0)),
+                asd_tls,
+                np.sqrt(np.maximum(asd_electronic**2 - asd_electronic_2**2, 0.0)),
+            )
+            branch2 = (asd_johnson_2, asd_phonon_2, asd_electronic_2)
             ylab = "Phase ASD [rad/rtHz]" if is_phase else "Amplitude ASD [1/rtHz]"
             title = f"Noise ASD vs Frequency ({readout} readout)"
             self.ax.set_ylim(*(d["asd_phase_ylim"] if is_phase else d["asd_amp_ylim"]))
 
-        self.ax.loglog(freqs, ysets[0], label="Johnson", color="tab:blue")
-        self.ax.loglog(freqs, ysets[1], label="Phonon", color="tab:orange")
-        self.ax.loglog(freqs, ysets[2], label="TLS", color="tab:green")
-        self.ax.loglog(freqs, ysets[3], label="Electronic", color="tab:red")
-        self.ax.loglog(freqs, ysets[4], "k", linewidth=2.0, label="Total (quadrature)")
+        if dual:
+            self.ax.loglog(freqs, branch1[0], label="Johnson (KID1)", color="tab:blue")
+            self.ax.loglog(freqs, branch1[1], label="Phonon (KID1)", color="tab:orange")
+            self.ax.loglog(freqs, branch1[2], label="TLS", color="tab:green")
+            self.ax.loglog(freqs, branch1[3], label="Electronic (KID1)", color="tab:red")
+            self.ax.loglog(freqs, branch2[0], linestyle="--", linewidth=2.0, color="#8fb7ff", alpha=0.98, label="Johnson (KID2)")
+            self.ax.loglog(freqs, branch2[1], linestyle="--", linewidth=2.0, color="#ffd59a", alpha=0.98, label="Phonon (KID2)")
+            self.ax.loglog(freqs, branch2[2], linestyle="--", linewidth=2.0, color="#ffb3b3", alpha=0.98, label="Electronic (KID2)")
+        else:
+            self.ax.loglog(freqs, ysets[0], label="Johnson", color="tab:blue")
+            self.ax.loglog(freqs, ysets[1], label="Phonon", color="tab:orange")
+            self.ax.loglog(freqs, ysets[2], label="TLS", color="tab:green")
+            self.ax.loglog(freqs, ysets[3], label="Electronic", color="tab:red")
+        self.ax.loglog(freqs, ysets[4], color="k", linestyle=":", linewidth=2.2, label="Total (quadrature)")
 
         if mode == "Noise ASD" and is_phase:
             self.ax.axhline(
@@ -530,8 +731,12 @@ class NoiseGui:
 
         if s.mt_stable:
             sigma_mev = d["sigma_phase_mev"] if is_phase else d["sigma_amp_mev"]
-            label = f"Estimated energy resolution: sigma_E = {sigma_mev:.3f} meV"
-            color = "black"
+            if np.isfinite(sigma_mev):
+                label = f"Estimated energy resolution: sigma_E = {sigma_mev:.3f} meV"
+                color = "black"
+            else:
+                label = f"{readout} NEP unavailable: zero or invalid signal responsivity"
+                color = "red"
         else:
             label = "UNSTABLE: Mt eigenvalues indicate instability"
             color = "red"
@@ -559,6 +764,16 @@ class NoiseGui:
         self.data = self._compute_data(sensor)
         self._set_summary(sensor)
         self._draw()
+        if self.kid2_mode_var.get() == "Dual KID":
+            no_kid2_noise = (
+                abs(sensor.nj2_scale) == 0.0
+                and abs(sensor.nj2_thermal_scale) == 0.0
+                and abs(sensor.G2_W_per_K) == 0.0
+            )
+            if no_kid2_noise:
+                self._set_status(
+                    "Dual KID selected, but KID2 noise is zero. Set series_R2_Ohm (>0) for Johnson/electronic and G2_W_per_K (>0) for phonon."
+                )
 
     def _on_mode(self) -> None:
         self._draw()

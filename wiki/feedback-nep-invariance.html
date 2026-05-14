@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Feedback NEP Invariance | TKID Neutrino Detector Docs</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['\\(', '\\)'], ['$', '$']] }
+    };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+</head>
+<body>
+  <header class="hero">
+    <h1>Feedback NEP Invariance</h1>
+    <p>Why Q-channel NEP is independent of heater feedback when feedback enters only the Q column.</p>
+  </header>
+
+  <nav class="nav">
+    <a href="index.html">Home</a>
+    <a href="theory.html">Theory</a>
+    <a href="m-matrix.html">M Matrix</a>
+    <a href="feedback-nep-invariance.html" class="active">Feedback NEP</a>
+    <a href="noise-sources.html">Noise Sources</a>
+    <a href="signal-processing.html">Signal Processing</a>
+  </nav>
+
+  <main class="container">
+    <section class="card">
+      <h2>Setup</h2>
+      <p>The model state is</p>
+      <p>\[
+      Y=\begin{bmatrix}r&\phi&T_1&T_2\end{bmatrix}^T,
+      \qquad M(\omega)Y(\omega)=N(\omega).
+      \]</p>
+      <p>The measured Q channel is the phase coordinate \(\phi=Y_2\). Event power is injected on island 1, so the signal source vector is proportional to the third source component:</p>
+      <p>\[
+      N_{\mathrm{sig}}=\begin{bmatrix}0&0&P_{\mathrm{event}}&0\end{bmatrix}^T.
+      \]</p>
+      <p>In the current model the heater feedback gain \(K_{\mathrm{fb}}\) appears only in the Q column of the matrix, specifically in \(m_{42}\).</p>
+    </section>
+
+    <section class="card">
+      <h2>Adjugate Form</h2>
+      <p>The solution is</p>
+      <p>\[
+      Y=M^{-1}N=\frac{\operatorname{adj}(M)}{\det M}N.
+      \]</p>
+      <p>The Q output is therefore</p>
+      <p>\[
+      \phi=Y_2=\sum_j (M^{-1})_{2j}N_j
+      =\frac{1}{\det M}\sum_j C_{j2}N_j,
+      \]</p>
+      <p>where \(C_{j2}\) is the cofactor formed by deleting row \(j\) and column 2 of \(M\). Because column 2 is deleted, no cofactor \(C_{j2}\) contains any element of the Q column:</p>
+      <p>\[
+      m_{12},\;m_{22},\;m_{32},\;m_{42}.
+      \]</p>
+      <p>Thus the cofactors that map source vectors into Q do not contain the feedback term in \(m_{42}\).</p>
+    </section>
+
+    <section class="card">
+      <h2>NEP Cancellation</h2>
+      <p>The Q responsivity to event power on island 1 is</p>
+      <p>\[
+      \frac{d\phi}{dP_{\mathrm{event}}}=(M^{-1})_{23}=\frac{C_{32}}{\det M}.
+      \]</p>
+      <p>A noise source \(N^{(a)}\) produces</p>
+      <p>\[
+      \phi_a=\frac{C_{12}N^{(a)}_1+C_{22}N^{(a)}_2+C_{32}N^{(a)}_3+C_{42}N^{(a)}_4}{\det M}.
+      \]</p>
+      <p>Therefore the input-referred Q-channel NEP for that source is</p>
+      <p>\[
+      \mathrm{NEP}_{a,Q}=
+      \frac{
+      \left|C_{12}N^{(a)}_1+C_{22}N^{(a)}_2+C_{32}N^{(a)}_3+C_{42}N^{(a)}_4\right|
+      }{
+      |C_{32}|
+      }.
+      \]</p>
+      <p>The common determinant cancels. Since the cofactors \(C_{j2}\) do not contain the Q-column entries, this NEP expression is independent of \(K_{\mathrm{fb}}\) when the source vectors are fixed.</p>
+    </section>
+
+    <section class="card">
+      <h2>Total Noise</h2>
+      <p>For independent noise sources, the same argument applies after summing powers:</p>
+      <p>\[
+      \mathrm{NEP}_{Q}^2=
+      \frac{
+      \sum_a
+      \left|
+      C_{12}N^{(a)}_1+C_{22}N^{(a)}_2+C_{32}N^{(a)}_3+C_{42}N^{(a)}_4
+      \right|^2
+      }{
+      |C_{32}|^2
+      }.
+      \]</p>
+      <p>Thus the Q-channel NEP spectrum and energy resolution derived from that spectrum should be invariant under changes in \(K_{\mathrm{fb}}\), provided the source vectors and integration procedure are held fixed.</p>
+    </section>
+
+    <section class="card">
+      <h2>Assumptions</h2>
+      <ul>
+        <li>The output channel is Q/phase, \(Y_2\).</li>
+        <li>The event signal is power injected into island 1, \(N_3\).</li>
+        <li>Feedback enters only through \(m_{42}\), which is in the Q column.</li>
+        <li>Noise source vectors do not depend on \(K_{\mathrm{fb}}\).</li>
+        <li>No additional feedback electronics, heater-current, or readout noise is injected through the feedback path.</li>
+        <li>The same fixed frequency grid and estimator are used when comparing feedback gains.</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>Failure Modes</h2>
+      <p>If computed Q-channel NEP changes with \(K_{\mathrm{fb}}\), one of the assumptions above has been violated or the implementation is not preserving the cofactor cancellation. Common causes are:</p>
+      <ul>
+        <li>A noise vector depends directly or indirectly on feedback gain.</li>
+        <li>Noise sources are combined coherently before propagation instead of independently in power.</li>
+        <li>TLS scaling or another model component is normalized to a feedback-dependent Johnson quantity.</li>
+        <li>The energy-resolution integration bandwidth changes with feedback-dependent eigenvalues.</li>
+        <li>The calculation is not using the same source vector for signal responsivity and NEP normalization.</li>
+      </ul>
+    </section>
+  </main>
+</body>
+</html>

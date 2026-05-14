@@ -40,13 +40,14 @@
       \xrightarrow{\text{demod / coordinate transform}}
       \text{demodulated quadratures}
       \xrightarrow{\text{normalization}}
-      Y=[r,\phi,T]^T.
+      Y=[r,\phi,T_1,T_2]^T.
       \]</p>
       <p>In compact notation used across this wiki:</p>
       <p>\[
       Y = T_V^{-1}\,d^{-1}\,y,
       \]</p>
       <p>where \(y\) is the sideband-domain vector, \(T_V\) is the sideband-to-demodulated transform, and \(d\) applies the paper's normalization scale factors.</p>
+      <p>Current project implementation keeps this same transform/normalization idea but uses an extended state vector \(Y=[r,\phi,T_1,T_2]^T\) for dual-KID thermal modeling.</p>
     </section>
 
     <section class="card">
@@ -92,7 +93,7 @@
       <p>\[
       N_{\mathrm{ro}}=T_V^{-1}d^{-1}y_{\mathrm{ro}}.
       \]</p>
-      <p>This places readout noise in the same normalized coordinate basis as \(Y\) and \(N\) in Eq. (11).</p>
+      <p>This places readout noise in the same normalized coordinate basis as \(Y\) and \(N\) in Eq. (11). In the dual-KID extension, the extra thermal coordinate is appended in the internal model state, while I/Q normalization remains the same.</p>
       <p>For post-resonator amplifier noise, use this mapping for coordinate conversion, then add the resulting contribution at the output noise/covariance level at a common reference plane.</p>
     </section>
 

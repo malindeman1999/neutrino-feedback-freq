@@ -12,6 +12,26 @@
 <section class="card"><h2>Physical Expression</h2>
 <p>The paper models excess electronic noise from microwave-driven quasiparticle generation as:</p>
 <p>\[P_D=\sqrt{4E_{qp}P_0},\qquad M_e\approx\sqrt{\frac{E_{qp}}{k_B T_0}}.\]</p>
+<p>Reference chain: the resonator-bolometer paper introduces this source-vector form in Eq. (19). It notes that the earlier NEP estimate for microwave-bias quasiparticle generation was the power shot-noise scale \(P_D=\sqrt{4E_{qp}P_0}\) from Ref. 5, J. Zmuidzinas, <em>Annual Review of Condensed Matter Physics</em> <strong>3</strong>, 169 (2012). The paper then extends that estimate by treating the quasiparticle creation energy as coming from the microwave bias, so the associated voltage and power fluctuations have the same component structure as Johnson noise.</p>
+<p>In the local copy of Ref. 5, <code>papers/2012-Superconducting_Microresonators__Physics_and_Applications.pdf</code>, the relevant expression is on printed page 39, Eq. (86). Zmuidzinas writes the microwave quasiparticle-generation contribution as one term in the dissipation-readout NEP:</p>
+<p>\[
+\mathrm{NEP}_{\mathrm{mw-gen}}^2=
+\frac{4\eta_a\chi_{qp}\Delta_0 P_a}{\eta_o^2}.
+\]</p>
+<p>Here \(P_a\) is absorbed readout power, \(\Delta_0\) is the gap energy scale, \(\eta_a\) is the efficiency for converting readout power into quasiparticles, \(\chi_{qp}\) is the fraction of internal dissipation due to quasiparticles, and \(\eta_o\) is the optical quasiparticle-creation efficiency used to refer the fluctuation to optical input power. In the simplified resonator-bolometer estimate, taking \(\eta_a\approx\chi_{qp}\approx\eta_o\approx1\), \(P_a\rightarrow P_0\), and \(\Delta_0\rightarrow E_{qp}\) gives:</p>
+<p>\[
+\mathrm{NEP}_{\mathrm{mw-gen}}\rightarrow \sqrt{4E_{qp}P_0}\equiv P_D.
+\]</p>
+<p>The substitutions used in this project are:</p>
+<table>
+<tr><th>Ref. 5 quantity</th><th>Project value</th><th>Reason</th></tr>
+<tr><td>\(P_a\)</td><td>\(P_0\)</td><td>The resonator-bolometer model uses \(P_0\) for microwave power dissipated in the inductor/island. This is the absorbed readout power that creates the drive-related quasiparticle fluctuations.</td></tr>
+<tr><td>\(\Delta_0\)</td><td>\(E_{qp}\approx\Delta\)</td><td>The estimate assumes each quasiparticle-generation event carries an energy of order the superconducting gap. The code uses \(E_{qp}=\Delta=1.764\,k_BT_c\).</td></tr>
+<tr><td>\(\eta_a\)</td><td>1</td><td>This is an intentionally conservative/simple normalization: all dissipated microwave power in the active inductor is treated as available to generate the relevant quasiparticle fluctuation channel. If a measured microwave-to-QP efficiency is known, it should multiply this term.</td></tr>
+<tr><td>\(\chi_{qp}\)</td><td>1</td><td>The simple model attributes the relevant internal dissipation in the KID island to the quasiparticle/dissipative channel being modeled. If only a fraction of \(Q_i^{-1}\) comes from quasiparticles, \(\chi_{qp}<1\) would reduce the term.</td></tr>
+<tr><td>\(\eta_o\)</td><td>1</td><td>Zmuidzinas divides by \(\eta_o^2\) because Eq. (86) is referred to equivalent optical input power. Here the NEP is referred to deposited island/event power, not to optical power before absorption or pair-breaking efficiency losses, so the island-power-equivalent convention sets \(\eta_o=1\).</td></tr>
+</table>
+<p>With these choices, the expression is not claiming that every real device has unity efficiencies. It is the model's default island-power-equivalent noise normalization. More detailed device physics can be added later by replacing \(P_D^2=4E_{qp}P_0\) with \(4\eta_a\chi_{qp}E_{qp}P_0/\eta_{\mathrm{event}}^2\), where \(\eta_{\mathrm{event}}\) is the efficiency for the signal channel used to define NEP.</p>
 </section>
 <section class="card" id="noise-vector-derivation-eq-19"><h2>Noise Vector Derivation (Eq. 19)</h2>
 <p>Assumption: this source has the same component structure as Johnson noise (electrical sidebands plus correlated thermal-power component), but larger magnitude.</p>

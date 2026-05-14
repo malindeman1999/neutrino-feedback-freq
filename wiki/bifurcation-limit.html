@@ -40,9 +40,10 @@
       <h2>Operating Margin</h2>
       <p>Define the proximity ratio:</p>
       <p>\[
-      \frac{P_0}{P_{\mathrm{bif}}}.
+      \frac{P_{0,x=0}}{P_{\mathrm{bif}}}.
       \]</p>
-      <p>Hard rule: operate below bifurcation, \(P_0<P_{\mathrm{bif}}\).</p>
+      <p>Here \(P_{0,x=0}\) is the dissipated resonator power that the same generator drive would produce if the readout were exactly on resonance. This is intentionally a worst-case bifurcation estimate; the actual operating \(P_0\) used for heating and noise still includes the detuning factor.</p>
+      <p>Hard rule: operate below bifurcation, \(P_{0,x=0}<P_{\mathrm{bif}}\).</p>
       <p>Soft goal: run close to (but below) bifurcation to increase signal response and reduce TLS impact through higher readout field.</p>
     </section>
 

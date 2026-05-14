@@ -51,7 +51,7 @@
         <tr><td>Phonon Thermal-Fluctuation Noise</td><td>\(\sqrt{4k_B T_b^2 G}\)</td><td><a href="noise-phonon.html">Phonon Noise Vector</a></td></tr>
         <tr><td>Johnson Noise (Resistor in KIB)</td><td>\(\sqrt{4k_B T_0 R_0}\)</td><td><a href="noise-johnson.html">Johnson Noise Vectors</a></td></tr>
         <tr><td>Excess Electronic / QP-Generation Noise</td><td>\(N_g=M_eN_J\), \(M_e\sim\sqrt{E_{qp}/k_BT_0}\)</td><td><a href="noise-electronic.html">Electronic Noise Vector</a></td></tr>
-        <tr><td>TLS Frequency Noise</td><td>\(N_{TLS}=M_{TLS}(f)N_{J,\phi}\)</td><td><a href="noise-tls.html">TLS Noise Vector</a></td></tr>
+        <tr><td>TLS Frequency Noise</td><td>\(N_{TLS,\phi}(\nu)=i\sqrt{S_{\phi,\mathrm{TLS}}(\nu)}/|H_{\mathrm{TLS,passive}}(\nu)|\)</td><td><a href="noise-tls.html">TLS Noise Vector</a></td></tr>
         <tr><td>Readout Chain Noise (Amplifier/Generator)</td><td>\(V_A\sim\sqrt{k_BT_A Z_0}\), \(V_G\sim |S_{21}|\sqrt{k_BT_G Z_0}\)</td><td><a href="noise-readout.html">Readout Noise Vector</a></td></tr>
       </table>
       <p>Johnson \(S_f\) note (full vs simplified): <a href="noise-johnson-sf.html">Johnson Sf: Full vs Simplified</a>.</p>
@@ -65,7 +65,7 @@
         <li><a href="theory.html">Theory</a>: full Eq. (4), Eq. (10)-(20) model and workflow.</li>
         <li><a href="signal-processing.html">Signal Processing</a>: optimal filtering with modeled \\(\mathbf{S}_{IQ}(\omega)\\).</li>
         <li><a href="noise-tls.html">TLS + Johnson</a>: geometry and design guidance tied to these sources.</li>
-        <li><a href="../python-simple-abs/sensor.py"><code>python-simple-abs/sensor.py</code></a>: <code>n_phonon()</code>, <code>n_johnson_A()</code>, <code>n_johnson_phi()</code>, <code>n_electronic_A()</code>, <code>n_electronic_phi()</code>, <code>n_tls_phi()</code>, <code>phase_responsivity_mag_rad_per_W_at_hz()</code>, <code>nep_from_phase_asd_W_per_rtHz()</code>.</li>
+        <li><a href="../python-simple-abs/sensor.py"><code>python-simple-abs/sensor.py</code></a>: <code>n_phonon()</code>, <code>n_johnson_A()</code>, <code>n_johnson_phi()</code>, <code>n_electronic_A()</code>, <code>n_electronic_phi()</code>, <code>n_tls_phi_at_hz()</code>, <code>phase_responsivity_mag_rad_per_W_at_hz()</code>, <code>nep_from_phase_asd_W_per_rtHz()</code>.</li>
         <li>Per-source NEP outputs in code: <a href="../python-simple-abs/sensor.py"><code>nep_phi_johnson_W_per_rtHz</code></a>, <a href="../python-simple-abs/sensor.py"><code>nep_phi_phonon_W_per_rtHz</code></a>, <a href="../python-simple-abs/sensor.py"><code>nep_phi_tls_W_per_rtHz</code></a>, <a href="../python-simple-abs/sensor.py"><code>nep_phi_electronic_W_per_rtHz</code></a>, <a href="../python-simple-abs/sensor.py"><code>nep_phi_total_W_per_rtHz</code></a>.</li>
         <li><a href="python-estimates.html">Python-Derived Estimates</a>: code-generated nominal values used in this wiki.</li>
       </ul>

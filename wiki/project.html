@@ -75,14 +75,13 @@
       <p><strong>Rule 1:</strong> \(\tau_{qp}/\tau_{res}<0.1\). Quasiparticle dynamics should be faster than resonator response so quasiparticle-statistics fluctuations do not significantly add noise to the measured signal.</p>
       <p><strong>Rule 2:</strong> \(\tau_{res}/\tau_{th}<1\). Resonator response should remain faster than thermal evolution so pulse shape is set by thermal physics, not readout lag, and to maintain margin for stable electrothermal feedback.</p>
       <p><strong>Rule 3:</strong> phonon phase ASD \(>\) TLS phase ASD (100 Hz). Forces the low-frequency floor to be set by fundamental thermal noise rather than dielectric excess noise.</p>
-      <p><strong>Rule 4:</strong> \(P_0<P_{bif}\). Hard nonlinearity/stability limit; crossing bifurcation breaks linear modeling and can destabilize operation.</p>
-      <p><strong>Rule 5:</strong> \(P_0/P_{bif}>0.5\). Soft operating floor to keep readout power high enough for good signal swing and TLS suppression margin.</p>
+      <p><strong>Rule 4:</strong> \(P_{0,x=0}<P_{bif}\). Hard nonlinearity/stability limit using the undetuned worst-case dissipated resonator power; crossing bifurcation breaks linear modeling and can destabilize operation.</p>
+      <p><strong>Rule 5:</strong> \(P_{0,x=0}/P_{bif}>0.5\). Soft operating floor using the same undetuned worst-case power, to keep readout power high enough for good signal swing and TLS suppression margin.</p>
       <p><strong>Rule 6:</strong> \(P_{bif,dBm}\) in typical MKID range. Sanity check that the design sits in a realistic readout-power regime for comparable 100 mK, ~1 GHz devices.</p>
       <p><strong>Rule 7:</strong> \(\Delta T_{event}>1\) mK. Ensures a resolvable thermal step from a Ho event above practical small fluctuations and readout granularity.</p>
       <p><strong>Rule 8:</strong> \(\Delta T_{event}<100\) mK. Checks that the design is not carrying excess heat capacity for the event energy scale; too much added heat capacity suppresses \(\Delta T\) and reduces signal size.</p>
       <p><strong>Rule 9:</strong> \(\sigma_{E,th,eV}<\sigma_{E,target}\). Keeps intrinsic thermal fluctuation energy scale below the resolution target budget.</p>
-      <p><strong>Rule 10:</strong> \(T_{bath}>10\) mK (from link estimate). Avoids unrealistically deep inferred bath temperatures from chosen \(P_0/G\), supporting physical consistency.</p>
-      <p><strong>Rule 11:</strong> \(\Delta T_{\mathrm{event}} < \Delta T_{\mathrm{abs-bath}}\). Keeps event heating below electrothermal operating elevation so ETF power margin can pull event heat through the KID channel rather than letting it preferentially leak to the bath.</p>
+      <p><strong>Rule 10:</strong> \(\Delta L_{2,\mathrm{head}} \ge \Delta L_{1,\mathrm{event}}\). The second KID must have enough temperature headroom above the bath, weighted by its inductance responsivity \(dL_2/dT_2\), to cancel the inductance increase produced by one event in KID1.</p>
       <p><strong>Rule 12:</strong> all eigenvalues of \(M_t\) must have negative real parts. This is the linear stability condition for the coupled electrothermal-resonator dynamics.</p>
     </section>
 
@@ -100,14 +99,14 @@
       <p>\[
       \sqrt{S_{\phi,\mathrm{ph}}}^{\,\mathrm{simple}}>\sqrt{S_{\phi,\mathrm{TLS}}}(100\,\mathrm{Hz}).
       \]</p>
-      <p>Rule 4 enforces the bifurcation limit:</p>
+      <p>Rule 4 enforces the bifurcation limit using the undetuned worst-case dissipated power:</p>
       <p>\[
-      P_0<P_{\mathrm{bif}},\qquad
-      \frac{P_0}{P_{\mathrm{bif}}}<1.
+      P_{0,x=0}<P_{\mathrm{bif}},\qquad
+      \frac{P_{0,x=0}}{P_{\mathrm{bif}}}<1.
       \]</p>
       <p>Rule 5 applies a soft floor on operating fraction:</p>
       <p>\[
-      \frac{P_0}{P_{\mathrm{bif}}}>0.5.
+      \frac{P_{0,x=0}}{P_{\mathrm{bif}}}>0.5.
       \]</p>
       <p>Rule 6 checks that \(P_{\mathrm{bif,dBm}}\) lies in the chosen typical range:</p>
       <p>\[
@@ -126,20 +125,19 @@
       \sigma_{E,\mathrm{th,eV}} < \sigma_{E,\mathrm{target}},
       \quad \sigma_{E,\mathrm{target}}=0.1\,\mathrm{eV}\ \text{(default)}.
       \]</p>
-      <p>Rule 10 requires inferred bath temperature to stay above 10 mK:</p>
+      <p>Rule 10 requires KID2 to have enough inductance headroom to compensate the KID1 event response. The raw temperature margin is weighted by each island's inductance slope:</p>
       <p>\[
-      T_{\mathrm{bath}} > 10\,\mathrm{mK}.
-      \]</p>
-      <p>Rule 11 requires event rise to stay below operating temperature elevation above bath:</p>
-      <p>\[
-      \Delta T_{\mathrm{event}} < \Delta T_{\mathrm{abs-bath}}.
+      \frac{dL_2}{dT_2}(T_{02}-T_b) \ge
+      \frac{dL_1}{dT_1}\Delta T_{\mathrm{event}},
+      \qquad
+      \frac{dL_i}{dT_i}\propto\frac{\alpha_{\phi i}L_i}{T_i}.
       \]</p>
       <p>Rule 12 requires time-domain stability of \(M_t\):</p>
       <p>\[
       \Re[\lambda_i(M_t)]<0,\ \forall i.
       \]</p>
       <p>Soft goal: choose \(P_0/P_{\mathrm{bif}}\) close to 1 from below.</p>
-      <p>Python: <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule1_left_ratio</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule1_right_ratio</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule1_ok</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule2_ok</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule2_ratio</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule3_ok</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule4_ok</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule5_ok</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule6_ok</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule7_ok</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule8_ok</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule9_ok</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule10_ok</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule11_ok</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule12_ok</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.bifurcation_power_ratio</code></a>.</p>
+      <p>Python: <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule1_left_ratio</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule1_right_ratio</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule1_ok</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule2_ok</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule2_ratio</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule3_ok</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule4_ok</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule5_ok</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule6_ok</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule7_ok</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule8_ok</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule9_ok</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule10_ok</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule12_ok</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.bifurcation_power_ratio</code></a>.</p>
     </section>
 
     <section class="card">

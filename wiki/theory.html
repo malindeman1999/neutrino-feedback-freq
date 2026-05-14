@@ -24,6 +24,7 @@
     <a href="physics.html">Physics</a>
     <a href="theory.html" class="active">Theory</a>
     <a href="m-matrix.html">M Matrix</a>
+    <a href="feedback-nep-invariance.html">Feedback NEP</a>
     <a href="paper-transform-summary.html">Transform Summary</a>
     <a href="noise-sources.html">Noise Sources</a>
     <a href="signal-processing.html">Signal Processing</a>
@@ -47,13 +48,14 @@
 
     <section class="card">
       <h2>State and Measurement Vectors</h2>
-      <p>Use the paperâ€™s normalized demodulated state vector:</p>
+      <p>Use the normalized demodulated state vector implemented in this project:</p>
       <p>\[
       Y(\omega)=
       \begin{bmatrix}
       r(\omega)\\
       \phi(\omega)\\
-      T_{TB}(\omega)
+      T_1(\omega)\\
+      T_2(\omega)
       \end{bmatrix},
       \]</p>
       <p>and source vector \(N(\omega)\), related by Eq. (11):</p>
@@ -91,18 +93,19 @@
 
     <section class="card">
       <h2>Eq. (10)-(13): Normalized Sideband-to-Demodulated Model</h2>
-      <p>Eq. (10) defines voltage normalization (\(V_0=I_0R_0/2\)). Eq. (11) is the central linear system \(M\,Y=N\), where \(Y=[r,\phi,T]^T\) are demodulated normalized coordinates and \(N\) is the source/noise vector.</p>
-      <p>Eq. (12) gives the coordinate transforms from sideband variables to demodulated normalized variables. Eq. (13) expands \(M(\omega)\) explicitly in terms of \(Q, Q_i, \alpha, \beta, P_0, C, G, T_0\), and detuning.</p>
+      <p>Eq. (10) defines voltage normalization (\(V_0=I_0R_0/2\)). Eq. (11) is the central linear system \(M\,Y=N\). In code, \(Y=[r,\phi,T_1,T_2]^T\) extends the paper's single-thermal-node form.</p>
+      <p>Eq. (12) gives the coordinate transforms from sideband variables to demodulated normalized variables. The code keeps this normalization and extends Eq. (13)-style coefficients to two coupled thermal islands.</p>
       <p>Concise step-by-step transformation summary: <a href="paper-transform-summary.html">Paper Transform Summary</a>.</p>
       <p>Interpretation for implementation: build \(M(\omega)\) directly from measured or fitted resonator parameters, then solve \(Y=M^{-1}N\) for each source and frequency bin.</p>
       <p>Dedicated reference: <a href="m-matrix.html">M Matrix</a>.</p>
+      <p>Feedback invariance reference: <a href="feedback-nep-invariance.html">Feedback NEP Invariance</a>.</p>
       <p>Model scope note: this matrix formulation is a small-signal linearization about an operating point; it is not valid for strongly nonlinear large-signal excursions, which require a nonlinear time-domain model.</p>
     </section>
 
     <section class="card">
       <h2>Eq. (14)-(15): Time-Domain Dynamics and Pulse Model</h2>
       <p>Eq. (14) converts the frequency-domain model to time-domain dynamics \(\dot{Y}=M_tY+D_1^{-1}N\), where <a href="mt-stability.html#mt-from-momega">\(M_t\)</a> is obtained from \(M(\omega)\).</p>
-      <p>Eq. (15) gives explicit coupled ODEs for \(r(t)\), \(\phi(t)\), and \(T(t)\) on resonance. The absorbed calorimeter power enters as an additive source term \(P(t)/C\) in the thermal equation.</p>
+      <p>Eq. (15) gives explicit coupled ODEs for \(r(t)\), \(\phi(t)\), and thermal coordinates. In the current model those thermal coordinates are \((T_1,T_2)\), with optional reduction to a single thermal coordinate when KID2 is inactive.</p>
       <p>Use this form to check stability (all eigenvalues of \(M_t\) must have negative real parts), pulse shape, and thermal/electrical coupling behavior before noise propagation.</p>
     </section>
 
@@ -131,6 +134,7 @@
       </ul>
       <p>Notation convention used here: \(T_b\) is bath temperature and \(T_0\) is bolometer operating-point temperature under bias.</p>
       <p>Python implementation links: <a href="../python-simple-abs/sensor.py"><code>Sensor.estimates()</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.tau_res_s</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.tau_th_s</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.sphi_total_per_hz</code></a>, and <a href="../python-simple-abs/sensor.py"><code>Sensor.nep_phi_total_W_per_rtHz</code></a>.</p>
+      <p>Dual-KID resonator implementation uses effective series parameters \((L_1+L_2,\;R_1+R_2)\) for \(f_{0,\mathrm{eff}}\) and \(Q_{i,\mathrm{eff}}\), while preserving one shared normalized I/Q reference circle.</p>
     </section>
 
     <section class="card" id="kid-lumped-formulas">

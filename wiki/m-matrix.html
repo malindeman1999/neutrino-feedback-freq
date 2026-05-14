@@ -23,6 +23,7 @@
     <a href="theory.html">Theory</a>
     <a href="m-matrix.html" class="active">M Matrix</a>
     <a href="paper-transform-summary.html">Transform Summary</a>
+    <a href="feedback-nep-invariance.html">Feedback NEP</a>
     <a href="noise-sources.html">Noise Sources</a>
     <a href="mt-stability.html">Mt Stability</a>
   </nav>
@@ -43,15 +44,15 @@
       M(\omega)\,Y(\omega)=N(\omega),\qquad
       Y(\omega)=M^{-1}(\omega)\,N(\omega).
       \]</p>
-      <p>\(Y=[r,\phi,T]^T\) are demodulated normalized states and \(N\) is the source vector.</p>
+      <p>\(Y=[r,\phi,T_1,T_2]^T\) are demodulated normalized states and \(N\) is the source vector.</p>
     </section>
 
     <section class="card">
       <h2>Role of \(M(\omega)\)</h2>
-      <p>\(M(\omega)\) is the dynamic coupling operator that includes resonator response, thermal response, and electrothermal coupling.</p>
+      <p>\(M(\omega)\) is the dynamic coupling operator that includes resonator response, dual-island thermal response, and electrothermal coupling.</p>
       <ul>
         <li>Diagonal terms set intrinsic response poles/scales.</li>
-        <li>Off-diagonal terms encode coupling between \(r,\phi,T\).</li>
+        <li>Off-diagonal terms encode coupling between \(r,\phi,T_1,T_2\).</li>
         <li>Detuning enters through model coefficients and changes phase slope/responsivity.</li>
       </ul>
       <p>Every source/noise path is computed through this same operator via \(Y=M^{-1}N\).</p>
@@ -59,29 +60,38 @@
 
     <section class="card">
       <h2>Implementation Form</h2>
-      <p>In code, \(M(\omega)\) is built directly from project parameters \((Q_r,Q_i,\alpha,\beta,P_0,C,G,T_0,f_0,\delta f)\) and evaluated at demodulated frequency \(f\).</p>
+      <p>In code, \(M(\omega)\) is built directly from project parameters and evaluated at demodulated frequency \(f\). The current implementation uses a dual-KID state \([r,\phi,T_1,T_2]\) with optional fallback to the original single-KID thermal subspace.</p>
       <p>For this projectâ€™s nominal estimates, \(f=0\) Hz in the demodulated band is used by default.</p>
       <p>Python: <a href="../python-simple-abs/sensor.py"><code>Sensor.m_matrix()</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.m_matrix_array()</code></a>.</p>
     </section>
 
     <section class="card">
-      <h2>Full \(M(\omega)\) Matrix Form Used in Code (Eq. 13 Structure)</h2>
-      <p>Let \(\omega_0=2\pi f_0\), demodulated angular frequency \(\omega\), loaded \(Q\equiv Q_r\), and dimensionless detuning \(x\equiv \delta f/f_0\). The implemented normalized matrix is:</p>
+      <h2>Full \(M(\omega)\) Matrix Form Used in Code</h2>
+      <p>Let \(\omega_0=2\pi f_{0,\mathrm{eff}}\), demodulated angular frequency \(\omega\), loaded \(Q\equiv Q_r\), and dimensionless detuning \(x\equiv \delta f/f_{0,\mathrm{eff}}\). The implementation keeps the Eq. (13)-style electrical block and extends the thermal block to two islands:</p>
       <p>\[
       M(\omega)=
       \begin{bmatrix}
       \dfrac{2i\omega Q_i}{\omega_0}+\dfrac{Q_i}{Q}+\beta_A+4Q_iQx^2 &
       -\dfrac{4i\omega Q_iQx}{\omega_0} &
-      -2Qx\beta_A+\dfrac{2\alpha_A}{T_0}\\[1.0em]
+      -2Qx\beta_A+\dfrac{2\alpha_{A1}}{T_{01}} &
+      \dfrac{2\alpha_{A2}}{T_{02}}\\[1.0em]
       \dfrac{4i\omega Q_iQx}{\omega_0}-\beta_\phi &
       \dfrac{2i\omega Q_i}{\omega_0}+\dfrac{Q_i}{Q}+4Q_iQx^2+2Qx\beta_\phi &
-      -\dfrac{2\alpha_\phi}{T_0}\\[1.0em]
-      -\left(1+\dfrac{\beta_A}{2}\right)P_0 &
-      Qx(\beta_A+2)P_0 &
-      i\omega C+G-\dfrac{P_0\alpha_A}{T_0}
+      -\dfrac{2\alpha_{\phi1}}{T_{01}} &
+      -\dfrac{2\alpha_{\phi2}}{T_{02}}\\[1.0em]
+      -\left(1+\dfrac{\beta_A}{2}\right)P_1 &
+      Qx(\beta_A+2)P_1 &
+      i\omega C_1+G_1-\dfrac{P_1\alpha_{A1}}{T_{01}} &
+      0\\[1.0em]
+      -\left(1+\dfrac{\beta_A}{2}\right)P_2 &
+      Qx(\beta_A+2)P_2-K_{\mathrm{fb}} &
+      0 &
+      i\omega C_2+G_2-\dfrac{P_2\alpha_{A2}}{T_{02}}
       \end{bmatrix}.
       \]</p>
-      <p>This is the exact matrix currently implemented in <a href="../python-simple-abs/sensor.py"><code>Sensor.m_matrix()</code></a>.</p>
+      <p>Here \(P_1+P_2=P_0\), with \(P_j\) split by series loss (\(P_j\propto R_j\)).</p>
+      <p>This is the exact matrix structure currently implemented in <a href="../python-simple-abs/sensor.py"><code>Sensor.m_matrix()</code></a>.</p>
+      <p>For the cofactor argument showing why Q-channel NEP should be independent of \(K_{\mathrm{fb}}\) when feedback appears only in the Q column, see <a href="feedback-nep-invariance.html">Feedback NEP Invariance</a>.</p>
     </section>
 
     <section class="card">
