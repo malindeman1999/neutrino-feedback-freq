@@ -229,7 +229,7 @@ class NoiseGui:
         if float(s0.heater2_dc_power_W) > 0.0:
             self.defaults["heater2_offset_dBm"] = float(10.0 * np.log10(s0.heater2_dc_power_W / 1.0e-3))
         else:
-            self.defaults["heater2_offset_dBm"] = -300.0
+            self.defaults["heater2_offset_dBm"] = -1000.0
         (
             self.current,
             self.last_loaded,
@@ -435,7 +435,7 @@ class NoiseGui:
         merged["series_L2_ratio"] = float(loaded.get("series_L2_H", merged["series_L2_H"])) / max(float(s1.L_total_H), 1.0e-30)
         merged["series_R2_ratio"] = float(loaded.get("series_R2_Ohm", merged["series_R2_Ohm"])) / max(float(s1.R1_series_Ohm), 1.0e-30)
         if "heater2_offset_dBm" not in loaded:
-            merged["heater2_offset_dBm"] = float(self.defaults.get("heater2_offset_dBm", -300.0))
+            merged["heater2_offset_dBm"] = float(self.defaults.get("heater2_offset_dBm", -1000.0))
 
     def _load_settings_file(self, path: Path) -> dict[str, float] | None:
         try:
@@ -612,18 +612,9 @@ class NoiseGui:
         kwargs.pop("G2_ratio", None)
         kwargs.pop("series_L2_ratio", None)
         kwargs.pop("series_R2_ratio", None)
-        # Derive T02 from Tb + (P2 + heater_offset_power) / G2 for dual-KID mode.
-        if self.kid2_mode_var.get() == "Dual KID" and float(kwargs.get("G2_W_per_K", 0.0)) > 0.0:
-            tmp_kwargs = dict(kwargs)
-            tmp_kwargs["T02_K"] = float(kwargs.get("Tb_K", 0.0))
-            tmp_kwargs.pop("heater2_offset_dBm", None)
-            s_tmp = Sensor(Version1SensorInputs(**tmp_kwargs))
-            heater_off_dbm = float(kwargs.get("heater2_offset_dBm", self.defaults.get("heater2_offset_dBm", -300.0)))
-            heater_off_w = 1.0e-3 * (10.0 ** (heater_off_dbm / 10.0))
-            kwargs["T02_K"] = float(kwargs.get("Tb_K", 0.0)) + (float(s_tmp.P2_W) + heater_off_w) / float(kwargs["G2_W_per_K"])
-        kwargs.pop("heater2_offset_dBm", None)
+        kwargs["heater2_offset_dBm"] = float(kwargs.get("heater2_offset_dBm", self.defaults.get("heater2_offset_dBm", -1000.0)))
         if self.kid2_mode_var.get() == "Single KID":
-            kwargs["T02_K"] = 0.0
+            kwargs["heater2_offset_dBm"] = -1000.0
             kwargs["heat_capacity2_eV_per_mK"] = 0.0
             kwargs["G2_W_per_K"] = 0.0
             kwargs["alpha_A2"] = 0.0
@@ -646,7 +637,7 @@ class NoiseGui:
         if not _all_kid2_zero(self.current):
             return
         base = dict(self.current)
-        base["heater2_offset_dBm"] = float(self.defaults.get("heater2_offset_dBm", -300.0))
+        base["heater2_offset_dBm"] = float(self.defaults.get("heater2_offset_dBm", -1000.0))
         base["heat_capacity2_ratio"] = 1.0
         base["G2_ratio"] = 1.0
         base["alpha_A2"] = float(base.get("alpha_A", 0.1))
@@ -705,7 +696,7 @@ class NoiseGui:
                 # With fixed L_geo, this maps k -> k' = 2k - 1 (clamped to [0,1)).
                 k_old = float(self.current.get("kinetic_inductance_fraction", 0.0))
                 self.current["kinetic_inductance_fraction"] = min(max((2.0 * k_old) - 1.0, 0.0), 0.999999)
-                self.current["heater2_offset_dBm"] = float(self.defaults.get("heater2_offset_dBm", -300.0))
+                self.current["heater2_offset_dBm"] = float(self.defaults.get("heater2_offset_dBm", -1000.0))
                 self.current["heat_capacity2_ratio"] = 1.0
                 self.current["G2_ratio"] = 1.0
                 self.current["alpha_A2"] = float(self.current.get("alpha_A", 0.1))
@@ -737,7 +728,7 @@ class NoiseGui:
             self.current["heat_capacity_eV_per_mK"] = 0.5 * float(self.current.get("heat_capacity_eV_per_mK", 0.0))
             k_old = float(self.current.get("kinetic_inductance_fraction", 0.0))
             self.current["kinetic_inductance_fraction"] = min(max((2.0 * k_old) - 1.0, 0.0), 0.999999)
-            self.current["heater2_offset_dBm"] = float(self.defaults.get("heater2_offset_dBm", -300.0))
+            self.current["heater2_offset_dBm"] = float(self.defaults.get("heater2_offset_dBm", -1000.0))
             self.current["heat_capacity2_ratio"] = 1.0
             self.current["G2_ratio"] = 1.0
             self.current["alpha_A2"] = float(self.current.get("alpha_A", 0.1))

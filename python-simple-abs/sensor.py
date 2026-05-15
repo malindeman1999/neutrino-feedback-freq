@@ -79,7 +79,7 @@ class SensorInputs:
     nep_sufficiency_percent: float
     event_power_fraction_kid1: float
     # Optional second series KID / second island parameters
-    T02_K: float = 0.0
+    heater2_offset_dBm: float = -1000.0
     heat_capacity2_eV_per_mK: float = 0.0
     G2_W_per_K: float = 0.0
     alpha_A2: float = 0.0
@@ -131,7 +131,7 @@ class Version1SensorInputs(SensorInputs):
     detuning_widths: float = 0.1
     nep_sufficiency_percent: float = 10.0
     event_power_fraction_kid1: float = 0.5
-    T02_K: float = 0.150
+    heater2_offset_dBm: float = -1000.0
     heat_capacity2_eV_per_mK: float = 4.5
     G2_W_per_K: float = 8.012820512820513e-13
     alpha_A2: float = 0.1
@@ -585,8 +585,19 @@ class Sensor:
 
     @cached_property
     def T02_eff_K(self) -> float:
-        """Effective KID2 operating temperature (falls back to T0)."""
-        return self.T02_K if self.T02_K > 0.0 else self.T0_K
+        """Effective KID2 operating temperature derived from power balance.
+
+        T02 = Tb + (P2 + P_heater_offset) / G2
+        where P_heater_offset is configured in dBm.
+        """
+        if not self.second_kid_active or self.G2_W_per_K <= 0.0:
+            return self.T0_K
+        return self.Tb_K + (self.P2_W + self.heater2_offset_power_W) / self.G2_W_per_K
+
+    @cached_property
+    def heater2_offset_power_W(self) -> float:
+        """Configured KID2 heater offset power derived from dBm input."""
+        return 1.0e-3 * (10.0 ** (self.heater2_offset_dBm / 10.0))
 
     @cached_property
     def P1_W(self) -> float:
@@ -670,10 +681,10 @@ class Sensor:
 
     @cached_property
     def heater2_dc_power_W(self) -> float:
-        """DC heater power needed to hold island 2 at T02."""
-        if not self.second_kid_active or self.G2_W_per_K <= 0.0:
+        """Configured DC heater offset power for island 2."""
+        if not self.second_kid_active:
             return 0.0
-        return (self.G2_W_per_K * (self.T02_eff_K - self.Tb_K)) - self.P2_W
+        return self.heater2_offset_power_W
 
     @cached_property
     def heater2_dc_power_dBm(self) -> float:
@@ -1381,7 +1392,7 @@ class Sensor:
         c2 = max(self.heat_capacity2_eV_per_mK, 0.0) * 1.0e3 * J_PER_EV
         g1 = self.G_W_per_K
         g2 = max(self.G2_W_per_K, 0.0)
-        t02 = self.T02_K if self.T02_K > 0.0 else self.T0_K
+        t02 = self.T02_eff_K
         r1 = max(self.R1_series_Ohm, 0.0)
         r2 = max(self.series_R2_Ohm, 0.0)
         rsum = r1 + r2
@@ -1747,6 +1758,8 @@ class Sensor:
             "detuning_Hz": self.detuning_Hz,
             "x": self.x,
             "f_demod_Hz": self.f_demod_Hz,
+            "heater2_offset_dBm": self.heater2_offset_dBm,
+            "T02_K": self.T02_eff_K,
             "nep_sufficiency_percent": self.nep_sufficiency_percent,
             "event_power_fraction_kid1": self.event_power_fraction_kid1_clamped,
             "count_rate_Hz": self.count_rate_Hz,
