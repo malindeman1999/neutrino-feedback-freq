@@ -68,7 +68,7 @@ INPUT_SECTIONS = [
     (
         "KID2 / Island2",
         [
-            "T02_K",
+            "heater2_offset_dBm",
             "heat_capacity2_ratio",
             "G2_ratio",
             "alpha_A2",
@@ -81,7 +81,16 @@ INPUT_SECTIONS = [
 ]
 INPUT_KEYS = [k for _, keys in INPUT_SECTIONS for k in keys]
 KID2_KEYS = (
-    "T02_K",
+    "heater2_offset_dBm",
+    "heat_capacity2_ratio",
+    "G2_ratio",
+    "alpha_A2",
+    "alpha_phi2",
+    "series_L2_ratio",
+    "series_R2_ratio",
+    "feedback_heater_gain_W_per_rad",
+)
+KID2_ACTIVITY_KEYS = (
     "heat_capacity2_ratio",
     "G2_ratio",
     "alpha_A2",
@@ -93,7 +102,7 @@ KID2_KEYS = (
 
 
 def _all_kid2_zero(settings: dict[str, float]) -> bool:
-    return all(abs(float(settings.get(k, 0.0))) == 0.0 for k in KID2_KEYS)
+    return all(abs(float(settings.get(k, 0.0))) == 0.0 for k in KID2_ACTIVITY_KEYS)
 
 LABELS = {
     "T0_K": "T0 [K]",
@@ -113,7 +122,7 @@ LABELS = {
     "kinetic_inductance_fraction": "kinetic frac",
     "alpha_A": "alpha_A",
     "alpha_phi": "alpha_phi",
-    "T02_K": "T02 [K]",
+    "heater2_offset_dBm": "Heater2 off [dBm]",
     "heat_capacity2_ratio": "C2/C1",
     "G2_ratio": "G2/G1",
     "alpha_A2": "alpha_A2",
@@ -217,6 +226,10 @@ class NoiseGui:
         self.defaults["G2_ratio"] = self.defaults["G2_W_per_K"] / max(float(s0.G_W_per_K), 1.0e-30)
         self.defaults["series_L2_ratio"] = self.defaults["series_L2_H"] / max(float(s0.L_total_H), 1.0e-30)
         self.defaults["series_R2_ratio"] = self.defaults["series_R2_Ohm"] / max(float(s0.R1_series_Ohm), 1.0e-30)
+        if float(s0.heater2_dc_power_W) > 0.0:
+            self.defaults["heater2_offset_dBm"] = float(10.0 * np.log10(s0.heater2_dc_power_W / 1.0e-3))
+        else:
+            self.defaults["heater2_offset_dBm"] = -300.0
         (
             self.current,
             self.last_loaded,
@@ -233,7 +246,7 @@ class NoiseGui:
 
         self.mode_var = tk.StringVar(value="Noise ASD")
         self.readout_var = tk.StringVar(value="Phase")
-        kid2_active_default = any(abs(float(self.current.get(k, 0.0))) > 0.0 for k in KID2_KEYS)
+        kid2_active_default = any(abs(float(self.current.get(k, 0.0))) > 0.0 for k in KID2_ACTIVITY_KEYS)
         self.kid2_mode_var = tk.StringVar(value="Dual KID" if kid2_active_default else "Single KID")
         self.status_var = tk.StringVar(value="")
         self.summary_var = tk.StringVar(value="")
@@ -421,6 +434,8 @@ class NoiseGui:
         merged["G2_ratio"] = float(loaded.get("G2_W_per_K", merged["G2_W_per_K"])) / max(float(s1.G_W_per_K), 1.0e-30)
         merged["series_L2_ratio"] = float(loaded.get("series_L2_H", merged["series_L2_H"])) / max(float(s1.L_total_H), 1.0e-30)
         merged["series_R2_ratio"] = float(loaded.get("series_R2_Ohm", merged["series_R2_Ohm"])) / max(float(s1.R1_series_Ohm), 1.0e-30)
+        if "heater2_offset_dBm" not in loaded:
+            merged["heater2_offset_dBm"] = float(self.defaults.get("heater2_offset_dBm", -300.0))
 
     def _load_settings_file(self, path: Path) -> dict[str, float] | None:
         try:
@@ -597,6 +612,16 @@ class NoiseGui:
         kwargs.pop("G2_ratio", None)
         kwargs.pop("series_L2_ratio", None)
         kwargs.pop("series_R2_ratio", None)
+        # Derive T02 from Tb + (P2 + heater_offset_power) / G2 for dual-KID mode.
+        if self.kid2_mode_var.get() == "Dual KID" and float(kwargs.get("G2_W_per_K", 0.0)) > 0.0:
+            tmp_kwargs = dict(kwargs)
+            tmp_kwargs["T02_K"] = float(kwargs.get("Tb_K", 0.0))
+            tmp_kwargs.pop("heater2_offset_dBm", None)
+            s_tmp = Sensor(Version1SensorInputs(**tmp_kwargs))
+            heater_off_dbm = float(kwargs.get("heater2_offset_dBm", self.defaults.get("heater2_offset_dBm", -300.0)))
+            heater_off_w = 1.0e-3 * (10.0 ** (heater_off_dbm / 10.0))
+            kwargs["T02_K"] = float(kwargs.get("Tb_K", 0.0)) + (float(s_tmp.P2_W) + heater_off_w) / float(kwargs["G2_W_per_K"])
+        kwargs.pop("heater2_offset_dBm", None)
         if self.kid2_mode_var.get() == "Single KID":
             kwargs["T02_K"] = 0.0
             kwargs["heat_capacity2_eV_per_mK"] = 0.0
@@ -621,7 +646,7 @@ class NoiseGui:
         if not _all_kid2_zero(self.current):
             return
         base = dict(self.current)
-        base["T02_K"] = float(base.get("T0_K", 0.04))
+        base["heater2_offset_dBm"] = float(self.defaults.get("heater2_offset_dBm", -300.0))
         base["heat_capacity2_ratio"] = 1.0
         base["G2_ratio"] = 1.0
         base["alpha_A2"] = float(base.get("alpha_A", 0.1))
@@ -680,7 +705,7 @@ class NoiseGui:
                 # With fixed L_geo, this maps k -> k' = 2k - 1 (clamped to [0,1)).
                 k_old = float(self.current.get("kinetic_inductance_fraction", 0.0))
                 self.current["kinetic_inductance_fraction"] = min(max((2.0 * k_old) - 1.0, 0.0), 0.999999)
-                self.current["T02_K"] = float(self.current.get("T0_K", 0.04))
+                self.current["heater2_offset_dBm"] = float(self.defaults.get("heater2_offset_dBm", -300.0))
                 self.current["heat_capacity2_ratio"] = 1.0
                 self.current["G2_ratio"] = 1.0
                 self.current["alpha_A2"] = float(self.current.get("alpha_A", 0.1))
@@ -712,7 +737,7 @@ class NoiseGui:
             self.current["heat_capacity_eV_per_mK"] = 0.5 * float(self.current.get("heat_capacity_eV_per_mK", 0.0))
             k_old = float(self.current.get("kinetic_inductance_fraction", 0.0))
             self.current["kinetic_inductance_fraction"] = min(max((2.0 * k_old) - 1.0, 0.0), 0.999999)
-            self.current["T02_K"] = float(self.current.get("T0_K", 0.04))
+            self.current["heater2_offset_dBm"] = float(self.defaults.get("heater2_offset_dBm", -300.0))
             self.current["heat_capacity2_ratio"] = 1.0
             self.current["G2_ratio"] = 1.0
             self.current["alpha_A2"] = float(self.current.get("alpha_A", 0.1))
