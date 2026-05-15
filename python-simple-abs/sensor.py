@@ -96,8 +96,8 @@ class Version1SensorInputs(SensorInputs):
 
     T0_K: float = 0.040
     Tb_K: float = 0.020
-    heat_capacity_eV_per_mK: float = 60.0
-    ho_in_au_atomic_fraction: float = 0.00068
+    heat_capacity_eV_per_mK: float = 15.0
+    ho_in_au_atomic_fraction: float = 0.03
     ho_decay_energy_J: float = 4.5e-16
     kid_length_m: float = 220e-6
     kid_width_m: float = 220e-6
@@ -130,15 +130,15 @@ class Version1SensorInputs(SensorInputs):
     thermal_energy_resolution_target_eV: float = 0.1
     detuning_widths: float = 0.1
     nep_sufficiency_percent: float = 10.0
-    event_power_fraction_kid1: float = 1.0
-    T02_K: float = 0.070
-    heat_capacity2_eV_per_mK: float = 60.0
-    G2_W_per_K: float = 2.1021957e-12
+    event_power_fraction_kid1: float = 0.5
+    T02_K: float = 0.150
+    heat_capacity2_eV_per_mK: float = 4.5
+    G2_W_per_K: float = 8.012820512820513e-13
     alpha_A2: float = 0.1
-    alpha_phi2: float = 140.0
-    series_L2_H: float = 2.4404747e-07
-    series_R2_Ohm: float = 0.03066791
-    feedback_heater_gain_W_per_rad: float = 0.0
+    alpha_phi2: float = 150.0
+    series_L2_H: float = 4.880949436233082e-07
+    series_R2_Ohm: float = 0.061335819565652365
+    feedback_heater_gain_W_per_rad: float = 7.0e-15
     f_demod_Hz: float = 0.0
 
 @dataclass(frozen=True)
