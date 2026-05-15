@@ -80,6 +80,7 @@ f_0\left|d\phi/df\right|_{\delta f}
 }\right)^2.
 \]</p>
 <p>This is a capacitor/frequency-noise interpretation only; the active source vector uses the passive-reference IQ normalization above.</p>
+<p>Implemented pipeline: choose the TLS source level in SB coordinates from the passive-reference target, map SB\(\rightarrow\)IQ with the active normalization matrix, and propagate with \(Y=M^{-1}N\). The code includes an explicit constructed-form comparison check and raises an error on significant mismatch.</p>
 </section>
 <section class="card"><h2>Feedback Independence</h2>
 <p>The TLS source vector does not contain \(K_{\mathrm{fb}}\). Feedback only enters the active matrix \(M\), currently through the Q-column term \(m_{42}\). Thus:</p>

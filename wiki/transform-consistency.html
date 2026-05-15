@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Transform Consistency | TKID Neutrino Detector Docs</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['\\(', '\\)'], ['$', '$']] }
+    };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+</head>
+<body>
+  <header class="hero">
+    <h1>Transform Consistency and Physics Invariance</h1>
+    <p>Why applying the same demodulation/normalization transform to vectors and operators preserves physical predictions.</p>
+  </header>
+
+  <nav class="nav">
+    <a href="index.html">Home</a>
+    <a href="theory.html">Theory</a>
+    <a href="m-matrix.html">M Matrix</a>
+    <a href="paper-transform-summary.html">Transform Summary</a>
+    <a href="transform-consistency.html" class="active">Transform Consistency</a>
+    <a href="noise-sources.html">Noise Sources</a>
+  </nav>
+
+  <main class="container">
+    <section class="card">
+      <h2>Core Statement</h2>
+      <p>Yes: the model applies transforms consistently, so physics is preserved under basis change.</p>
+      <p><strong>Key point:</strong> the matrix is formed in the same transformed/normalized coordinate system as the noise vectors. The operator and source terms are not mixed across bases.</p>
+      <p>Let \(y\) be a sideband-domain state and define normalized demodulated coordinates \(Y=S\,y\), where \(S=T_V^{-1}d^{-1}\). Then a linear system in sideband form,</p>
+      <p>\[
+      A\,y=n,
+      \]</p>
+      <p>maps to</p>
+      <p>\[
+      M\,Y=N,\qquad M=SAS^{-1},\qquad N=Sn.
+      \]</p>
+      <p>Therefore \(Y=M^{-1}N=S\,A^{-1}n\), so observables are unchanged by coordinate choice when both operator and sources are transformed consistently.</p>
+    </section>
+
+    <section class="card">
+      <h2>How This Project Applies It</h2>
+      <ul>
+        <li>\(M\) is formed, defined, and solved in normalized demodulated coordinates \([r,\phi,T_1,T_2]\).</li>
+        <li>Microwave/readout-originated noise sources (Johnson, excess electronic, TLS, readout) are built in sideband representation and mapped by SB\(\rightarrow\)IQ normalization before propagation.</li>
+        <li>Thermal-band sources (phonon) are injected directly in thermal components of \(N\) because they are not USB/LSB voltage sidebands.</li>
+        <li>All sources are propagated with the same rule \(Y=M^{-1}N\).</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>Consistency Checks Implemented in Code</h2>
+      <p>The code computes SB-derived vectors and compares them against paper closed forms, then raises an error on significant mismatch:</p>
+      <ul>
+        <li>Johnson Eq. (18) closed-form vectors vs SB-derived vectors.</li>
+        <li>Excess electronic Eq. (19) closed-form vectors vs SB-derived vectors.</li>
+        <li>TLS constructed-form check vs SB-derived mapped vector at each frequency.</li>
+      </ul>
+      <p>Single-vs-dual split equivalence is also checked through shared SB\(\rightarrow\)IQ normalization assumptions.</p>
+      <p>Code references: <a href="../python-simple-abs/sensor.py"><code>Sensor.sb_to_iq_normalization_matrix</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor._assert_noise_vector_agreement</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.n_johnson_A_1</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.n_electronic_A_1</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.n_tls_phi_at_hz</code></a>.</p>
+    </section>
+
+    <section class="card">
+      <h2>Implication</h2>
+      <p>Differences between configurations (single vs dual, feedback on vs off, detuning changes) should be interpreted as model-physics differences in \(M\), source amplitudes, or operating point, not as coordinate artifacts from inconsistent normalization.</p>
+    </section>
+  </main>
+</body>
+</html>

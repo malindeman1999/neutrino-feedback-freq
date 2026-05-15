@@ -81,8 +81,11 @@
       <p><strong>Rule 7:</strong> \(\Delta T_{event}>1\) mK. Ensures a resolvable thermal step from a Ho event above practical small fluctuations and readout granularity.</p>
       <p><strong>Rule 8:</strong> \(\Delta T_{event}<100\) mK. Checks that the design is not carrying excess heat capacity for the event energy scale; too much added heat capacity suppresses \(\Delta T\) and reduces signal size.</p>
       <p><strong>Rule 9:</strong> \(\sigma_{E,th,eV}<\sigma_{E,target}\). Keeps intrinsic thermal fluctuation energy scale below the resolution target budget.</p>
-      <p><strong>Rule 10:</strong> \(\Delta L_{2,\mathrm{head}} \ge \Delta L_{1,\mathrm{event}}\). The second KID must have enough temperature headroom above the bath, weighted by its inductance responsivity \(dL_2/dT_2\), to cancel the inductance increase produced by one event in KID1.</p>
+      <p><strong>Rule 10:</strong> \(\Delta L_{2,\mathrm{head}} \ge \Delta L_{1,\mathrm{event}}\). The second KID must have enough heater headroom above its zero-heater baseline to cancel the inductance increase produced by one event in KID1.</p>
       <p><strong>Rule 12:</strong> all eigenvalues of \(M_t\) must have negative real parts. This is the linear stability condition for the coupled electrothermal-resonator dynamics.</p>
+      <p><strong>Rule 13:</strong> \(P_{\mathrm{pileup,reject}}<0.5\). Pileup-rejection probability should remain below 50%.</p>
+      <p><strong>Rule 14:</strong> \(\mathrm{NEP}_{\phi}(0)\) within 1% of phonon-only \(\mathrm{NEP}_{\phi,\mathrm{ph}}(0)\). Checks low-frequency total-noise closure against the phonon floor.</p>
+      <p><strong>Rule 15:</strong> \(P_{0,x=0}/P_{\mathrm{bif}}<1\). Explicit undetuned bifurcation safety check.</p>
     </section>
 
     <section class="card" id="core-rule-checks">
@@ -132,12 +135,31 @@
       \qquad
       \frac{dL_i}{dT_i}\propto\frac{\alpha_{\phi i}L_i}{T_i}.
       \]</p>
+      <p><strong>Assumption used in this project:</strong> for this rule check, \(\alpha_{\phi1}\) and \(\alpha_{\phi2}\) are evaluated at approximately the same temperature (extrapolated from \(T_0\) to elevated temperatures), so temperature factors are taken to cancel. With \(dL/dT \propto \alpha_\phi R/T\), the implemented Rule 10 form is:</p>
+      <p>\[
+      \Delta T_{2,\mathrm{head}}
+      \ge
+      \frac{\alpha_{\phi1}R_1}{\alpha_{\phi2}R_2}\,\Delta T_{1,\mathrm{event}},
+      \]</p>
+      <p>where \(\Delta T_{2,\mathrm{head}} = T_{02} - T_{2,\mathrm{baseline,no\ heater}}\).</p>
       <p>Rule 12 requires time-domain stability of \(M_t\):</p>
       <p>\[
       \Re[\lambda_i(M_t)]<0,\ \forall i.
       \]</p>
+      <p>Rule 13 limits pileup rejection probability:</p>
+      <p>\[
+      P_{\mathrm{pileup,reject}} < 0.5.
+      \]</p>
+      <p>Rule 14 enforces low-frequency NEP closure to the phonon reference:</p>
+      <p>\[
+      \left|\frac{\mathrm{NEP}_{\phi}(0)}{\mathrm{NEP}_{\phi,\mathrm{ph}}(0)} - 1\right| \le 0.01.
+      \]</p>
+      <p>Rule 15 repeats the undetuned bifurcation safety inequality as a direct ratio check:</p>
+      <p>\[
+      \frac{P_{0,x=0}}{P_{\mathrm{bif}}} < 1.
+      \]</p>
       <p>Soft goal: choose \(P_0/P_{\mathrm{bif}}\) close to 1 from below.</p>
-      <p>Python: <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule1_left_ratio</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule1_right_ratio</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule1_ok</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule2_ok</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule2_ratio</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule3_ok</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule4_ok</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule5_ok</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule6_ok</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule7_ok</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule8_ok</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule9_ok</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule10_ok</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule12_ok</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.bifurcation_power_ratio</code></a>.</p>
+      <p>Python: <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule1_left_ratio</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule1_right_ratio</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule1_ok</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule2_ok</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule2_ratio</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule3_ok</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule4_ok</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule5_ok</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule6_ok</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule7_ok</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule8_ok</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule9_ok</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule10_ok</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule12_ok</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule13_ok</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule14_ok</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.core_rule15_ok</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.bifurcation_power_ratio</code></a>.</p>
     </section>
 
     <section class="card">

@@ -22,6 +22,10 @@ V_e=\sqrt{S_V}=\sqrt{4k_B T_0 R_0}.
 <p>\[n_{J,A}=\frac{V_e}{\sqrt{2}}\begin{bmatrix}1\\1\\-I_0\end{bmatrix},\qquad
 n_{J,\phi}=\frac{V_e}{\sqrt{2}}\begin{bmatrix}1\\-1\\0\end{bmatrix}.\]</p>
 <p>The third component in \\(n_{J,A}\\) is the correlated Joule-power term from electrical fluctuations.</p></section>
+<section class="card"><h2>Why Use A/Phi Sideband Modes</h2>
+<p>The implementation uses the combined SB modes (\(A\)-like and \(\phi\)-like), not isolated USB-only or LSB-only propagated vectors, because the physically relevant separation is whether the electrical fluctuation carries correlated thermal-power modulation.</p>
+<p>In this basis, \(n_{J,A}\) includes the Joule-power term (thermal component), while \(n_{J,\phi}\) does not. That makes thermal coupling and NEP bookkeeping explicit and consistent before mapping SB\(\rightarrow\)IQ and applying \(Y=M^{-1}N\).</p>
+</section>
 <section class="card"><h2>Sideband Vector Units</h2>
 <p>Since \(V_e=\sqrt{4k_BT_0R_0}\) is a voltage-noise amplitude, \(V_e\) carries units \(\mathrm{V}/\sqrt{\mathrm{Hz}}\).</p>
 <p>Therefore sideband vectors have component-wise units:</p>
@@ -61,6 +65,11 @@ i\sqrt{16k_BT_0/P_0}\\
 \end{bmatrix}.
 \]</p>
 <p>These are the vectors used in \\(Y=M^{-1}N\\) for noise propagation.</p></section>
+<section class="card"><h2>Implemented Pipeline (SB -> IQ -> M^{-1})</h2>
+<p>In the numerical model, Johnson noise is constructed first in sideband (USB/LSB) coordinates, then transformed with the SB\(\rightarrow\)IQ normalization matrix to produce \(N_{J,A}\) and \(N_{J,\phi}\), and finally propagated through \(Y=M^{-1}N\).</p>
+<p>The code also computes the explicit Eq. (18) \(N\)-vectors from the resonator-bolometer paper (Lindeman et al.) and checks agreement with the SB-derived vectors. A mismatch beyond tolerance raises an error to enforce consistent normalization.</p>
+<p>Reference: <a href="sb-to-iq-equivalence.html">SB-to-IQ Equivalence</a>.</p>
+</section>
 <section class="card"><h2>Vector Component Units</h2>
 <p>The vectors are defined in the \((r,\phi,T)\) state basis and have per-component units:</p>
 <p>\[

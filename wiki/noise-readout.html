@@ -39,6 +39,7 @@ i\sigma_{RO,\phi}\\
 \]</p>
 <p>with \(\sigma_{RO,A}\) and \(\sigma_{RO,\phi}\) set from measured or modeled readout PSD levels after demodulation/normalization.</p>
 <p>If readout noise is measured directly in I/Q, it can be added as \\(\mathbf{S}_{amp}(\omega)\\) instead of via explicit \\(N\\) vectors.</p>
+<p>Implemented pipeline: readout-originated voltage noise starts in SB (USB/LSB) form, is transformed by the SB\(\rightarrow\)IQ normalization matrix, and then propagated with \(Y=M^{-1}N\) when represented as source vectors.</p>
 </section>
 <section class="card"><h2>Vector Component Units</h2>
 <p>Sideband-source vector units:</p>

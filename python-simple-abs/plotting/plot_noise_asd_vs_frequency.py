@@ -123,6 +123,23 @@ LABELS = {
     "feedback_heater_gain_W_per_rad": "Kfb [W/rad]",
 }
 
+RULE_SPECS: list[tuple[str, str]] = [
+    ("Rule 1", "core_rule1_ok"),
+    ("Rule 2", "core_rule2_ok"),
+    ("Rule 3", "core_rule3_ok"),
+    ("Rule 4", "core_rule4_ok"),
+    ("Rule 5", "core_rule5_ok"),
+    ("Rule 6", "core_rule6_ok"),
+    ("Rule 7", "core_rule7_ok"),
+    ("Rule 8", "core_rule8_ok"),
+    ("Rule 9", "core_rule9_ok"),
+    ("Rule 10", "core_rule10_ok"),
+    ("Rule 12", "core_rule12_ok"),
+    ("Rule 13", "core_rule13_ok"),
+    ("Rule 14", "core_rule14_ok"),
+    ("Rule 15", "core_rule15_ok"),
+]
+
 
 def _positive_limits(arrays: list[np.ndarray], pad: float = 1.3) -> tuple[float, float]:
     vals = np.concatenate([np.asarray(a, dtype=float).ravel() for a in arrays])
@@ -200,7 +217,13 @@ class NoiseGui:
         self.defaults["G2_ratio"] = self.defaults["G2_W_per_K"] / max(float(s0.G_W_per_K), 1.0e-30)
         self.defaults["series_L2_ratio"] = self.defaults["series_L2_H"] / max(float(s0.L_total_H), 1.0e-30)
         self.defaults["series_R2_ratio"] = self.defaults["series_R2_Ohm"] / max(float(s0.R1_series_Ohm), 1.0e-30)
-        self.current, self.last_loaded, self.last_loaded_name, self.startup_ui_state = self._load_startup_settings()
+        (
+            self.current,
+            self.last_loaded,
+            self.last_loaded_name,
+            self.startup_ui_state,
+            self.last_loaded_ui_state,
+        ) = self._load_startup_settings()
         self.undo_stack: list[dict[str, float]] = []
         self.single_mode_snapshot: dict[str, float] | None = None
 
@@ -215,6 +238,8 @@ class NoiseGui:
         self.status_var = tk.StringVar(value="")
         self.summary_var = tk.StringVar(value="")
         self.loaded_name_var = tk.StringVar(value="")
+        self.rule_status_vars: dict[str, tk.StringVar] = {}
+        self.rule_status_labels: dict[str, ttk.Label] = {}
         self.entry_vars: dict[str, tk.StringVar] = {}
         self.entry_widgets: dict[str, ttk.Entry] = {}
 
@@ -227,12 +252,29 @@ class NoiseGui:
         return [("Pickle files", "*.pkl"), ("All files", "*.*")]
 
     def _build_layout(self) -> None:
-        self.root.columnconfigure(0, weight=4)
-        self.root.columnconfigure(1, weight=0)
+        self.root.columnconfigure(0, weight=0)
+        self.root.columnconfigure(1, weight=4)
+        self.root.columnconfigure(2, weight=0)
         self.root.rowconfigure(0, weight=1)
 
+        rules_frame = ttk.Frame(self.root, padding=(10, 8, 6, 8))
+        rules_frame.grid(row=0, column=0, sticky="nsw")
+        rules_frame.columnconfigure(0, weight=1)
+        ttk.Label(rules_frame, text="Rules", font=("Segoe UI", 12, "bold")).grid(
+            row=0, column=0, sticky="w", pady=(0, 8)
+        )
+        for i, (rule_name, _attr_name) in enumerate(RULE_SPECS, start=1):
+            rule_num = rule_name.replace("Rule ", "").strip()
+            row_frame = ttk.Frame(rules_frame)
+            row_frame.grid(row=i, column=0, sticky="w", pady=1)
+            svar = tk.StringVar(value=f"●{rule_num}")
+            slbl = ttk.Label(row_frame, textvariable=svar, width=4, font=("Segoe UI", 10, "bold"))
+            slbl.grid(row=0, column=0, sticky="w")
+            self.rule_status_vars[rule_name] = svar
+            self.rule_status_labels[rule_name] = slbl
+
         plot_frame = ttk.Frame(self.root, padding=8)
-        plot_frame.grid(row=0, column=0, sticky="nsew")
+        plot_frame.grid(row=0, column=1, sticky="nsew")
         plot_frame.rowconfigure(0, weight=1)
         plot_frame.columnconfigure(0, weight=1)
 
@@ -249,18 +291,20 @@ class NoiseGui:
         toolbar = NavigationToolbar2Tk(self.canvas, plot_inner)
         toolbar.update()
 
-        controls = ttk.Frame(self.root, padding=10)
-        controls.grid(row=0, column=1, sticky="ns")
+        controls = ttk.Frame(self.root, padding=6)
+        controls.grid(row=0, column=2, sticky="ns")
+        controls.columnconfigure(0, weight=1)
+        controls.columnconfigure(1, weight=1)
 
-        ttk.Label(controls, text="Noise/NEP Controls", font=("Segoe UI", 12, "bold")).grid(
-            row=0, column=0, columnspan=2, sticky="w", pady=(0, 8)
+        ttk.Label(controls, text="Noise/NEP Controls", font=("Segoe UI", 11, "bold")).grid(
+            row=0, column=0, columnspan=2, sticky="w", pady=(0, 4)
         )
         ttk.Label(controls, textvariable=self.loaded_name_var, foreground="#222").grid(
-            row=1, column=0, columnspan=2, sticky="w", pady=(0, 8)
+            row=1, column=0, columnspan=2, sticky="w", pady=(0, 4)
         )
 
-        mode_frame = ttk.LabelFrame(controls, text="Mode", padding=6)
-        mode_frame.grid(row=2, column=0, columnspan=2, sticky="ew", pady=(0, 8))
+        mode_frame = ttk.LabelFrame(controls, text="Mode", padding=4)
+        mode_frame.grid(row=2, column=0, columnspan=2, sticky="ew", pady=(0, 4))
         ttk.Radiobutton(mode_frame, text="Noise ASD", variable=self.mode_var, value="Noise ASD", command=self._on_mode).grid(
             row=0, column=0, sticky="w"
         )
@@ -268,8 +312,8 @@ class NoiseGui:
             row=0, column=1, sticky="w", padx=(12, 0)
         )
 
-        readout_frame = ttk.LabelFrame(controls, text="Readout", padding=6)
-        readout_frame.grid(row=3, column=0, columnspan=2, sticky="ew", pady=(0, 8))
+        readout_frame = ttk.LabelFrame(controls, text="Readout", padding=4)
+        readout_frame.grid(row=3, column=0, columnspan=2, sticky="ew", pady=(0, 4))
         ttk.Radiobutton(
             readout_frame, text="Phase", variable=self.readout_var, value="Phase", command=self._on_mode
         ).grid(row=0, column=0, sticky="w")
@@ -277,8 +321,8 @@ class NoiseGui:
             readout_frame, text="Amplitude", variable=self.readout_var, value="Amplitude", command=self._on_mode
         ).grid(row=0, column=1, sticky="w", padx=(12, 0))
 
-        kid_mode_frame = ttk.LabelFrame(controls, text="Configuration", padding=6)
-        kid_mode_frame.grid(row=4, column=0, columnspan=2, sticky="ew", pady=(0, 8))
+        kid_mode_frame = ttk.LabelFrame(controls, text="Configuration", padding=4)
+        kid_mode_frame.grid(row=4, column=0, columnspan=2, sticky="ew", pady=(0, 4))
         ttk.Radiobutton(
             kid_mode_frame, text="Single KID", variable=self.kid2_mode_var, value="Single KID", command=self._on_kid2_mode
         ).grid(row=0, column=0, sticky="w")
@@ -286,26 +330,33 @@ class NoiseGui:
             kid_mode_frame, text="Dual KID", variable=self.kid2_mode_var, value="Dual KID", command=self._on_kid2_mode
         ).grid(row=0, column=1, sticky="w", padx=(12, 0))
 
-        row = 5
-        for section_name, keys in INPUT_SECTIONS:
-            section = ttk.LabelFrame(controls, text=section_name, padding=6)
-            section.grid(row=row, column=0, columnspan=2, sticky="ew", pady=(0, 8))
-            row += 1
+        section_container = ttk.Frame(controls)
+        section_container.grid(row=5, column=0, columnspan=2, sticky="nsew", pady=(0, 4))
+        section_container.columnconfigure(0, weight=1)
+
+        for section_idx, (section_name, keys) in enumerate(INPUT_SECTIONS):
+            section = ttk.LabelFrame(section_container, text=section_name, padding=4)
+            section.grid(row=section_idx, column=0, sticky="ew", pady=(0, 4))
+            split = (len(keys) + 1) // 2
             for i, key in enumerate(keys):
-                ttk.Label(section, text=LABELS[key]).grid(row=i, column=0, sticky="w", padx=(0, 6), pady=2)
+                block_col = 0 if i < split else 1
+                r = i if i < split else i - split
+                c0 = block_col * 2
+                ttk.Label(section, text=LABELS[key], width=14).grid(row=r, column=c0, sticky="w", padx=(0, 4), pady=1)
                 var = tk.StringVar(value=f"{self.current[key]:.8g}")
-                ent = ttk.Entry(section, textvariable=var, width=16)
-                ent.grid(row=i, column=1, sticky="ew", pady=2)
+                ent = ttk.Entry(section, textvariable=var, width=11)
+                ent.grid(row=r, column=c0 + 1, sticky="ew", pady=1, padx=(0, 6))
                 ent.bind("<Return>", self._on_field_commit)
                 ent.bind("<FocusOut>", self._on_field_commit)
                 self.entry_vars[key] = var
                 self.entry_widgets[key] = ent
+            section.columnconfigure(1, weight=1)
+            section.columnconfigure(3, weight=1)
 
         self._set_kid2_fields_enabled()
 
         button_frame = ttk.Frame(controls)
-        button_frame.grid(row=row, column=0, columnspan=2, sticky="ew", pady=(2, 6))
-        row += 1
+        button_frame.grid(row=6, column=0, columnspan=2, sticky="ew", pady=(1, 3))
 
         ttk.Button(button_frame, text="Defaults", command=self._load_defaults).grid(row=0, column=0, padx=2, pady=2, sticky="ew")
         ttk.Button(button_frame, text="Undo", command=self._undo).grid(row=0, column=1, padx=2, pady=2, sticky="ew")
@@ -320,9 +371,8 @@ class NoiseGui:
             button_frame.columnconfigure(i, weight=1)
 
         ttk.Label(controls, textvariable=self.status_var, wraplength=300, foreground="#444").grid(
-            row=row, column=0, columnspan=2, sticky="w", pady=(6, 0)
+            row=7, column=0, columnspan=2, sticky="w", pady=(3, 0)
         )
-        row += 1
 
         ttk.Label(
             controls,
@@ -331,7 +381,7 @@ class NoiseGui:
             anchor="e",
             wraplength=320,
             foreground="#222",
-        ).grid(row=row, column=0, columnspan=2, sticky="e", pady=(14, 0))
+        ).grid(row=8, column=0, columnspan=2, sticky="e", pady=(6, 0))
 
     def _load_saved_or_defaults(self) -> dict[str, float]:
         if SETTINGS_FILE.exists():
@@ -427,7 +477,7 @@ class NoiseGui:
             self.kid2_mode_var.set(kid2_mode)
         self._set_kid2_fields_enabled()
 
-    def _load_startup_settings(self) -> tuple[dict[str, float], dict[str, float], str | None, dict[str, str]]:
+    def _load_startup_settings(self) -> tuple[dict[str, float], dict[str, float], str | None, dict[str, str], dict[str, str]]:
         if STARTUP_STATE_FILE.exists():
             try:
                 with STARTUP_STATE_FILE.open("rb") as f:
@@ -438,25 +488,33 @@ class NoiseGui:
                         source_path = Path(source)
                         vals = self._load_settings_file(source_path)
                         if vals is not None:
-                            ui_state: dict[str, str] = {}
+                            ui_state: dict[str, str] = self._extract_ui_state(state)
                             try:
                                 with source_path.open("rb") as sf:
                                     loaded = pickle.load(sf)
-                                ui_state = self._extract_ui_state(loaded)
+                                file_ui = self._extract_ui_state(loaded)
+                                if file_ui:
+                                    ui_state = file_ui
                             except Exception:
-                                ui_state = {}
-                            return vals, dict(vals), source_path.name, ui_state
+                                pass
+                            return vals, dict(vals), source_path.name, ui_state, dict(ui_state)
             except Exception:
                 pass
 
         vals = self._load_saved_or_defaults()
         name = SETTINGS_FILE.name if SETTINGS_FILE.exists() else None
-        return vals, dict(vals), name, {}
+        return vals, dict(vals), name, {}, {}
 
     def _persist_startup_state(self, source_path: Path) -> None:
         try:
             with STARTUP_STATE_FILE.open("wb") as f:
-                pickle.dump({"source_path": str(source_path)}, f)
+                pickle.dump(
+                    {
+                        "source_path": str(source_path),
+                        "ui": self._current_ui_state(),
+                    },
+                    f,
+                )
         except Exception:
             pass
 
@@ -932,6 +990,20 @@ class NoiseGui:
             va="bottom",
             bbox={"facecolor": "white", "alpha": 0.85, "edgecolor": "0.8"},
         )
+        eigs = np.array(s.mt_eigenvalues, dtype=complex)
+        is_underdamped = bool(np.any(np.abs(np.imag(eigs)) > 1.0e-12))
+        show_underdamped = is_underdamped and bool(s.mt_stable)
+        if show_underdamped:
+            self.ax.text(
+                0.98,
+                0.075,
+                "Underdamped (complex Mt eigenvalue present)",
+                color="#d17a00",
+                transform=self.ax.transAxes,
+                ha="right",
+                va="bottom",
+                bbox={"facecolor": "white", "alpha": 0.85, "edgecolor": "0.8"},
+            )
 
         self.ax.set_title(title)
         self.ax.set_xlabel("Frequency [Hz]")
@@ -945,6 +1017,7 @@ class NoiseGui:
         sensor = self._build_sensor(self.current)
         self.data = self._compute_data(sensor)
         self._set_summary(sensor)
+        self._update_rule_indicators(sensor)
         self._draw()
         if self.kid2_mode_var.get() == "Dual KID":
             no_kid2_noise = (
@@ -956,6 +1029,27 @@ class NoiseGui:
                 self._set_status(
                     "Dual KID selected, but KID2 noise is zero. Set series_R2_Ohm (>0) for Johnson/electronic and G2_W_per_K (>0) for phonon."
                 )
+
+    def _update_rule_indicators(self, s: Sensor) -> None:
+        style = ttk.Style(self.root)
+        style.configure("RulePass.TLabel", foreground="#198754")
+        style.configure("RuleFail.TLabel", foreground="#c62828")
+        style.configure("RuleUnknown.TLabel", foreground="#6c757d")
+        for rule_name, attr_name in RULE_SPECS:
+            var = self.rule_status_vars.get(rule_name)
+            lbl = self.rule_status_labels.get(rule_name)
+            if var is None or lbl is None:
+                continue
+            try:
+                raw = getattr(s, attr_name)
+                passed = bool(raw)
+                rule_num = rule_name.replace("Rule ", "").strip()
+                var.set(f"●{rule_num}")
+                lbl.configure(style="RulePass.TLabel" if passed else "RuleFail.TLabel")
+            except Exception:
+                rule_num = rule_name.replace("Rule ", "").strip()
+                var.set(f"●{rule_num}")
+                lbl.configure(style="RuleUnknown.TLabel")
 
     def _on_mode(self) -> None:
         self._draw()
@@ -1014,6 +1108,7 @@ class NoiseGui:
                 )
             self.last_loaded = dict(self.current)
             self.last_loaded_name = save_path.name
+            self.last_loaded_ui_state = self._current_ui_state()
             self._persist_startup_state(save_path)
             self._update_loaded_name()
             self._set_status(f"Saved settings to {save_path.name}")
@@ -1041,9 +1136,10 @@ class NoiseGui:
             self.current = vals
             self.last_loaded = dict(vals)
             self.last_loaded_name = load_path.name
+            self.last_loaded_ui_state = self._extract_ui_state(loaded)
             self._persist_startup_state(load_path)
             self._write_fields(self.current)
-            self._apply_ui_state(self._extract_ui_state(loaded))
+            self._apply_ui_state(self.last_loaded_ui_state)
             self._recompute_and_draw()
             self._push_undo(prev)
             self._update_loaded_name()
@@ -1053,9 +1149,11 @@ class NoiseGui:
 
     def _restore_last_loaded(self) -> None:
         prev = dict(self.current)
+        prev_ui = self._current_ui_state()
         self.current = dict(self.last_loaded)
         self._write_fields(self.current)
         try:
+            self._apply_ui_state(self.last_loaded_ui_state)
             self._recompute_and_draw()
             self._push_undo(prev)
             self._update_loaded_name()
@@ -1063,6 +1161,7 @@ class NoiseGui:
         except Exception as exc:
             self.current = prev
             self._write_fields(self.current)
+            self._apply_ui_state(prev_ui)
             self._set_status(f"Restore failed: {exc}")
 
     def _undo(self) -> None:

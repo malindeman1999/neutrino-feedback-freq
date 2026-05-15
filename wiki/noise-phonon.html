@@ -29,6 +29,9 @@ N_{ph}=\begin{bmatrix}
 \end{bmatrix}.
 \]</p>
 <p>This is Eq. (16), already in the normalized model coordinate system used with \\(Y=M^{-1}N\\).</p></section>
+<section class="card"><h2>Implemented Pipeline Note</h2>
+<p>Phonon noise is a thermal-power source, so it is injected directly in the thermal component of \(N\) (not through an SB voltage source). After that injection, the same propagation step is used as all other sources: \(Y=M^{-1}N\).</p>
+</section>
 <section class="card"><h2>Vector Component Units</h2>
 <p>Noise vectors are mixed-unit objects in the \((r,\phi,T)\) basis, so units are component-wise:</p>
 <p>\[

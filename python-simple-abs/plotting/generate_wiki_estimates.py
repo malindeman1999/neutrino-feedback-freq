@@ -20,6 +20,8 @@ from sensor import version_1_sensor
 OUT_JSON = ROOT / "outputs" / "wiki_estimates.json"
 OUT_HTML = ROOT / "wiki" / "python-estimates.html"
 OUT_DESIGN_HTML = ROOT / "wiki" / "design.html"
+OUT_HTML_TOP = ROOT.parent / "wiki" / "python-estimates.html"
+OUT_DESIGN_HTML_TOP = ROOT.parent / "wiki" / "design.html"
 
 
 def _fmt(x: float) -> str:
@@ -45,6 +47,7 @@ def _pf_html(x: float) -> str:
 def main() -> None:
     OUT_JSON.parent.mkdir(parents=True, exist_ok=True)
     OUT_HTML.parent.mkdir(parents=True, exist_ok=True)
+    OUT_HTML_TOP.parent.mkdir(parents=True, exist_ok=True)
     s = version_1_sensor()
     est = s.estimates()
     input_keys = [f.name for f in fields(s.inputs)]
@@ -169,6 +172,8 @@ def main() -> None:
         "core_rule10_ok": "1",
         "core_rule12_ok": "1",
         "core_rule13_ok": "1",
+        "core_rule14_ok": "1",
+        "core_rule15_ok": "1",
         "L_geo_H": "H",
         "L_total_H": "H",
         "C_res_F": "F",
@@ -337,6 +342,8 @@ def main() -> None:
         "core_rule10_ok": r"\(\mathbb{1}_{\mathrm{rule10}}\)",
         "core_rule12_ok": r"\(\mathbb{1}_{\mathrm{rule12}}\)",
         "core_rule13_ok": r"\(\mathbb{1}_{\mathrm{rule13}}\)",
+        "core_rule14_ok": r"\(\mathbb{1}_{\mathrm{rule14}}\)",
+        "core_rule15_ok": r"\(\mathbb{1}_{\mathrm{rule15}}\)",
         "L_geo_H": r"\(L_g\)",
         "L_total_H": r"\(L_{\mathrm{tot}}\)",
         "C_res_F": r"\(C_{\mathrm{res}}\)",
@@ -445,9 +452,11 @@ def main() -> None:
         "core_rule7_ok": r"\(\text{Pass if } \Delta T_{\mathrm{event}} \gt 1\,\mathrm{mK}\)",
         "core_rule8_ok": r"\(\text{Pass if } \Delta T_{\mathrm{event}} \lt 100\,\mathrm{mK}\)",
         "core_rule9_ok": r"\(\text{Pass if } \sigma_{E,\mathrm{th,eV}} \lt \sigma_{E,\mathrm{target}}\)",
-        "core_rule10_ok": r"\(\text{Pass if } \Delta L_{2,\mathrm{head}} \ge \Delta L_{1,\mathrm{event}}\)",
+        "core_rule10_ok": r"\(\text{Pass if } \Delta T_{2,\mathrm{head}} \ge \dfrac{\alpha_{\phi1}R_1}{\alpha_{\phi2}R_2}\Delta T_{1,\mathrm{event}}\ \text{(same-}T\text{ alpha assumption)}\)",
         "core_rule12_ok": r"\(\text{Pass if } \Re[\lambda_i(M_t)]<0,\ \forall i\)",
         "core_rule13_ok": r"\(\text{Pass if } P_{\mathrm{pileup,reject}} < 0.5\)",
+        "core_rule14_ok": r"\(\text{Pass if } |\mathrm{NEP}_{\phi}(0)/\mathrm{NEP}_{\phi,\mathrm{ph}}(0)-1|\le 0.01\)",
+        "core_rule15_ok": r"\(\text{Pass if } P_{0,x=0}/P_{\mathrm{bif}}<1\)",
         "phonon_power_rms_W": r"\(P_{\mathrm{ph,RMS}}=\sqrt{4k_BT_b^2G}\)",
         "L_geo_H": r"\(L_g\approx \mu_0\ell\left[\ln\!\left(\dfrac{2\ell}{w}\right)+0.5\right]\)",
         "L_total_H": r"\(L_{\mathrm{tot}}=\dfrac{L_g}{1-\alpha_k}\)",
@@ -602,6 +611,8 @@ def main() -> None:
         "core_rule10_ok": {"deltaL2_compensation_headroom_H", "deltaL1_event_H"},
         "core_rule12_ok": {"mt_stable"},
         "core_rule13_ok": {"pileup_probability_max"},
+        "core_rule14_ok": {"nep_phi_0hz_over_phonon_ratio"},
+        "core_rule15_ok": {"p0_over_pbif_target"},
         "sphi_johnson_full_per_hz": set(),
         "sphi_tls_per_hz": set(),
         "asd_phi_tls_per_rtHz": {"sphi_tls_per_hz"},
@@ -707,6 +718,9 @@ def main() -> None:
         "core_rule9_ok": "project.html#core-rule-checks",
         "core_rule10_ok": "project.html#core-rule-checks",
         "core_rule12_ok": "project.html#core-rule-checks",
+        "core_rule13_ok": "project.html#core-rule-checks",
+        "core_rule14_ok": "project.html#core-rule-checks",
+        "core_rule15_ok": "project.html#core-rule-checks",
         "phonon_power_rms_W": "noise-phonon.html#physical-expression",
         "L_geo_H": "theory.html#kid-lumped-formulas",
         "L_total_H": "theory.html#kid-lumped-formulas",
@@ -1056,6 +1070,8 @@ def main() -> None:
             "core_rule10_ok",
             "core_rule12_ok",
             "core_rule13_ok",
+            "core_rule14_ok",
+            "core_rule15_ok",
         ],
     }
 
@@ -1145,6 +1161,7 @@ def main() -> None:
 </html>
 """
     OUT_HTML.write_text(html, encoding="utf-8")
+    OUT_HTML_TOP.write_text(html, encoding="utf-8")
 
     design_html = rf"""<!doctype html>
 <html lang="en">
@@ -1256,6 +1273,8 @@ def main() -> None:
         <tr><td>Rule 10</td><td><code>{_pf_html(model_outputs['core_rule10_ok'])}</code></td></tr>
         <tr><td>Rule 12</td><td><code>{_pf_html(model_outputs['core_rule12_ok'])}</code></td></tr>
         <tr><td>Rule 13</td><td><code>{_pf_html(model_outputs['core_rule13_ok'])}</code></td></tr>
+        <tr><td>Rule 14</td><td><code>{_pf_html(model_outputs['core_rule14_ok'])}</code></td></tr>
+        <tr><td>Rule 15</td><td><code>{_pf_html(model_outputs['core_rule15_ok'])}</code></td></tr>
         <tr><td><strong>Bifurcation Metrics</strong></td><td></td></tr>
         <tr><td>\\(\\Delta T_{{event}}\\)</td><td><code>{_fmt(model_outputs['deltaT_event_full_absorption_K'])}</code> K</td></tr>
         <tr><td>\\(\\Delta L_{{2,head}}/\\Delta L_{{1,event}}\\)</td><td><code>{_fmt(model_outputs['kid2_inductance_headroom_over_event_ratio'])}</code></td></tr>
@@ -1272,6 +1291,7 @@ def main() -> None:
 </html>
 """
     OUT_DESIGN_HTML.write_text(design_html, encoding="utf-8")
+    OUT_DESIGN_HTML_TOP.write_text(design_html, encoding="utf-8")
 
 
 if __name__ == "__main__":

@@ -1282,9 +1282,23 @@ class Sensor:
         return self.tls_iq_source_asd_at_hz_per_rtHz(100.0)
 
     def n_tls_phi_at_hz(self, nu_hz: float) -> Tuple[complex, complex, complex, complex]:
-        """TLS IQ source vector, normalized by a passive resonator reference."""
+        """TLS source vector with legacy and SB->IQ consistency enforcement."""
+        legacy = self._n_tls_phi_legacy_at_hz(nu_hz)
+        sb = self._n_tls_phi_sb_at_hz(nu_hz)
+        self._assert_noise_vector_agreement("n_tls_phi_at_hz", legacy, sb)
+        return sb
+
+    def _n_tls_phi_legacy_at_hz(self, nu_hz: float) -> Tuple[complex, complex, complex, complex]:
+        """Legacy TLS IQ source vector, normalized by passive resonator reference."""
         nu_eval_hz = 1.0 if nu_hz <= 0.0 else nu_hz
         return (0.0 + 0.0j, 1j * self.tls_iq_source_asd_at_hz_per_rtHz(nu_eval_hz), 0.0 + 0.0j, 0.0 + 0.0j)
+
+    def _n_tls_phi_sb_at_hz(self, nu_hz: float) -> Tuple[complex, complex, complex, complex]:
+        """TLS vector built explicitly from SB coordinates then mapped to IQ."""
+        nu_eval_hz = 1.0 if nu_hz <= 0.0 else nu_hz
+        tls_scale = self.tls_iq_source_asd_at_hz_per_rtHz(nu_eval_hz)
+        n_r, n_phi = self._johnson_iq_components_from_scale(tls_scale, phase_like=True)
+        return (n_r, n_phi, 0.0 + 0.0j, 0.0 + 0.0j)
 
     def n_electronic_A_1(self) -> Tuple[complex, complex, complex, complex]:
         me = self.me_electronic_1
@@ -1581,10 +1595,34 @@ class Sensor:
 
     @cached_property
     def kid2_thermal_headroom_K(self) -> float:
-        """KID2 temperature elevation available for negative compensation."""
+        """KID2 temperature elevation above bath (legacy diagnostic)."""
         if not self.second_kid_active:
             return float("nan")
         return self.T02_eff_K - self.Tb_K
+
+    @cached_property
+    def kid2_zero_heater_baseline_K(self) -> float:
+        """KID2 operating temperature with heater power set to zero.
+
+        With no heater input, island-2 steady-state satisfies:
+            G2 * (T2 - Tb) = P2
+        so baseline temperature is Tb + P2/G2.
+        """
+        if not self.second_kid_active:
+            return float("nan")
+        if self.G2_W_per_K <= 0.0:
+            return float("nan")
+        return self.Tb_K + (self.P2_W / self.G2_W_per_K)
+
+    @cached_property
+    def kid2_heater_headroom_over_baseline_K(self) -> float:
+        """Available KID2 heater headroom above zero-heater baseline temperature."""
+        if not self.second_kid_active:
+            return float("nan")
+        t_base = self.kid2_zero_heater_baseline_K
+        if not np.isfinite(t_base):
+            return float("nan")
+        return self.T02_eff_K - t_base
 
     @cached_property
     def kid2_thermal_headroom_over_event_ratio(self) -> float:
@@ -1594,17 +1632,19 @@ class Sensor:
 
     @cached_property
     def dL1_dT_H_per_K(self) -> float:
-        """KID1 inductance slope scale used for compensation headroom checks."""
-        if self.T0_K <= 0.0:
+        """KID1 inductance slope from alpha_phi definition: dL/dT = alpha_phi*R/(omega*T)."""
+        omega0 = 2.0 * pi * self.f0_Hz
+        if self.T0_K <= 0.0 or omega0 <= 0.0:
             return float("nan")
-        return self.alpha_phi * self.L_total_H / self.T0_K
+        return self.alpha_phi * self.R1_series_Ohm / (omega0 * self.T0_K)
 
     @cached_property
     def dL2_dT_H_per_K(self) -> float:
-        """KID2 inductance slope scale used for compensation headroom checks."""
-        if not self.second_kid_active or self.T02_eff_K <= 0.0:
+        """KID2 inductance slope from alpha_phi definition: dL/dT = alpha_phi*R/(omega*T)."""
+        omega0 = 2.0 * pi * self.f0_Hz
+        if not self.second_kid_active or self.T02_eff_K <= 0.0 or omega0 <= 0.0:
             return float("nan")
-        return self.alpha_phi2 * max(self.series_L2_H, 0.0) / self.T02_eff_K
+        return self.alpha_phi2 * max(self.series_R2_Ohm, 0.0) / (omega0 * self.T02_eff_K)
 
     @cached_property
     def deltaL1_event_H(self) -> float:
@@ -1614,7 +1654,7 @@ class Sensor:
     def deltaL2_compensation_headroom_H(self) -> float:
         if not self.second_kid_active:
             return float("nan")
-        return self.dL2_dT_H_per_K * self.kid2_thermal_headroom_K
+        return self.dL2_dT_H_per_K * self.kid2_heater_headroom_over_baseline_K
 
     @cached_property
     def kid2_inductance_headroom_over_event_ratio(self) -> float:
@@ -1624,10 +1664,26 @@ class Sensor:
 
     @cached_property
     def core_rule10_ok(self) -> bool:
-        """Rule 10: KID2 must have enough inductance headroom to cancel one event."""
+        """Rule 10: KID2 heater headroom must satisfy alpha_phi*R-weighted compensation.
+
+        Uses same-temperature approximation for alpha evaluation, so T factors cancel:
+            DeltaT2_head >= (alpha_phi1*R1)/(alpha_phi2*R2) * DeltaT1_event
+        """
         if not self.second_kid_active:
             return True
-        return bool(self.deltaL2_compensation_headroom_H >= self.deltaL1_event_H)
+        if (
+            self.alpha_phi2 == 0.0
+            or self.series_R2_Ohm <= 0.0
+            or self.deltaT_event_full_absorption_K < 0.0
+        ):
+            return False
+        lhs = self.kid2_heater_headroom_over_baseline_K
+        rhs = (
+            (self.alpha_phi * self.R1_series_Ohm)
+            / (self.alpha_phi2 * self.series_R2_Ohm)
+            * self.deltaT_event_full_absorption_K
+        )
+        return bool(lhs >= rhs)
 
     @cached_property
     def core_rule12_ok(self) -> bool:

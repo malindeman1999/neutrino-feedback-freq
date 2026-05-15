@@ -37,11 +37,15 @@
     <section class="card">
       <h2>How To Use This Section</h2>
       <p>Each page below gives (1) the physical noise expression, (2) mapping to source vector components, and (3) the normalized vector used in the resonator-bolometer model.</p>
+      <p><strong>Common pipeline used in code for all microwave/readout-originated sources:</strong> build the source in sideband (SB; USB/LSB) coordinates, apply the SB\(\rightarrow\)IQ normalization transform, then propagate with \(Y=M^{-1}N\). For Johnson/electronic/TLS, code also compares this SB-derived \(N\)-vector to an explicit closed-form \(N\)-vector and raises an error if they disagree beyond tolerance.</p>
+      <p>For Johnson and excess electronic noise, the closed-form comparison vectors are the Eq. (18) and Eq. (19) expressions from the resonator-bolometer paper (Lindeman et al.).</p>
+      <p>Thermal-band sources (phonon) are injected directly in the thermal component of \(N\), since they do not originate as USB/LSB voltage sidebands.</p>
       <p>All sources are propagated using \\(Y=M^{-1}N\\), then converted to phase-direction NEP using Eq. (20):</p>
       <p>\[
       \mathrm{NEP}_{\phi}(\omega)=\left|\frac{[Y_{\mathrm{RMS}}(\omega)]_{\phi}}{(M^{-1})_{\phi,\,P}}\right|.
       \]</p>
       <p>For matrix definition and implementation details, see <a href="m-matrix.html">M Matrix</a>.</p>
+      <p>Normalization details and single-vs-dual consistency proof: <a href="sb-to-iq-equivalence.html">SB-to-IQ Equivalence</a>.</p>
     </section>
 
     <section class="card">
