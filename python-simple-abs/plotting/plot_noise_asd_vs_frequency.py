@@ -255,6 +255,7 @@ class NoiseGui:
         self.rule_status_labels: dict[str, ttk.Label] = {}
         self.entry_vars: dict[str, tk.StringVar] = {}
         self.entry_widgets: dict[str, ttk.Entry] = {}
+        self.event_windows: list["EventResponseWindow"] = []
 
         self._build_layout()
         self._apply_ui_state(self.startup_ui_state)
@@ -378,6 +379,9 @@ class NoiseGui:
         ttk.Button(button_frame, text="Restore", command=self._restore_last_loaded).grid(row=1, column=1, padx=2, pady=2, sticky="ew")
         ttk.Button(button_frame, text="Match KID2->KID1", command=self._match_kid2_to_kid1).grid(
             row=1, column=2, padx=2, pady=2, sticky="ew"
+        )
+        ttk.Button(button_frame, text="Event Response", command=self._open_event_response).grid(
+            row=2, column=0, columnspan=3, padx=2, pady=2, sticky="ew"
         )
 
         for i in range(3):
@@ -1035,6 +1039,7 @@ class NoiseGui:
         self._set_summary(sensor)
         self._update_rule_indicators(sensor)
         self._draw()
+        self._sync_event_windows(sensor)
         if self.kid2_mode_var.get() == "Dual KID":
             no_kid2_noise = (
                 abs(sensor.nj2_scale) == 0.0
@@ -1194,6 +1199,30 @@ class NoiseGui:
         except Exception as exc:
             self._set_status(f"Undo failed: {exc}")
 
+    def _open_event_response(self) -> None:
+        try:
+            self.current = self._read_fields()
+            sensor = self._build_sensor(self.current)
+            win = EventResponseWindow(self.root, sensor, on_close=self._on_event_window_close)
+            self.event_windows.append(win)
+        except Exception as exc:
+            self._set_status(f"Event response failed: {exc}")
+
+    def _sync_event_windows(self, sensor: Sensor) -> None:
+        alive: list["EventResponseWindow"] = []
+        for win in self.event_windows:
+            if win.is_closed:
+                continue
+            try:
+                win.update_sensor(sensor)
+                alive.append(win)
+            except Exception:
+                continue
+        self.event_windows = alive
+
+    def _on_event_window_close(self, win: "EventResponseWindow") -> None:
+        self.event_windows = [w for w in self.event_windows if (w is not win and not w.is_closed)]
+
     def run(self) -> None:
         startup = self.last_loaded_name if self.last_loaded_name else "defaults"
         self._update_loaded_name()
@@ -1204,6 +1233,194 @@ class NoiseGui:
 def main() -> None:
     app = NoiseGui()
     app.run()
+
+
+class EventResponseWindow:
+    def __init__(self, parent: tk.Tk, sensor: Sensor, on_close=None) -> None:
+        self.sensor = sensor
+        self.on_close = on_close
+        self.is_closed = False
+        self.win = tk.Toplevel(parent)
+        self.win.title("Ho Event Response")
+        self.win.geometry("1200x760")
+        self.win.protocol("WM_DELETE_WINDOW", self._handle_close)
+        self.domain_var = tk.StringVar(value="Time")
+        self.var_var = tk.StringVar(value="phi")
+        self._build()
+        self._recompute_and_draw()
+
+    def _build(self) -> None:
+        self.win.columnconfigure(0, weight=1)
+        self.win.columnconfigure(1, weight=0)
+        self.win.rowconfigure(0, weight=1)
+
+        plot_frame = ttk.Frame(self.win, padding=8)
+        plot_frame.grid(row=0, column=0, sticky="nsew")
+        plot_frame.rowconfigure(0, weight=1)
+        plot_frame.columnconfigure(0, weight=1)
+        self.fig = Figure(figsize=(9, 6), dpi=100)
+        self.ax = self.fig.add_subplot(111)
+        self.canvas = FigureCanvasTkAgg(self.fig, master=plot_frame)
+        self.canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+        NavigationToolbar2Tk(self.canvas, plot_frame).update()
+
+        ctl = ttk.Frame(self.win, padding=8)
+        ctl.grid(row=0, column=1, sticky="ns")
+        ttk.Label(ctl, text="Event Response", font=("Segoe UI", 11, "bold")).grid(row=0, column=0, sticky="w", pady=(0, 8))
+
+        domain = ttk.LabelFrame(ctl, text="Domain", padding=4)
+        domain.grid(row=1, column=0, sticky="ew", pady=(0, 6))
+        ttk.Radiobutton(domain, text="Time", variable=self.domain_var, value="Time", command=self._draw).grid(row=0, column=0, sticky="w")
+        ttk.Radiobutton(domain, text="Frequency", variable=self.domain_var, value="Frequency", command=self._draw).grid(row=0, column=1, sticky="w", padx=(8, 0))
+
+        varf = ttk.LabelFrame(ctl, text="Variable", padding=4)
+        varf.grid(row=2, column=0, sticky="ew", pady=(0, 6))
+        names = [("r", "r"), ("phi", "phi"), ("T1", "T1")]
+        if self.sensor.second_kid_active:
+            names.append(("T2", "T2"))
+        for i, (lbl, v) in enumerate(names):
+            ttk.Radiobutton(varf, text=lbl, variable=self.var_var, value=v, command=self._draw).grid(row=i, column=0, sticky="w")
+
+        self.status = tk.StringVar(value="")
+        ttk.Label(ctl, textvariable=self.status, wraplength=260, foreground="#333").grid(row=3, column=0, sticky="w")
+
+    @staticmethod
+    def _var_index(var: str) -> int:
+        return {"r": 0, "phi": 1, "T1": 2, "T2": 3}[var]
+
+    @staticmethod
+    def _var_units(var: str) -> tuple[str, str]:
+        # Response units are from event-energy forcing:
+        # r -> dimensionless, phi -> rad, T1/T2 -> K.
+        if var == "r":
+            return ("1", "1·s")
+        if var == "phi":
+            return ("rad", "rad·s")
+        return ("K", "K·s")
+
+    def _recompute_and_draw(self) -> None:
+        s = self.sensor
+        mt = np.array(s.mt_matrix, dtype=complex)
+        d1 = np.array(s.d1_matrix, dtype=complex)
+        if mt.shape[0] == 3:
+            src = np.array((0.0 + 0.0j, 0.0 + 0.0j, s.event_power_fraction_kid1_clamped + 0.0j), dtype=complex)
+        else:
+            src = np.array(
+                (
+                    0.0 + 0.0j,
+                    0.0 + 0.0j,
+                    s.event_power_fraction_kid1_clamped + 0.0j,
+                    s.event_power_fraction_kid2 + 0.0j,
+                ),
+                dtype=complex,
+            )
+        b = np.linalg.solve(d1, src)
+
+        evals, evecs = np.linalg.eig(mt)
+        vinv = np.linalg.inv(evecs)
+        neg = np.real(evals) < 0.0
+        t_const = -1.0 / np.real(evals[neg]) if np.any(neg) else np.array([1.0])
+        tau_min = float(np.min(t_const))
+        tau_max = float(np.max(t_const))
+        t_max = max(8.0 * tau_max, 1.0e-5)
+        # Adaptive uniform sampling: ensure we resolve fast modes while covering slow modes.
+        # Use ~24 points on the fastest time constant, then round to power-of-two for FFT.
+        dt_target = max(tau_min / 24.0, 1.0e-9)
+        n_needed = int(np.ceil(t_max / dt_target)) + 1
+        n_pow2 = 1 << int(np.ceil(np.log2(max(n_needed, 1024))))
+        n_samples = min(max(n_pow2, 1024), 262144)
+        self.t_s = np.linspace(0.0, t_max, n_samples)
+        self._time_grid_info = {
+            "tau_min_s": tau_min,
+            "tau_max_s": tau_max,
+            "n_needed": n_needed,
+            "n_used": n_samples,
+            "clipped": n_samples < n_needed,
+        }
+
+        coeff = vinv @ b
+        exp_terms = np.exp(np.outer(evals, self.t_s))
+        h = evecs @ (coeff[:, None] * exp_terms)
+        self.y_t = h * s.ho_decay_energy_J
+
+        dt = float(self.t_s[1] - self.t_s[0])
+        f_all = np.fft.fftfreq(self.t_s.size, d=dt)
+        pos = f_all >= 0.0
+        freqs = f_all[pos]
+        y_fft_all = np.fft.fft(self.y_t, axis=1) * dt
+        self.freq_hz = freqs
+        self.y_fft = y_fft_all[:, pos]
+
+        # Matrix frequency response for unit power input.
+        h_f = np.zeros((self.y_t.shape[0], freqs.size), dtype=complex)
+        for i, f_hz in enumerate(freqs):
+            m = s.m_matrix_array(float(f_hz))
+            if self.y_t.shape[0] == 3:
+                m = m[:3, :3]
+                rhs = np.array((src[0], src[1], src[2]), dtype=complex)
+            else:
+                rhs = src
+            y = np.linalg.solve(m, rhs)
+            h_f[:, i] = y
+        self.h_f_matrix = h_f * s.ho_decay_energy_J
+        self._draw()
+
+    def update_sensor(self, sensor: Sensor) -> None:
+        if self.is_closed:
+            return
+        self.sensor = sensor
+        self._recompute_and_draw()
+
+    def _handle_close(self) -> None:
+        self.is_closed = True
+        try:
+            if callable(self.on_close):
+                self.on_close(self)
+        finally:
+            self.win.destroy()
+
+    def _draw(self) -> None:
+        var_name = self.var_var.get()
+        idx = self._var_index(var_name)
+        if idx >= self.y_t.shape[0]:
+            self.var_var.set("phi")
+            var_name = "phi"
+            idx = self._var_index(var_name)
+        unit_t, unit_f = self._var_units(var_name)
+        self.ax.clear()
+        if self.domain_var.get() == "Time":
+            y = np.real(self.y_t[idx])
+            self.ax.plot(self.t_s * 1e3, y, color="tab:blue")
+            self.ax.set_xlabel("Time [ms]")
+            self.ax.set_ylabel(f"{var_name}(t) [{unit_t}]")
+            self.ax.set_title(f"Ho Event Response: {var_name}(t)")
+        else:
+            ym = np.abs(self.h_f_matrix[idx])
+            yf = np.abs(self.y_fft[idx])
+            self.ax.loglog(self.freq_hz[1:], ym[1:], color="tab:blue", label="Matrix responsivity")
+            self.ax.loglog(self.freq_hz[1:], yf[1:], color="tab:orange", linestyle="--", label="FFT(time response)")
+            self.ax.set_xlabel("Frequency [Hz]")
+            self.ax.set_ylabel(f"|{var_name}(f)| [{unit_f}]")
+            self.ax.set_title(f"Ho Event Response: {var_name}(f)")
+            self.ax.legend(loc="best")
+        self.ax.grid(True, which="both", alpha=0.25)
+        self.canvas.draw_idle()
+        err = np.nan
+        if self.domain_var.get() == "Frequency":
+            denom = np.maximum(np.abs(self.h_f_matrix[idx, 1:]), 1.0e-30)
+            err = float(np.median(np.abs(np.abs(self.y_fft[idx, 1:]) - np.abs(self.h_f_matrix[idx, 1:])) / denom))
+        if np.isfinite(err):
+            info = getattr(self, "_time_grid_info", None)
+            if isinstance(info, dict):
+                clip_txt = " (grid clipped)" if bool(info.get("clipped", False)) else ""
+                self.status.set(
+                    f"Median |FFT-matrix|/matrix: {err:.3e} | N={int(info.get('n_used', 0))}, "
+                    f"tau_min={float(info.get('tau_min_s', np.nan)):.3e}s, tau_max={float(info.get('tau_max_s', np.nan)):.3e}s{clip_txt}"
+                )
+            else:
+                self.status.set(f"Median |FFT-matrix|/matrix: {err:.3e}")
+        else:
+            self.status.set("")
 
 
 if __name__ == "__main__":
