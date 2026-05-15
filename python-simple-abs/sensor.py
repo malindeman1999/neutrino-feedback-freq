@@ -105,7 +105,7 @@ class Version1SensorInputs(SensorInputs):
     leg_count: int = 4
     leg_width_m: float = 0.50e-6
     cap_thickness_m: float = 1.0e-6
-    membrane_thickness_m: float = 1.0e-6
+    membrane_thickness_m: float = 0.25e-6
     cv_absorber_J_per_m3K: float = 0.075
     kappa_leg_W_per_mK: float = 1.5e-3
     thermal_link_exponent_n: float = 3.0
@@ -227,6 +227,36 @@ class Sensor:
     def membrane_span_m(self) -> float:
         """Characteristic span for leg scaling."""
         return max(self.membrane_length_m, self.membrane_width_m)
+
+    @cached_property
+    def absorber_island_length_m(self) -> float:
+        """Island length scale (membrane length hosting absorber+KID)."""
+        return self.membrane_length_m
+
+    @cached_property
+    def absorber_island_width_m(self) -> float:
+        """Island width scale (membrane width hosting absorber+KID)."""
+        return self.membrane_width_m
+
+    @cached_property
+    def absorber_island_area_m2(self) -> float:
+        """Plan-view absorber-island area."""
+        return self.absorber_island_length_m * self.absorber_island_width_m
+
+    @cached_property
+    def membrane_volume_m3(self) -> float:
+        """Membrane volume from geometric dimensions."""
+        return self.membrane_length_m * self.membrane_width_m * self.membrane_thickness_m
+
+    @cached_property
+    def membrane_heat_capacity_J_per_K(self) -> float:
+        """Membrane heat capacity estimate at T1 using provided volumetric specific heat."""
+        return self.cv_absorber_J_per_m3K * self.membrane_volume_m3
+
+    @cached_property
+    def membrane_heat_capacity_eV_per_mK(self) -> float:
+        """Membrane heat capacity estimate expressed in eV/mK for reporting."""
+        return self.membrane_heat_capacity_J_per_K / (J_PER_EV * 1.0e3)
 
     @cached_property
     def leg_thickness_m(self) -> float:
@@ -1734,6 +1764,12 @@ class Sensor:
             "absorber_length_m": self.absorber_length_m,
             "absorber_width_m": self.absorber_width_m,
             "absorber_thickness_m": self.absorber_thickness_m,
+            "absorber_island_length_m": self.absorber_island_length_m,
+            "absorber_island_width_m": self.absorber_island_width_m,
+            "absorber_island_area_m2": self.absorber_island_area_m2,
+            "membrane_volume_m3": self.membrane_volume_m3,
+            "membrane_heat_capacity_J_per_K": self.membrane_heat_capacity_J_per_K,
+            "membrane_heat_capacity_eV_per_mK": self.membrane_heat_capacity_eV_per_mK,
             "membrane_length_m": self.membrane_length_m,
             "membrane_width_m": self.membrane_width_m,
             "membrane_span_m": self.membrane_span_m,

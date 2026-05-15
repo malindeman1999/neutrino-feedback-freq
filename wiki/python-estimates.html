@@ -52,7 +52,7 @@
 <tr><td>leg_count</td><td>\(N_{\mathrm{leg}}\)</td><td><code>4</code></td><td>count</td></tr>
 <tr><td>leg_width_m</td><td>\(w_{\mathrm{leg}}\)</td><td><code>5.000000e-07</code></td><td>m</td></tr>
 <tr><td>cap_thickness_m</td><td>\(t_{\mathrm{cap}}\)</td><td><code>1.000000e-06</code></td><td>m</td></tr>
-<tr><td>membrane_thickness_m</td><td>\(t_{\mathrm{mem}}\)</td><td><code>1.000000e-06</code></td><td>m</td></tr>
+<tr><td>membrane_thickness_m</td><td>\(t_{\mathrm{mem}}\)</td><td><code>2.500000e-07</code></td><td>m</td></tr>
       </table>
     </section>
     
@@ -174,11 +174,15 @@
 <tr><td>absorber_length_m</td><td><a href="project.html#source-activity-formulas">\(L_{\mathrm{abs}}\)</a></td><td>\(L_{\mathrm{abs}}=a_{\mathrm{abs}}\)</td><td><code>3.176241e-05</code></td><td>m</td></tr>
 <tr><td>absorber_width_m</td><td><a href="project.html#source-activity-formulas">\(W_{\mathrm{abs}}\)</a></td><td>\(W_{\mathrm{abs}}=a_{\mathrm{abs}}\)</td><td><code>3.176241e-05</code></td><td>m</td></tr>
 <tr><td>absorber_thickness_m</td><td><a href="project.html#source-activity-formulas">\(t_{\mathrm{abs}}\)</a></td><td>\(t_{\mathrm{abs}}=a_{\mathrm{abs}}\)</td><td><code>3.176241e-05</code></td><td>m</td></tr>
+<tr><td>absorber_island_length_m</td><td><a href="project.html#membrane-geometry-formulas">\(L_{\mathrm{island}}\)</a></td><td>\(L_{\mathrm{island}}=L_{\mathrm{mem}}\)</td><td><code>2.717624e-04</code></td><td>m</td></tr>
+<tr><td>absorber_island_width_m</td><td><a href="project.html#membrane-geometry-formulas">\(W_{\mathrm{island}}\)</a></td><td>\(W_{\mathrm{island}}=W_{\mathrm{mem}}\)</td><td><code>2.717624e-04</code></td><td>m</td></tr>
+<tr><td>absorber_island_area_m2</td><td><a href="project.html#membrane-geometry-formulas">\(A_{\mathrm{island}}\)</a></td><td>\(A_{\mathrm{island}}=L_{\mathrm{island}}W_{\mathrm{island}}\)</td><td><code>7.385481e-08</code></td><td>m^2</td></tr>
+<tr><td>membrane_volume_m3</td><td><a href="project.html#membrane-geometry-formulas">\(V_{\mathrm{mem}}\)</a></td><td>\(V_{\mathrm{mem}}=L_{\mathrm{mem}}W_{\mathrm{mem}}t_{\mathrm{mem}}\)</td><td><code>1.846370e-14</code></td><td>m^3</td></tr>
 <tr><td>membrane_length_m</td><td><a href="project.html#membrane-geometry-formulas">\(L_{\mathrm{mem}}\)</a></td><td>\(L_{\mathrm{mem}}=L_{\mathrm{abs}}+L_{\mathrm{KID}}+\Delta_{\mathrm{mem}}\)</td><td><code>2.717624e-04</code></td><td>m</td></tr>
 <tr><td>membrane_width_m</td><td><a href="project.html#membrane-geometry-formulas">\(W_{\mathrm{mem}}\)</a></td><td>\(W_{\mathrm{mem}}=W_{\mathrm{abs}}+W_{\mathrm{KID}}+\Delta_{\mathrm{mem}}\)</td><td><code>2.717624e-04</code></td><td>m</td></tr>
 <tr><td>membrane_span_m</td><td><a href="project.html#membrane-geometry-formulas">\(S_{\mathrm{mem}}\)</a></td><td>\(S_{\mathrm{mem}}=\max(L_{\mathrm{mem}},W_{\mathrm{mem}})\)</td><td><code>2.717624e-04</code></td><td>m</td></tr>
-<tr><td>leg_length_m</td><td><a href="physics.html#leg-geometry-formulas">\(L_{\mathrm{leg}}\)</a></td><td>\(L_{\mathrm{leg}}=\dfrac{N_{\mathrm{leg}}\kappa_{\mathrm{leg}}w_{\mathrm{leg}}t_{\mathrm{leg}}}{G}\)</td><td><code>0.003744</code></td><td>m</td></tr>
-<tr><td>leg_thickness_m</td><td><a href="physics.html#leg-geometry-formulas">\(t_{\mathrm{leg}}\)</a></td><td>\(t_{\mathrm{leg}}=t_{\mathrm{mem}}\)</td><td><code>1.000000e-06</code></td><td>m</td></tr>
+<tr><td>leg_length_m</td><td><a href="physics.html#leg-geometry-formulas">\(L_{\mathrm{leg}}\)</a></td><td>\(L_{\mathrm{leg}}=\dfrac{N_{\mathrm{leg}}\kappa_{\mathrm{leg}}w_{\mathrm{leg}}t_{\mathrm{leg}}}{G}\)</td><td><code>9.360000e-04</code></td><td>m</td></tr>
+<tr><td>leg_thickness_m</td><td><a href="physics.html#leg-geometry-formulas">\(t_{\mathrm{leg}}\)</a></td><td>\(t_{\mathrm{leg}}=t_{\mathrm{mem}}\)</td><td><code>2.500000e-07</code></td><td>m</td></tr>
       </table>
     </section>
     
@@ -187,8 +191,7 @@
       <h3>Derived Thermal</h3>
       <table>
         <tr><th>Quantity</th><th>Symbol</th><th>Formula</th><th>Value</th><th>Units</th></tr>
-        <tr><td>C_J_per_K</td><td><a href="physics.html#thermal-derived-formulas">\(C\)</a></td><td>\(C=c_{V,\mathrm{abs}}V_{\mathrm{abs}}\)</td><td><code>2.403265e-15</code></td><td>J/K</td></tr>
-<tr><td>C_eV_per_mK</td><td><a href="physics.html#thermal-derived-formulas">\(C_{\mathrm{eV/mK}}\)</a></td><td>\(C_{\mathrm{eV/mK}}=\dfrac{C}{q_e\cdot 10^3}\)</td><td><code>15</code></td><td>eV/mK</td></tr>
+        <tr><td>C_eV_per_mK</td><td><a href="physics.html#thermal-derived-formulas">\(C_{\mathrm{eV/mK}}\)</a></td><td>\(C_{\mathrm{eV/mK}}=\dfrac{C}{q_e\cdot 10^3}\)</td><td><code>15</code></td><td>eV/mK</td></tr>
 <tr><td>C_ho_eV_per_mK</td><td><a href="physics.html#thermal-derived-formulas">\(C_{\mathrm{Ho,eV/mK}}\)</a></td><td>\(C_{\mathrm{Ho,eV/mK}}=\dfrac{C_{\mathrm{Ho}}}{q_e\cdot 10^3}\)</td><td><code>15</code></td><td>eV/mK</td></tr>
 <tr><td>G_W_per_K</td><td><a href="physics.html#thermal-derived-formulas">\(G\)</a></td><td>\(G=\dfrac{P_0}{\Delta T_{\mathrm{abs-bath,set}}}\)</td><td><code>8.012821e-13</code></td><td>W/K</td></tr>
 <tr><td>deltaT_abs_over_bath_K</td><td><a href="physics.html#thermal-derived-formulas">\(\Delta T_{\mathrm{abs-bath}}\)</a></td><td>\(\Delta T_{\mathrm{abs-bath}}=\dfrac{P_0}{G}\)</td><td><code>0.02</code></td><td>K</td></tr>
@@ -201,6 +204,7 @@
 <tr><td>tau_res_s</td><td><a href="physics.html#resonator-derived-formulas">\(\tau_{\mathrm{res}}\)</a></td><td>\(\tau_{\mathrm{res}}=\dfrac{Q_r}{\pi f_0}\)</td><td><code>7.957747e-06</code></td><td>s</td></tr>
 <tr><td>tau_ratio_res_over_th</td><td><a href="physics.html#resonator-derived-formulas">\(\tau_{\mathrm{res}}/\tau_{\mathrm{th}}\)</a></td><td>\(\dfrac{\tau_{\mathrm{res}}}{\tau_{\mathrm{th}}}\)</td><td><code>0.00265322</code></td><td>1</td></tr>
 <tr><td>phonon_power_rms_W</td><td><a href="noise-phonon.html#physical-expression">\(P_{\mathrm{ph,RMS}}\)</a></td><td>\(P_{\mathrm{ph,RMS}}=\sqrt{4k_BT_b^2G}\)</td><td><code>1.830303e-19</code></td><td>W</td></tr>
+<tr><td>membrane_heat_capacity_eV_per_mK</td><td><a href="physics.html#thermal-derived-formulas">\(C_{\mathrm{mem,eV/mK}}(T_1)\)</a></td><td>\(C_{\mathrm{mem,eV/mK}}(T_1)=\dfrac{C_{\mathrm{mem}}(T_1)}{q_e\cdot 10^3}\)</td><td><code>8.6431</code></td><td>eV/mK</td></tr>
       </table>
     </section>
     

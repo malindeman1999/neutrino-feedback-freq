@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dual-KID Thermal-Inductive Feedback Concept | TKID Neutrino Detector Docs</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['\\(', '\\)'], ['$', '$']] }
+    };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+</head>
+<body>
+  <header class="hero">
+    <h1>Dual-KID Thermal-Inductive Feedback Concept</h1>
+    <p>Hypothetical negative-feedback architecture using two series KIDs with opposite thermal-inductive response roles.</p>
+  </header>
+
+  <nav class="nav">
+    <a href="index.html">Home</a>
+    <a href="theory.html">Theory</a>
+    <a href="m-matrix.html">M Matrix</a>
+    <a href="project.html">Project</a>
+    <a href="dual-kid-thermal-inductive-feedback.html" class="active">Dual-KID Feedback Concept</a>
+    <a href="feedback-nep-invariance.html">Feedback NEP</a>
+  </nav>
+
+  <main class="container">
+    <section class="card">
+      <h2>Concept Summary</h2>
+      <p>Use two series inductive elements in one resonator, where KID1 is event-sensitive and KID2 is pre-biased hotter with heater control headroom.</p>
+      <p>An event raises \(T_1\), increasing \(L_1\), which increases detuning and reduces resonator readout power. Reduced readout power cools KID2, decreasing \(L_2\), which pulls total inductance back toward its pre-event value.</p>
+      <p>This forms a passive electrothermal detuning-compensation loop intended to keep the resonator close to the readout tone over a larger event range.</p>
+    </section>
+
+    <section class="card">
+      <h2>Event-to-Compensation Chain</h2>
+      <p>\[
+      E_{\mathrm{event}}\uparrow \Rightarrow T_1\uparrow \Rightarrow L_1\uparrow \Rightarrow |x|\uparrow
+      \Rightarrow P_0\downarrow \Rightarrow T_2\downarrow \Rightarrow L_2\downarrow \Rightarrow |x|\downarrow.
+      \]</p>
+      <p>Desired effect: partial cancellation of total inductance shift,</p>
+      <p>\[
+      \Delta L_{\mathrm{tot}}=\Delta L_1+\Delta L_2,\qquad \Delta L_1>0,\ \Delta L_2<0.
+      \]</p>
+    </section>
+
+    <section class="card">
+      <h2>Headroom Condition</h2>
+      <p>KID2 must have enough available negative \(\Delta L_2\) swing to compensate KID1 event response.</p>
+      <p>Implemented same-temperature approximation rule in this project:</p>
+      <p>\[
+      \Delta T_{2,\mathrm{head}}
+      \ge
+      \frac{\alpha_{\phi1}R_1}{\alpha_{\phi2}R_2}\,\Delta T_{1,\mathrm{event}},
+      \]</p>
+      <p>with \(\Delta T_{2,\mathrm{head}}\) defined relative to KID2 zero-heater baseline temperature.</p>
+      <p>This is equivalent to requiring \(|\Delta L_{2,\mathrm{avail}}| \ge |\Delta L_{1,\mathrm{event}}|\) under the same-temperature extrapolation assumption for \(\alpha_\phi\).</p>
+    </section>
+
+    <section class="card">
+      <h2>Why It Could Help</h2>
+      <ul>
+        <li>Keeps resonator operating point near bias tone during events (larger linear dynamic range).</li>
+        <li>Reduces large detuning excursions that can otherwise compress response.</li>
+        <li>Potentially preserves readout gain over wider event amplitudes.</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>NEP Interpretation (Model Assumptions)</h2>
+      <p>Under the current linear model assumptions, this compensation can improve dynamic-range behavior without necessarily degrading phase-channel NEP:</p>
+      <ul>
+        <li>feedback appears only in the designated matrix term;</li>
+        <li>noise-source vectors are not directly feedback-dependent;</li>
+        <li>same source normalization is used for responsivity and NEP mapping.</li>
+      </ul>
+      <p>See <a href="feedback-nep-invariance.html">Feedback NEP Invariance</a> for the formal cofactor-cancellation argument in the Q-channel case.</p>
+    </section>
+
+    <section class="card">
+      <h2>Caveats</h2>
+      <ul>
+        <li>This page describes a hypothesis-level architecture, not yet a complete nonlinear validation.</li>
+        <li>Small-signal matrix agreement does not guarantee large-signal lock robustness.</li>
+        <li>Practical heater/readout chain noise and control implementation details can change final NEP/performance.</li>
+      </ul>
+    </section>
+  </main>
+</body>
+</html>
+
