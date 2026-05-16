@@ -31,6 +31,7 @@ digraph wiki {
   "noise-tls.html";
   "paper-transform-summary.html";
   "performance.html";
+  "phi-second-order-feedback.html";
   "physics.html";
   "pileup-analysis.html";
   "project.html";
@@ -80,6 +81,7 @@ digraph wiki {
   "index.html" -> "tls-capacitor-to-phase.html";
   "m-matrix.html" -> "mt-stability.html";
   "m-matrix.html" -> "paper-transform-summary.html";
+  "m-matrix.html" -> "phi-second-order-feedback.html";
   "nep-to-sigma.html" -> "signal-processing.html";
   "noise-johnson-sf.html" -> "noise-johnson.html";
   "noise-johnson-sf.html" -> "noise-tls.html";
