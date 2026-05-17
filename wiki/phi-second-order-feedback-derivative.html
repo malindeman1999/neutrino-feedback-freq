@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Second-Order Phi Feedback (Derivative Heater) | TKID Neutrino Detector Project Wiki</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['\\(', '\\)'], ['$', '$']] }
+    };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+</head>
+<body>
+  <header class="hero">
+    <h1>Second-Order Phi Feedback (Derivative Heater)</h1>
+    <p>Duplicate of the phi-second-order feedback derivation, but with heater feedback proportional to \(\dot\phi\) instead of \(\phi\).</p>
+  </header>
+
+  <nav class="nav">
+    <a href="index.html">Home</a>
+    <a href="project.html">Project</a>
+    <a href="theory.html">Theory</a>
+    <a href="noise-sources.html">Noise Sources</a>
+    <a href="signal-processing.html">Signal Processing</a>
+    <a href="python-estimates.html">Python Estimates</a>
+    <a href="phi-second-order-feedback.html">Phi 2nd Order (Kp)</a>
+    <a href="phi-second-order-feedback-derivative.html" class="active">Phi 2nd Order (Kd)</a>
+  </nav>
+
+  <main class="container">
+    <section class="card">
+      <h2>Starting Point</h2>
+      <p>Use the same state \(y=[r,\phi,T_1,T_2]^T\) and linearized matrix structure as <a href="phi-second-order-feedback.html">Phi 2nd Order</a>, but replace proportional heater law with derivative heater law:</p>
+      <p>\[
+      P_{\rm heater}=K_d\,\dot\phi.
+      \]</p>
+      <p>In frequency domain this is \(P_{\rm heater}=i\omega K_d\phi\). Therefore the row-4/col-2 matrix entry becomes</p>
+      <p>\[
+      m_{42}=Q_r x(\beta_A+2)P_2 - i\omega K_d
+      \]</p>
+      <p>instead of \(Q_r x(\beta_A+2)P_2-K_{\rm fb}\).</p>
+    </section>
+
+    <section class="card">
+      <h2>Coupled \(\phi\)-\(T_2\) Equations</h2>
+      <p>The row-2 phase equation is unchanged:</p>
+      <p>\[
+      \frac{2Q_i}{\omega_0}\dot\phi
+      +
+      \frac{4Q_iQ_r x}{\omega_0}\dot r
+      -
+      \beta_\phi r
+      +
+      \left(\frac{Q_i}{Q_r}+4Q_iQ_r x^2+2Q_r x\beta_\phi\right)\phi
+      -
+      \frac{2\alpha_\phi}{T_0}T_1
+      -
+      \frac{2\alpha_{\phi2}}{T_{02}}T_2
+      =0.
+      \]</p>
+      <p>The row-4 thermal equation becomes</p>
+      <p>\[
+      C_2\dot T_2
+      +
+      \left(G_2-\frac{P_2\alpha_{A2}}{T_{02}}\right)T_2
+      +
+      Q_r x(\beta_A+2)P_2\,\phi
+      -
+      K_d\dot\phi
+      -
+      \left(1+\frac{\beta_A}{2}\right)P_2 r
+      =0.
+      \]</p>
+    </section>
+
+    <section class="card">
+      <h2>Eliminated Second-Order Equation</h2>
+      <p>Eliminating \(T_2\) again yields</p>
+      <p>\[
+      M_\phi\ddot\phi+\Gamma_\phi\dot\phi+K_\phi\phi=S_\phi(t),
+      \]</p>
+      <p>with</p>
+      <p>\[
+      M_\phi=C_2\frac{2Q_i}{\omega_0},
+      \]</p>
+      <p>\[
+      \Gamma_\phi
+      =
+      C_2\left(\frac{Q_i}{Q_r}+4Q_iQ_r x^2+2Q_r x\beta_\phi\right)
+      +
+      \left(G_2-\frac{P_2\alpha_{A2}}{T_{02}}\right)\frac{2Q_i}{\omega_0}
+      -
+      \frac{2\alpha_{\phi2}}{T_{02}}K_d,
+      \]</p>
+      <p>\[
+      K_\phi
+      =
+      \left(G_2-\frac{P_2\alpha_{A2}}{T_{02}}\right)
+      \left(\frac{Q_i}{Q_r}+4Q_iQ_r x^2+2Q_r x\beta_\phi\right)
+      +
+      \frac{2\alpha_{\phi2}}{T_{02}}Q_r x(\beta_A+2)P_2.
+      \]</p>
+      <p>Compared to proportional heater feedback, derivative heater feedback shifts \(\Gamma_\phi\) (damping) rather than \(K_\phi\) (spring), under this sign convention.</p>
+    </section>
+
+    <section class="card">
+      <h2>Simplified Form for \(\beta_A=\beta_\phi=\alpha_{A2}=0\) and \(x=0\)</h2>
+      <p>The coupled equations reduce to</p>
+      <p>\[
+      \frac{2Q_i}{\omega_0}\dot\phi
+      +
+      \frac{Q_i}{Q_r}\phi
+      -
+      \frac{2\alpha_\phi}{T_0}T_1
+      -
+      \frac{2\alpha_{\phi2}}{T_{02}}T_2
+      =0,
+      \]</p>
+      <p>\[
+      C_2\dot T_2
+      +
+      G_2T_2
+      -
+      K_d\dot\phi
+      =0.
+      \]</p>
+      <p>After eliminating \(T_2\):</p>
+      <p>\[
+      M_\phi\ddot\phi+\Gamma_\phi\dot\phi+K_\phi\phi=S_\phi(t),
+      \]</p>
+      <p>\[
+      M_\phi=C_2\frac{2Q_i}{\omega_0},
+      \qquad
+      \Gamma_\phi=C_2\frac{Q_i}{Q_r}+G_2\frac{2Q_i}{\omega_0}-\frac{2\alpha_{\phi2}}{T_{02}}K_d,
+      \qquad
+      K_\phi=G_2\frac{Q_i}{Q_r}.
+      \]</p>
+      <p>So in this special case, \(K_d\) changes damping only, while spring constant comes from the plant term \(G_2Q_i/Q_r\).</p>
+    </section>
+
+    <section class="card">
+      <h2>Design Targets for Ho Pulses</h2>
+      <p>For a target \(|\phi|_{\max}<1\) rad and return time constant \(<1\) ms, use the reduced second-order form and tune near critical damping:</p>
+      <p>\[
+      \Gamma_\phi^2\approx4M_\phi K_\phi,
+      \qquad
+      \tau_{\rm crit}=\frac{2M_\phi}{\Gamma_\phi}.
+      \]</p>
+      <ul>
+        <li>Increase effective stiffness \(K_\phi\) (plant + optional proportional path) to reduce displacement scale.</li>
+        <li>Set \(K_d\) to place \(\Gamma_\phi\) near critical damping and suppress ringing.</li>
+        <li>Validate with real electronics bandwidth/noise/delay because derivative paths are phase-margin sensitive.</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>Assumptions</h2>
+      <ul>
+        <li>Same linearization as the main page: only constant and \(i\omega\) terms in \(M(\omega)\).</li>
+        <li>No extra heater state is introduced here; heater law is modeled as ideal instantaneous \(P_{\rm heater}\propto\dot\phi\).</li>
+        <li>If you later include controller or driver poles, add those as extra dynamic states.</li>
+      </ul>
+      <p>Related pages: <a href="phi-second-order-feedback.html">Phi 2nd Order (Kp)</a>, <a href="m-matrix.html">M Matrix</a>, <a href="mt-stability.html">Mt Stability</a>.</p>
+    </section>
+  </main>
+</body>
+</html>
