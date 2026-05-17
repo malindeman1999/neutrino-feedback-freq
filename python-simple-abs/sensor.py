@@ -87,6 +87,7 @@ class SensorInputs:
     series_L2_H: float = 0.0
     series_R2_Ohm: float = 0.0
     feedback_heater_gain_W_per_rad: float = 0.0
+    feedback_heater_derivative_gain_W_s_per_rad: float = 0.0
     f_demod_Hz: float = 0.0
 
 
@@ -139,6 +140,7 @@ class Version1SensorInputs(SensorInputs):
     series_L2_H: float = 4.880949436233082e-07
     series_R2_Ohm: float = 0.061335819565652365
     feedback_heater_gain_W_per_rad: float = 7.0e-15
+    feedback_heater_derivative_gain_W_s_per_rad: float = 0.0
     f_demod_Hz: float = 0.0
 
 @dataclass(frozen=True)
@@ -1411,7 +1413,15 @@ class Sensor:
 
         second_active = any(
             v > 0.0
-            for v in (c2, g2, p2, abs(self.alpha_A2), abs(self.alpha_phi2), abs(self.feedback_heater_gain_W_per_rad))
+            for v in (
+                c2,
+                g2,
+                p2,
+                abs(self.alpha_A2),
+                abs(self.alpha_phi2),
+                abs(self.feedback_heater_gain_W_per_rad),
+                abs(self.feedback_heater_derivative_gain_W_s_per_rad),
+            )
         )
 
         m31 = -((1.0 + self.beta_A / 2.0) * p1)
@@ -1421,7 +1431,11 @@ class Sensor:
 
         if second_active:
             m41 = -((1.0 + self.beta_A / 2.0) * p2)
-            m42 = +(q * x * (self.beta_A + 2.0) * p2) - self.feedback_heater_gain_W_per_rad
+            m42 = (
+                +(q * x * (self.beta_A + 2.0) * p2)
+                - self.feedback_heater_gain_W_per_rad
+                - (1.0j * omega * self.feedback_heater_derivative_gain_W_s_per_rad)
+            )
             m43 = 0.0 + 0.0j
             m44 = (1.0j * omega * c2) + g2 - (p2 * self.alpha_A2 / t02)
         else:
@@ -1454,6 +1468,7 @@ class Sensor:
                 abs(self.alpha_A2),
                 abs(self.alpha_phi2),
                 abs(self.feedback_heater_gain_W_per_rad),
+                abs(self.feedback_heater_derivative_gain_W_s_per_rad),
             )
         )
 

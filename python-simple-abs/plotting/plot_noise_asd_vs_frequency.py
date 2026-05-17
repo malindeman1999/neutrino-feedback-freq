@@ -76,6 +76,7 @@ INPUT_SECTIONS = [
             "series_L2_ratio",
             "series_R2_ratio",
             "feedback_heater_gain_W_per_rad",
+            "feedback_heater_derivative_gain_W_s_per_rad",
         ],
     ),
 ]
@@ -89,6 +90,7 @@ KID2_KEYS = (
     "series_L2_ratio",
     "series_R2_ratio",
     "feedback_heater_gain_W_per_rad",
+    "feedback_heater_derivative_gain_W_s_per_rad",
 )
 KID2_ACTIVITY_KEYS = (
     "heat_capacity2_ratio",
@@ -98,6 +100,7 @@ KID2_ACTIVITY_KEYS = (
     "series_L2_ratio",
     "series_R2_ratio",
     "feedback_heater_gain_W_per_rad",
+    "feedback_heater_derivative_gain_W_s_per_rad",
 )
 
 
@@ -129,7 +132,8 @@ LABELS = {
     "alpha_phi2": "alpha_phi2",
     "series_L2_ratio": "L2/L1",
     "series_R2_ratio": "R2/R1",
-    "feedback_heater_gain_W_per_rad": "Kfb [W/rad]",
+    "feedback_heater_gain_W_per_rad": "Kp [W/rad]",
+    "feedback_heater_derivative_gain_W_s_per_rad": "Kd [W*s/rad]",
 }
 
 RULE_SPECS: list[tuple[str, str]] = [
@@ -383,6 +387,9 @@ class NoiseGui:
         ttk.Button(button_frame, text="Event Response", command=self._open_event_response).grid(
             row=2, column=0, columnspan=3, padx=2, pady=2, sticky="ew"
         )
+        ttk.Button(button_frame, text="Auto Critical Kd", command=self._set_critical_kd).grid(
+            row=3, column=0, columnspan=3, padx=2, pady=2, sticky="ew"
+        )
 
         for i in range(3):
             button_frame.columnconfigure(i, weight=1)
@@ -570,6 +577,47 @@ class NoiseGui:
             f"{heater2_pW:.3g} pW"
         )
 
+    def _critical_kd_value(self, s: Sensor) -> float:
+        if not s.second_kid_active:
+            return float("nan")
+        qi = float(s.Qi_eff)
+        q = float(s.Qr)
+        w0 = 2.0 * pi * float(s.f0_Hz)
+        if w0 <= 0.0 or q <= 0.0 or qi <= 0.0 or s.T02_eff_K <= 0.0:
+            return float("nan")
+        x = float(s.x)
+        c2 = max(float(s.heat_capacity2_eV_per_mK), 0.0) * 1.0e3 * 1.602176634e-19
+        gbar = max(float(s.G2_W_per_K), 0.0) - (float(s.P2_W) * float(s.alpha_A2) / float(s.T02_eff_K))
+        b = (qi / q) + (4.0 * qi * q * x * x) + (2.0 * q * x * float(s.beta_phi))
+        cphi2 = 2.0 * float(s.alpha_phi2) / float(s.T02_eff_K)
+        kp = float(s.feedback_heater_gain_W_per_rad)
+        m = c2 * (2.0 * qi / w0)
+        k = (gbar * b) + (cphi2 * (q * x * (float(s.beta_A) + 2.0) * float(s.P2_W) - kp))
+        gamma0 = (c2 * b) + (gbar * (2.0 * qi / w0))
+        if m <= 0.0 or k <= 0.0 or abs(cphi2) <= 0.0:
+            return float("nan")
+        gamma_crit = 2.0 * np.sqrt(m * k)
+        return float((gamma0 - gamma_crit) / cphi2)
+
+    def _set_critical_kd(self) -> None:
+        prev = dict(self.current)
+        try:
+            self.current = self._read_fields()
+            s = self._build_sensor(self.current)
+            kd_crit = self._critical_kd_value(s)
+            if not np.isfinite(kd_crit):
+                self._set_status("Auto Critical Kd unavailable for current settings (requires stable positive M and K)")
+                return
+            self.current["feedback_heater_derivative_gain_W_s_per_rad"] = float(kd_crit)
+            self._write_fields(self.current)
+            self._recompute_and_draw()
+            self._push_undo(prev)
+            self._set_status(f"Set Kd to critical damping estimate: {kd_crit:.6g} W*s/rad")
+        except Exception as exc:
+            self.current = prev
+            self._write_fields(self.current)
+            self._set_status(f"Auto Critical Kd failed: {exc}")
+
     @staticmethod
     def _settings_match(a: dict[str, float], b: dict[str, float], rtol: float = 1.0e-12, atol: float = 0.0) -> bool:
         return all(np.isclose(float(a[k]), float(b[k]), rtol=rtol, atol=atol) for k in INPUT_KEYS)
@@ -626,6 +674,7 @@ class NoiseGui:
             kwargs["series_L2_H"] = 0.0
             kwargs["series_R2_Ohm"] = 0.0
             kwargs["feedback_heater_gain_W_per_rad"] = 0.0
+            kwargs["feedback_heater_derivative_gain_W_s_per_rad"] = 0.0
         return Sensor(Version1SensorInputs(**kwargs))
 
     def _set_kid2_fields_enabled(self) -> None:
@@ -650,6 +699,7 @@ class NoiseGui:
         base["series_R2_ratio"] = 1.0
         base["event_power_fraction_kid1"] = 0.5
         base["feedback_heater_gain_W_per_rad"] = 0.0
+        base["feedback_heater_derivative_gain_W_s_per_rad"] = 0.0
         self.current = base
         self._write_fields(self.current)
 
@@ -709,6 +759,7 @@ class NoiseGui:
                 self.current["series_R2_ratio"] = 1.0
                 self.current["event_power_fraction_kid1"] = 0.5
                 self.current["feedback_heater_gain_W_per_rad"] = 0.0
+                self.current["feedback_heater_derivative_gain_W_s_per_rad"] = 0.0
                 self._write_fields(self.current)
             except Exception:
                 pass
@@ -741,6 +792,7 @@ class NoiseGui:
             self.current["series_R2_ratio"] = 1.0
             self.current["event_power_fraction_kid1"] = 0.5
             self.current["feedback_heater_gain_W_per_rad"] = 0.0
+            self.current["feedback_heater_derivative_gain_W_s_per_rad"] = 0.0
             self.kid2_mode_var.set("Dual KID")
             self._write_fields(self.current)
             self._set_kid2_fields_enabled()

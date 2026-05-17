@@ -39,7 +39,10 @@
       <p>\[
       N_{\mathrm{sig}}=\begin{bmatrix}0&0&P_{\mathrm{event}}&0\end{bmatrix}^T.
       \]</p>
-      <p>In the current model the heater feedback gain \(K_{\mathrm{fb}}\) appears only in the Q column of the matrix, specifically in \(m_{42}\).</p>
+      <p>In the current model heater feedback appears only in the Q column of the matrix, specifically in \(m_{42}\), through \(K_p\) and \(K_d\):</p>
+      <p>\[
+      m_{42}=Q_r x(\beta_A+2)P_2-K_p-i\omega K_d.
+      \]</p>
     </section>
 
     <section class="card">
@@ -79,7 +82,7 @@
       |C_{32}|
       }.
       \]</p>
-      <p>The common determinant cancels. Since the cofactors \(C_{j2}\) do not contain the Q-column entries, this NEP expression is independent of \(K_{\mathrm{fb}}\) when the source vectors are fixed.</p>
+      <p>The common determinant cancels. Since the cofactors \(C_{j2}\) do not contain the Q-column entries, this NEP expression is independent of \(K_p\) and \(K_d\) when the source vectors are fixed.</p>
     </section>
 
     <section class="card">
@@ -96,7 +99,7 @@
       |C_{32}|^2
       }.
       \]</p>
-      <p>Thus the Q-channel NEP spectrum and energy resolution derived from that spectrum should be invariant under changes in \(K_{\mathrm{fb}}\), provided the source vectors and integration procedure are held fixed.</p>
+      <p>Thus the Q-channel NEP spectrum and energy resolution derived from that spectrum should be invariant under changes in \(K_p\) and \(K_d\), provided the source vectors and integration procedure are held fixed.</p>
     </section>
 
     <section class="card">
@@ -105,7 +108,7 @@
         <li>The output channel is Q/phase, \(Y_2\).</li>
         <li>The event signal is power injected into island 1, \(N_3\).</li>
         <li>Feedback enters only through \(m_{42}\), which is in the Q column.</li>
-        <li>Noise source vectors do not depend on \(K_{\mathrm{fb}}\).</li>
+        <li>Noise source vectors do not depend on \(K_p\) or \(K_d\).</li>
         <li>No additional feedback electronics, heater-current, or readout noise is injected through the feedback path.</li>
         <li>The same fixed frequency grid and estimator are used when comparing feedback gains.</li>
       </ul>
@@ -113,7 +116,7 @@
 
     <section class="card">
       <h2>Failure Modes</h2>
-      <p>If computed Q-channel NEP changes with \(K_{\mathrm{fb}}\), one of the assumptions above has been violated or the implementation is not preserving the cofactor cancellation. Common causes are:</p>
+      <p>If computed Q-channel NEP changes with \(K_p\) or \(K_d\), one of the assumptions above has been violated or the implementation is not preserving the cofactor cancellation. Common causes are:</p>
       <ul>
         <li>A noise vector depends directly or indirectly on feedback gain.</li>
         <li>Noise sources are combined coherently before propagation instead of independently in power.</li>

@@ -87,17 +87,18 @@
       i\omega C_1+G_1-\dfrac{P_1\alpha_{A1}}{T_{01}} &
       0\\[1.0em]
       -\left(1+\dfrac{\beta_A}{2}\right)P_2 &
-      Qx(\beta_A+2)P_2-K_{\mathrm{fb}} &
+      Qx(\beta_A+2)P_2-K_p-i\omega K_d &
       0 &
       i\omega C_2+G_2-\dfrac{P_2\alpha_{A2}}{T_{02}}
       \end{bmatrix}.
       \]</p>
+      <p>Here \(K_p\) is heater proportional gain (\(\mathrm{W/rad}\)) and \(K_d\) is heater derivative gain (\(\mathrm{W\cdot s/rad}\)).</p>
       <p>Here \(P_1+P_2=P_0\), with \(P_j\) split by series loss (\(P_j\propto R_j\)).</p>
       <p>This is the exact matrix structure currently implemented in <a href="../python-simple-abs/sensor.py"><code>Sensor.m_matrix()</code></a>.</p>
       <p>Detailed branch-power split and its use in matrix/noise normalization: <a href="power-partitioning.html">Power Partitioning</a>.</p>
       <p>Algebraic full-circle proof (3x3 -> 4x4 split -> 3x3 reduction): <a href="dual-to-single-reduction.html">Dual-to-Single Reduction</a>.</p>
       <p>Microwave-basis check that SB->IQ conversion is identical in single vs halfed dual: <a href="sb-to-iq-equivalence.html">SB-to-IQ Equivalence</a>.</p>
-      <p>For the cofactor argument showing why Q-channel NEP should be independent of \(K_{\mathrm{fb}}\) when feedback appears only in the Q column, see <a href="feedback-nep-invariance.html">Feedback NEP Invariance</a>.</p>
+      <p>For the cofactor argument showing why Q-channel NEP should be independent of \(K_p\) and \(K_d\) when feedback appears only in the Q column, see <a href="feedback-nep-invariance.html">Feedback NEP Invariance</a>.</p>
     </section>
 
     <section class="card">

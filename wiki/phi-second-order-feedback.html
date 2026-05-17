@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Second-Order Phi Feedback Equation | TKID Neutrino Detector Project Wiki</title>
+  <title>Second-Order Phi Feedback Equation (Kp-Only) | TKID Neutrino Detector Project Wiki</title>
   <link rel="stylesheet" href="styles.css" />
   <script>
     window.MathJax = {
@@ -14,8 +14,8 @@
 </head>
 <body>
   <header class="hero">
-    <h1>Second-Order Phi Feedback Equation</h1>
-    <p>Eliminating \(T_2\) from the dual-KID model to expose the damped-oscillator structure of the feedback loop.</p>
+    <h1>Second-Order Phi Feedback Equation (Kp-Only)</h1>
+    <p>Eliminating \(T_2\) from the dual-KID model to expose the damped-oscillator structure for proportional heater feedback (\(K_d=0\)).</p>
   </header>
 
   <nav class="nav">
@@ -63,7 +63,11 @@
       m_{41} & m_{42} & 0 & m_{44}
       \end{bmatrix}.
       \]</p>
-      <p>In the current model, the entries are</p>
+      <p>The full model allows both proportional and derivative heater feedback in \(m_{42}\):</p>
+      <p>\[
+      m_{42}=Q_r x(\beta_A+2)P_2-K_p-i\omega K_d.
+      \]</p>
+      <p>This page is the proportional-only specialization \(K_d=0\), so the entries used here are</p>
       <p>\[
       m_{11}=\frac{2 i \omega Q_i}{\omega_0}+\frac{Q_i}{Q_r}+\beta_A+4Q_iQ_r x^2
       \]</p>
@@ -101,7 +105,7 @@
       m_{41}=-\left(1+\frac{\beta_A}{2}\right)P_2
       \]</p>
       <p>\[
-      m_{42}=Q_r x(\beta_A+2)P_2-K_{\rm fb}
+      m_{42}=Q_r x(\beta_A+2)P_2-K_p
       \]</p>
       <p>\[
       m_{44}=i\omega C_2+G_2-\frac{P_2\alpha_{A2}}{T_{02}}.
@@ -140,7 +144,7 @@
       +
       \left(G_2-\frac{P_2\alpha_{A2}}{T_{02}}\right)T_2
       +
-      \left(Q_r x(\beta_A+2)P_2-K_{\rm fb}\right)\phi
+      \left(Q_r x(\beta_A+2)P_2-K_p\right)\phi
       -
       \left(1+\frac{\beta_A}{2}\right)P_2 r
       =
@@ -175,7 +179,7 @@
       \left(\frac{Q_i}{Q_r}+4Q_iQ_r x^2+2Q_r x\,\beta_\phi\right)
       +
       \frac{2\alpha_{\phi2}}{T_{02}}
-      \left(Q_r x(\beta_A+2)P_2-K_{\rm fb}\right).
+      \left(Q_r x(\beta_A+2)P_2-K_p\right).
       \]</p>
       <p>The deterministic source term is</p>
       <p>\[
@@ -231,7 +235,7 @@
         <li>\(G_2\) increases the damping term and also contributes to the restoring term.</li>
         <li>\(\alpha_{\phi2}\) controls how strongly KID2 temperature motion pulls the phase channel.</li>
         <li>\(\alpha_{A2}\) enters through the electrothermal correction \(P_2\alpha_{A2}/T_{02}\).</li>
-        <li>\(K_{\rm fb}\) enters only through the restoring term \(K_\phi\), via the factor \(- (2\alpha_{\phi2}/T_{02}) K_{\rm fb}\).</li>
+        <li>\(K_p\) enters only through the restoring term \(K_\phi\), via the factor \(- (2\alpha_{\phi2}/T_{02}) K_p\).</li>
       </ul>
     </section>
 
@@ -254,7 +258,7 @@
       +
       G_2 T_2
       +
-      \left(-K_{\rm fb}\right)\phi
+      \left(-K_p\right)\phi
       =
       0.
       \]</p>
@@ -278,7 +282,7 @@
       =
       G_2\frac{Q_i}{Q_r}
       -
-      \frac{2\alpha_{\phi2}}{T_{02}}K_{\rm fb}.
+      \frac{2\alpha_{\phi2}}{T_{02}}K_p.
       \]</p>
       <p>The deterministic source term simplifies to</p>
       <p>\[
@@ -292,7 +296,7 @@
       \]</p>
       <p>At exact resonance, the derivative-based \(r\)-coupling terms drop out of the reduced equation, but the direct forcing term proportional to \(P_2 r\) remains because it enters through the island-2 thermal equation. This is still the cleanest form for analyzing whether the feedback branch is overdamped or underdamped. In particular, the feedback-dependent part of the restoring coefficient is</p>
       <p>\[
-      K_{\phi,\mathrm{fb}}=-\frac{2\alpha_{\phi2}}{T_{02}}K_{\rm fb}.
+      K_{\phi,\mathrm{fb}}=-\frac{2\alpha_{\phi2}}{T_{02}}K_p.
       \]</p>
       <p>So in this simplified model the heater feedback changes the effective spring constant but not the effective mass term \(M_\phi\) or the direct damping term \(\Gamma_\phi\).</p>
     </section>
@@ -313,7 +317,7 @@
       \qquad
       \Gamma_\phi=C_2\frac{Q_i}{Q_r}+G_2\frac{2Q_i}{\omega_0},
       \qquad
-      K_\phi=G_2\frac{Q_i}{Q_r}-\frac{2\alpha_{\phi2}}{T_{02}}K_{\rm fb}.
+      K_\phi=G_2\frac{Q_i}{Q_r}-\frac{2\alpha_{\phi2}}{T_{02}}K_p.
       \]</p>
       <p>Each sign condition can now be read directly in model parameters.</p>
 
@@ -335,22 +339,22 @@
       <p>\[
       \Gamma_\phi>0
       \]</p>
-      <p>automatically in the simple model. In this limit the loop cannot become anti-damped through \(K_{\rm fb}\), because \(K_{\rm fb}\) does not appear in \(\Gamma_\phi\).</p>
+      <p>automatically in the simple model. In this limit the loop cannot become anti-damped through \(K_p\), because \(K_p\) does not appear in \(\Gamma_\phi\).</p>
 
       <h3>Spring Term</h3>
       <p>\[
-      K_\phi=G_2\frac{Q_i}{Q_r}-\frac{2\alpha_{\phi2}}{T_{02}}K_{\rm fb}.
+      K_\phi=G_2\frac{Q_i}{Q_r}-\frac{2\alpha_{\phi2}}{T_{02}}K_p.
       \]</p>
       <p>This is the nontrivial sign condition. A restoring spring requires</p>
       <p>\[
-      G_2\frac{Q_i}{Q_r}-\frac{2\alpha_{\phi2}}{T_{02}}K_{\rm fb}>0.
+      G_2\frac{Q_i}{Q_r}-\frac{2\alpha_{\phi2}}{T_{02}}K_p>0.
       \]</p>
       <p>Equivalently, if \(\alpha_{\phi2}>0\),</p>
       <p>\[
-      K_{\rm fb}<\frac{G_2 Q_i T_{02}}{2 Q_r \alpha_{\phi2}}.
+      K_p<\frac{G_2 Q_i T_{02}}{2 Q_r \alpha_{\phi2}}.
       \]</p>
-      <p>So positive feedback gain reduces the spring constant, while negative feedback gain increases it. In the sign convention of this model, a sufficiently large positive \(K_{\rm fb}\) drives \(K_\phi\) through zero and turns the system from restoring to non-restoring.</p>
-      <p>If \(\alpha_{\phi2}<0\), the inequality reverses: positive \(K_{\rm fb}\) increases the spring constant and negative \(K_{\rm fb}\) decreases it.</p>
+      <p>So positive feedback gain reduces the spring constant, while negative feedback gain increases it. In the sign convention of this model, a sufficiently large positive \(K_p\) drives \(K_\phi\) through zero and turns the system from restoring to non-restoring.</p>
+      <p>If \(\alpha_{\phi2}<0\), the inequality reverses: positive \(K_p\) increases the spring constant and negative \(K_p\) decreases it.</p>
 
       <h3>Underdamped Condition</h3>
       <p>Once \(M_\phi>0\), \(\Gamma_\phi>0\), and \(K_\phi>0\), the system is a stable damped oscillator. It is specifically underdamped when</p>
@@ -362,11 +366,11 @@
       \left(C_2\frac{Q_i}{Q_r}+G_2\frac{2Q_i}{\omega_0}\right)^2
       <
       4\left(C_2\frac{2Q_i}{\omega_0}\right)
-      \left(G_2\frac{Q_i}{Q_r}-\frac{2\alpha_{\phi2}}{T_{02}}K_{\rm fb}\right).
+      \left(G_2\frac{Q_i}{Q_r}-\frac{2\alpha_{\phi2}}{T_{02}}K_p\right).
       \]</p>
-      <p>Solving this for \(K_{\rm fb}\) gives</p>
+      <p>Solving this for \(K_p\) gives</p>
       <p>\[
-      K_{\rm fb}
+      K_p
       <
       \frac{T_{02}}{2\alpha_{\phi2}}
       \left[
@@ -383,7 +387,7 @@
       <ul>
         <li>Larger \(C_2\) increases the inertia.</li>
         <li>Larger \(G_2\) increases both damping and restoring strength.</li>
-        <li>\(K_{\rm fb}\) shifts only the spring term in this limit.</li>
+        <li>\(K_p\) shifts only the spring term in this limit.</li>
       </ul>
       <p>So the first requirement is not underdamping but sign correctness: if \(K_\phi \le 0\), the equation is not a stable damped oscillator at all, regardless of the discriminant.</p>
     </section>
@@ -410,7 +414,7 @@
       \qquad
       \Gamma_\phi=C_2\frac{Q_i}{Q_r}+G_2\frac{2Q_i}{\omega_0},
       \qquad
-      K_\phi=G_2\frac{Q_i}{Q_r}-\frac{2\alpha_{\phi2}}{T_{02}}K_{\rm fb}.
+      K_\phi=G_2\frac{Q_i}{Q_r}-\frac{2\alpha_{\phi2}}{T_{02}}K_p.
       \]</p>
       <p>Substituting gives</p>
       <p>\[
@@ -423,7 +427,7 @@
       \left(C_2\frac{Q_i}{Q_r}+G_2\frac{2Q_i}{\omega_0}\right)^2
       -
       4\left(C_2\frac{2Q_i}{\omega_0}\right)
-      \left(G_2\frac{Q_i}{Q_r}-\frac{2\alpha_{\phi2}}{T_{02}}K_{\rm fb}\right)
+      \left(G_2\frac{Q_i}{Q_r}-\frac{2\alpha_{\phi2}}{T_{02}}K_p\right)
       }
       }{
       2\left(C_2\frac{2Q_i}{\omega_0}\right)
@@ -485,6 +489,7 @@
       <h2>Assumptions</h2>
       <ul>
         <li>The derivation uses the current linearized matrix structure in which \(M(\omega)\) contains only constant and \(i\omega\) terms.</li>
+        <li>This page is the \(K_d=0\) specialization of the combined \(K_p+K_d\) heater-feedback model.</li>
         <li>The equation is exact for the row-2 and row-4 subsystem of the current model, with \(r\) and \(T_1\) left as explicit source terms.</li>
         <li>If \(\beta_A=\beta_\phi=0\), all beta-dependent terms above drop out immediately.</li>
       </ul>
