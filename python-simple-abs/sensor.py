@@ -1524,13 +1524,14 @@ class Sensor:
 
     @cached_property
     def mt_pulse_shortening_ratio(self) -> float:
-        """Pulse shortening ratio: (G/C) normalized by slowest |lambda|.
+        """Pulse shortening ratio: (G/C) normalized by slowest decay rate.
 
         Defined only for stable eigenvalues. Returns NaN otherwise.
         """
         if not self.mt_stable:
             return float("nan")
-        slowest = float(np.min(np.abs(self.mt_eigenvalues)))
+        decay_rates = -np.real(self.mt_eigenvalues)
+        slowest = float(np.min(decay_rates))
         gc_freq = self.G_W_per_K / self.C_J_per_K
         if slowest == 0.0:
             return float("nan")

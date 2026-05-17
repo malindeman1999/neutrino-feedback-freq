@@ -564,6 +564,13 @@ class NoiseGui:
         pileup_pct = 100.0 * float(s.pileup_probability_max)
         shorten = float(s.mt_pulse_shortening_ratio)
         heater2_pW = 1.0e12 * float(s.heater2_dc_power_W)
+        eigs = np.array(s.mt_eigenvalues, dtype=complex)
+        pulse_tau_s = float("nan")
+        if s.mt_stable:
+            slowest_decay_per_s = float(np.min(-np.real(eigs)))
+            if slowest_decay_per_s > 0.0:
+                pulse_tau_s = 1.0 / slowest_decay_per_s
+        pulse_tau_txt = f"{pulse_tau_s:.3g} s" if np.isfinite(pulse_tau_s) else "n/a"
         self.summary_var.set(
             "Event dT (island): "
             f"{delta_t_mk:.3g} mK\n"
@@ -573,6 +580,8 @@ class NoiseGui:
             f"{pileup_pct:.3g}%\n"
             "Pulse shortening factor: "
             f"{shorten:.3g}\n"
+            "Event pulse time: "
+            f"{pulse_tau_txt}\n"
             "KID2 heater power: "
             f"{heater2_pW:.3g} pW"
         )

@@ -505,7 +505,7 @@ def main() -> None:
         "mt_eig4_per_s": r"\(\lambda_4(M_t)\)",
         "mt_max_real_part_per_s": r"\(\max\Re[\lambda(M_t)]\)",
         "mt_stable": r"\(1\ \mathrm{if}\ \Re[\lambda_i(M_t)]<0\ \forall i\)",
-        "mt_pulse_shortening_ratio": r"\(\rho_{\mathrm{short}}=\dfrac{G/C}{\min_i|\lambda_i(M_t)|}\ \mathrm{if\ stable}\)",
+        "mt_pulse_shortening_ratio": r"\(\rho_{\mathrm{short}}=\dfrac{G/C}{\min_i\left(-\Re[\lambda_i(M_t)]\right)}\ \mathrm{if\ stable}\)",
         "passive_tls_iq_transfer_phi_100hz_abs": r"\(|H_{\mathrm{TLS,passive}}|=\left|[M_{\mathrm{passive}}^{-1}(0,i)^T]_{\phi}\right|\)",
         "tls_iq_source_asd_100hz_per_rtHz": r"\(\sqrt{S_{N,\mathrm{TLS}}}=\sqrt{S_{\phi,\mathrm{TLS}}}/|H_{\mathrm{TLS,passive}}|\)",
         "sphi_johnson_full_per_hz": r"\(S_{\phi,J}^{\mathrm{full}}=\left|[Y_{J,A}]_{\phi}\right|^2+\left|[Y_{J,\phi}]_{\phi}\right|^2\)",
