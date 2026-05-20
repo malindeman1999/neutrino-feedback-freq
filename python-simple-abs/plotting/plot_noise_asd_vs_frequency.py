@@ -507,32 +507,10 @@ class NoiseGui:
         self._set_kid2_fields_enabled()
 
     def _load_startup_settings(self) -> tuple[dict[str, float], dict[str, float], str | None, dict[str, str], dict[str, str]]:
-        if STARTUP_STATE_FILE.exists():
-            try:
-                with STARTUP_STATE_FILE.open("rb") as f:
-                    state = pickle.load(f)
-                if isinstance(state, dict):
-                    source = state.get("source_path")
-                    if isinstance(source, str) and source:
-                        source_path = Path(source)
-                        vals = self._load_settings_file(source_path)
-                        if vals is not None:
-                            ui_state: dict[str, str] = self._extract_ui_state(state)
-                            try:
-                                with source_path.open("rb") as sf:
-                                    loaded = pickle.load(sf)
-                                file_ui = self._extract_ui_state(loaded)
-                                if file_ui:
-                                    ui_state = file_ui
-                            except Exception:
-                                pass
-                            return vals, dict(vals), source_path.name, ui_state, dict(ui_state)
-            except Exception:
-                pass
-
-        vals = self._load_saved_or_defaults()
-        name = SETTINGS_FILE.name if SETTINGS_FILE.exists() else None
-        return vals, dict(vals), name, {}, {}
+        # Startup should always reflect current code defaults.
+        # Saved presets remain available via explicit Load/Restore actions.
+        vals = dict(self.defaults)
+        return vals, dict(vals), None, {}, {}
 
     def _persist_startup_state(self, source_path: Path) -> None:
         try:

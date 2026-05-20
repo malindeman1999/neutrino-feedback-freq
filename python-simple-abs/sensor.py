@@ -20,8 +20,15 @@ K_B = 1.380649e-23
 MU0 = 4.0e-7 * pi
 J_PER_EV = 1.602176634e-19
 N_A = 6.02214076e23
+R_GAS = 8.314462618
 RHO_AU_KG_PER_M3 = 19300.0
 M_AU_KG_PER_MOL = 0.19696657
+RHO_HO_KG_PER_M3 = 8795.0
+M_HO_KG_PER_MOL = 0.16293
+GAMMA_HO_J_PER_MOLK2 = 10.0e-3
+GAMMA_AU_J_PER_MOLK2 = 0.729e-3
+THETA_D_HO_K = 165.0
+THETA_D_AU_K = 170.0
 HO163_HALF_LIFE_Y = 4570.0
 SECONDS_PER_YEAR = 365.25 * 24.0 * 3600.0
 
@@ -97,8 +104,8 @@ class Version1SensorInputs(SensorInputs):
 
     T0_K: float = 0.040
     Tb_K: float = 0.020
-    heat_capacity_eV_per_mK: float = 15.0
-    ho_in_au_atomic_fraction: float = 0.03
+    heat_capacity_eV_per_mK: float = 3.0
+    ho_in_au_atomic_fraction: float = 1.0
     ho_decay_energy_J: float = 4.5e-16
     kid_length_m: float = 220e-6
     kid_width_m: float = 220e-6
@@ -106,21 +113,21 @@ class Version1SensorInputs(SensorInputs):
     leg_count: int = 4
     leg_width_m: float = 0.50e-6
     cap_thickness_m: float = 1.0e-6
-    membrane_thickness_m: float = 0.25e-6
+    membrane_thickness_m: float = 0.3e-6
     cv_absorber_J_per_m3K: float = 0.075
     kappa_leg_W_per_mK: float = 1.5e-3
     thermal_link_exponent_n: float = 3.0
     asd_deltaC_over_C_tls_100hz_per_rtHz: float = 1.0e-9
     tls_beta: float = 0.5
     f0_Hz: float = 1.0e9
-    Qi: float = 50000.0
-    Qc: float = 50000.0
+    Qi: float = 250000.0
+    Qc: float = 250000.0
     tau_qp_s: float = 5.0e-8
-    kinetic_inductance_fraction: float = 0.5
+    kinetic_inductance_fraction: float = 0.0
     kid_trace_length_m: float = 10.0e-3
     kid_trace_width_m: float = 2.0e-6
     alpha_A: float = 0.1
-    alpha_phi: float = 140.0
+    alpha_phi: float = 68.0
     beta_A: float = 0.0
     beta_phi: float = 0.0
     Tc_K: float = 2.0
@@ -132,15 +139,15 @@ class Version1SensorInputs(SensorInputs):
     detuning_widths: float = 0.1
     nep_sufficiency_percent: float = 10.0
     event_power_fraction_kid1: float = 0.5
-    heater2_offset_dBm: float = -1000.0
-    heat_capacity2_eV_per_mK: float = 4.5
-    G2_W_per_K: float = 8.012820512820513e-13
+    heater2_offset_dBm: float = -95.0
+    heat_capacity2_eV_per_mK: float = 3.0
+    G2_W_per_K: float = 2.403846153846154e-12
     alpha_A2: float = 0.1
-    alpha_phi2: float = 150.0
-    series_L2_H: float = 4.880949436233082e-07
-    series_R2_Ohm: float = 0.061335819565652365
-    feedback_heater_gain_W_per_rad: float = 7.0e-15
-    feedback_heater_derivative_gain_W_s_per_rad: float = 0.0
+    alpha_phi2: float = 68.0
+    series_L2_H: float = 1.2202373590582704e-07
+    series_R2_Ohm: float = 0.0030667909782826183
+    feedback_heater_gain_W_per_rad: float = -1.0e-10
+    feedback_heater_derivative_gain_W_s_per_rad: float = -5.0e-16
     f_demod_Hz: float = 0.0
 
 @dataclass(frozen=True)
@@ -179,8 +186,13 @@ class Sensor:
 
     @cached_property
     def ho_number_density_per_m3(self) -> float:
-        """Ho number density from chosen Ho/Au atomic fraction."""
-        return self.ho_in_au_atomic_fraction * self.au_number_density_per_m3
+        """Ho number density from atomic-fraction mixture molar volume."""
+        x = float(min(1.0, max(0.0, self.ho_in_au_atomic_fraction)))
+        v_ho = M_HO_KG_PER_MOL / RHO_HO_KG_PER_M3
+        v_au = M_AU_KG_PER_MOL / RHO_AU_KG_PER_M3
+        v_mix = max((x * v_ho) + ((1.0 - x) * v_au), 1.0e-30)
+        mol_atoms_per_m3 = 1.0 / v_mix
+        return x * mol_atoms_per_m3 * N_A
 
     @cached_property
     def ho_decay_constant_per_s(self) -> float:
@@ -195,8 +207,25 @@ class Sensor:
 
     @cached_property
     def absorber_volume_m3(self) -> float:
-        """Absorber volume implied by heat capacity and absorber material c_v."""
-        return self.C_J_per_K / self.cv_absorber_J_per_m3K
+        """Absorber volume from Ho/Au alloy volumetric heat capacity at T0."""
+        return self.C_J_per_K / self.absorber_cv_ho_au_J_per_m3K
+
+    @cached_property
+    def absorber_cv_ho_au_J_per_m3K(self) -> float:
+        """Ho/Au alloy volumetric heat capacity from electronic + Debye phonon terms."""
+        x = float(min(1.0, max(0.0, self.ho_in_au_atomic_fraction)))
+        t = max(self.T0_K, 1.0e-12)
+        v_ho = M_HO_KG_PER_MOL / RHO_HO_KG_PER_M3
+        v_au = M_AU_KG_PER_MOL / RHO_AU_KG_PER_M3
+        v_mix = max((x * v_ho) + ((1.0 - x) * v_au), 1.0e-30)
+        mol_atoms_per_m3 = 1.0 / v_mix
+        n_ho = x * mol_atoms_per_m3
+        n_au = (1.0 - x) * mol_atoms_per_m3
+        beta_ho = (12.0 * pi**4 / 5.0) * R_GAS / (THETA_D_HO_K**3)
+        beta_au = (12.0 * pi**4 / 5.0) * R_GAS / (THETA_D_AU_K**3)
+        c_ho = n_ho * (GAMMA_HO_J_PER_MOLK2 * t + beta_ho * t**3)
+        c_au = n_au * (GAMMA_AU_J_PER_MOLK2 * t + beta_au * t**3)
+        return max(c_ho + c_au, 1.0e-30)
 
     @cached_property
     def absorber_edge_m(self) -> float:
