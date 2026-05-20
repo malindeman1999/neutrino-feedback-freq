@@ -677,9 +677,10 @@ class Sensor:
 
     @cached_property
     def nj2_thermal_scale(self) -> float:
-        if self.P2_W <= 0.0:
+        p2_total = self.P2_W + self.heater2_offset_power_W
+        if p2_total <= 0.0:
             return 0.0
-        return sqrt(4.0 * K_B * self.T02_eff_K * self.P2_W)
+        return sqrt(4.0 * K_B * self.T02_eff_K * p2_total)
 
     @cached_property
     def heater2_dc_power_W(self) -> float:

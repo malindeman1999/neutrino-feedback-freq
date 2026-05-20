@@ -569,6 +569,7 @@ class NoiseGui:
         heater2_pW = 1.0e12 * float(s.heater2_dc_power_W)
         t2_k = float(s.T02_eff_K)
         t2_elev_mk = 1.0e3 * float(s.T02_eff_K - s.Tb_K)
+        t2_heater_headroom_mk = 1.0e3 * float(s.kid2_heater_headroom_over_baseline_K)
         eigs = np.array(s.mt_eigenvalues, dtype=complex)
         pulse_tau_s = float("nan")
         if s.mt_stable:
@@ -589,6 +590,8 @@ class NoiseGui:
             f"{pulse_tau_txt}\n"
             "T2 elevated temperature: "
             f"{t2_k:.5g} K ({t2_elev_mk:.3g} mK above Tb)\n"
+            "T2 heater-only elevation: "
+            f"{t2_heater_headroom_mk:.3g} mK (vs T2 at P2 only)\n"
             "KID2 heater power: "
             f"{heater2_pW:.3g} pW"
         )
