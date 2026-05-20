@@ -160,6 +160,8 @@
     "I0_rms_A": "A",
     "s_deltaC_tls_1hz_F2_per_Hz": "F^2/Hz",
     "asd_deltaC_tls_1hz_F_per_rtHz": "F/Hz^(1/2)",
+    "s_deltaC_over_C_tls_100hz_per_Hz": "1/Hz",
+    "asd_deltaC_over_C_tls_100hz_per_rtHz": "1/Hz^(1/2)",
     "sv_usb_tls_1hz_V2_per_Hz": "V^2/Hz",
     "asd_v_usb_tls_1hz_V_per_rtHz": "V/Hz^(1/2)",
     "sv_usb_johnson_V2_per_Hz": "V^2/Hz",
@@ -229,6 +231,7 @@
     "series_L2_H": 4.880949436233082e-07,
     "series_R2_Ohm": 0.061335819565652365,
     "feedback_heater_gain_W_per_rad": 7e-15,
+    "feedback_heater_derivative_gain_W_s_per_rad": 0.0,
     "f_demod_Hz": 0.0
   },
   "model_outputs": {
@@ -350,6 +353,8 @@
     "I0_rms_A": 7.22879013651115e-07,
     "s_deltaC_tls_1hz_F2_per_Hz": 5.1786440492471576e-48,
     "asd_deltaC_tls_1hz_F_per_rtHz": 2.2756634305729742e-24,
+    "s_deltaC_over_C_tls_100hz_per_Hz": 4.326400000000001e-22,
+    "asd_deltaC_over_C_tls_100hz_per_rtHz": 2.0800000000000002e-11,
     "sv_usb_tls_1hz_V2_per_Hz": 1.1960484815302216e-26,
     "asd_v_usb_tls_1hz_V_per_rtHz": 1.0936400145981408e-13,
     "sv_usb_johnson_V2_per_Hz": 1.354931807159974e-25,
@@ -541,7 +546,7 @@
         ],
         [
           -5.897435897435912e-16,
-          0.0
+          -0.0
         ],
         [
           0.0,

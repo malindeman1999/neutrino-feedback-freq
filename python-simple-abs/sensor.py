@@ -1255,6 +1255,16 @@ class Sensor:
         return sqrt(self.s_deltaC_tls_1hz_F2_per_Hz)
 
     @cached_property
+    def s_deltaC_over_C_tls_100hz_per_Hz(self) -> float:
+        """Equivalent fractional-capacitance PSD at 100 Hz: S_(dC/C)=4(S_f/f0^2)."""
+        return 4.0 * self.sf_over_f0sq_tls_at_hz(100.0)
+
+    @cached_property
+    def asd_deltaC_over_C_tls_100hz_per_rtHz(self) -> float:
+        """Equivalent fractional-capacitance ASD at 100 Hz."""
+        return sqrt(self.s_deltaC_over_C_tls_100hz_per_Hz)
+
+    @cached_property
     def sv_usb_tls_1hz_V2_per_Hz(self) -> float:
         """Equivalent USB capacitor-voltage PSD at f0 + 1 Hz from TLS C-noise."""
         c0 = self.C_res_F
@@ -1902,6 +1912,8 @@ class Sensor:
             "I0_rms_A": self.I0_rms_A,
             "s_deltaC_tls_1hz_F2_per_Hz": self.s_deltaC_tls_1hz_F2_per_Hz,
             "asd_deltaC_tls_1hz_F_per_rtHz": self.asd_deltaC_tls_1hz_F_per_rtHz,
+            "s_deltaC_over_C_tls_100hz_per_Hz": self.s_deltaC_over_C_tls_100hz_per_Hz,
+            "asd_deltaC_over_C_tls_100hz_per_rtHz": self.asd_deltaC_over_C_tls_100hz_per_rtHz,
             "sv_usb_tls_1hz_V2_per_Hz": self.sv_usb_tls_1hz_V2_per_Hz,
             "asd_v_usb_tls_1hz_V_per_rtHz": self.asd_v_usb_tls_1hz_V_per_rtHz,
             "sv_usb_johnson_V2_per_Hz": self.sv_usb_johnson_V2_per_Hz,
