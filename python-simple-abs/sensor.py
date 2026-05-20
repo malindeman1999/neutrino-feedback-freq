@@ -52,7 +52,7 @@ class SensorInputs:
     thermal_link_exponent_n: float
 
     # Simplified TLS model inputs
-    tls_phi_asd_100hz_per_rtHz: float
+    asd_deltaC_over_C_tls_100hz_per_rtHz: float
     tls_beta: float
 
     # Resonator/electrical operating point
@@ -110,7 +110,7 @@ class Version1SensorInputs(SensorInputs):
     cv_absorber_J_per_m3K: float = 0.075
     kappa_leg_W_per_mK: float = 1.5e-3
     thermal_link_exponent_n: float = 3.0
-    tls_phi_asd_100hz_per_rtHz: float = 1.0e-6
+    asd_deltaC_over_C_tls_100hz_per_rtHz: float = 1.0e-9
     tls_beta: float = 0.5
     f0_Hz: float = 1.0e9
     Qi: float = 50000.0
@@ -1217,21 +1217,31 @@ class Sensor:
         """TLS fractional frequency-noise PSD at model reference offset (1 Hz)."""
         return self.sf_over_f0sq_tls_at_hz(1.0)
 
-    def sf_over_f0sq_tls_at_hz(self, nu_hz: float) -> float:
-        """TLS fractional frequency-noise PSD from phase ASD anchor at 100 Hz."""
+    def s_deltaC_over_C_tls_at_hz_per_Hz(self, nu_hz: float) -> float:
+        """Fractional-capacitance PSD power law anchored at 100 Hz."""
         if nu_hz <= 0.0:
             raise ValueError("nu_hz must be > 0")
-        asd_phi_nu = self.tls_phi_asd_at_hz_per_rtHz(nu_hz)
-        gain = abs(self.f0_Hz * self.dphi_df_detuning_per_hz)
-        if gain == 0.0:
-            return float("nan")
-        return (asd_phi_nu / gain) ** 2
+        asd_delta_c_over_c = self.asd_deltaC_over_C_tls_100hz_per_rtHz * ((nu_hz / 100.0) ** (-self.tls_beta / 2.0))
+        return asd_delta_c_over_c * asd_delta_c_over_c
+
+    def sf_over_f0sq_tls_at_hz(self, nu_hz: float) -> float:
+        """TLS fractional frequency-noise PSD from dC/C anchor at 100 Hz."""
+        if nu_hz <= 0.0:
+            raise ValueError("nu_hz must be > 0")
+        # From f = 1/(2*pi*sqrt(LC)): delta f/f = -0.5 * delta C/C
+        return 0.25 * self.s_deltaC_over_C_tls_at_hz_per_Hz(nu_hz)
 
     def tls_phi_asd_at_hz_per_rtHz(self, nu_hz: float) -> float:
-        """TLS phase ASD power-law anchored at 100 Hz."""
+        """TLS phase ASD derived from dC/C and local phase slope."""
         if nu_hz <= 0.0:
             raise ValueError("nu_hz must be > 0")
-        return self.tls_phi_asd_100hz_per_rtHz * ((nu_hz / 100.0) ** (-self.tls_beta / 2.0))
+        asd_sf_over_f0sq = sqrt(self.sf_over_f0sq_tls_at_hz(nu_hz))
+        return abs(self.f0_Hz * self.dphi_df_detuning_per_hz) * asd_sf_over_f0sq
+
+    @cached_property
+    def tls_phi_asd_100hz_per_rtHz(self) -> float:
+        """Derived TLS phase ASD at 100 Hz from dC/C input and local phase slope."""
+        return self.tls_phi_asd_at_hz_per_rtHz(100.0)
 
     @cached_property
     def I0_rms_A(self) -> float:
@@ -1256,20 +1266,25 @@ class Sensor:
 
     @cached_property
     def s_deltaC_over_C_tls_100hz_per_Hz(self) -> float:
-        """Equivalent fractional-capacitance PSD at 100 Hz: S_(dC/C)=4(S_f/f0^2)."""
-        return 4.0 * self.sf_over_f0sq_tls_at_hz(100.0)
+        """Fractional-capacitance PSD at 100 Hz (direct TLS input in PSD form)."""
+        return self.s_deltaC_over_C_tls_at_hz_per_Hz(100.0)
 
-    @cached_property
-    def asd_deltaC_over_C_tls_100hz_per_rtHz(self) -> float:
-        """Equivalent fractional-capacitance ASD at 100 Hz."""
-        return sqrt(self.s_deltaC_over_C_tls_100hz_per_Hz)
+    def sv_usb_tls_at_hz_V2_per_Hz(self, nu_hz: float) -> float:
+        """Equivalent USB capacitor-voltage PSD at f0+nu from TLS dC/C noise."""
+        if nu_hz <= 0.0:
+            raise ValueError("nu_hz must be > 0")
+        c0 = self.C_res_F
+        w0 = 2.0 * pi * self.f0_Hz
+        return (self.I0_rms_A**2 / (w0 * w0 * c0 * c0)) * self.sf_over_f0sq_tls_at_hz(nu_hz)
+
+    def asd_v_usb_tls_at_hz_per_rtHz(self, nu_hz: float) -> float:
+        """Equivalent USB capacitor-voltage ASD at f0+nu."""
+        return sqrt(self.sv_usb_tls_at_hz_V2_per_Hz(nu_hz))
 
     @cached_property
     def sv_usb_tls_1hz_V2_per_Hz(self) -> float:
         """Equivalent USB capacitor-voltage PSD at f0 + 1 Hz from TLS C-noise."""
-        c0 = self.C_res_F
-        w0 = 2.0 * pi * self.f0_Hz
-        return (self.I0_rms_A**2 / (w0 * w0 * c0 * c0)) * self.sf_over_f0sq_tls_1hz
+        return self.sv_usb_tls_at_hz_V2_per_Hz(1.0)
 
     @cached_property
     def asd_v_usb_tls_1hz_V_per_rtHz(self) -> float:
@@ -1317,12 +1332,12 @@ class Sensor:
         return complex(y[1])
 
     def tls_iq_source_asd_at_hz_per_rtHz(self, nu_hz: float) -> float:
-        """IQ-source ASD that gives the requested TLS phase ASD passively."""
+        """IQ-source ASD from TLS sideband voltage via shared SB->IQ normalization."""
         nu_eval_hz = 1.0 if nu_hz <= 0.0 else nu_hz
-        passive_gain = abs(self.passive_tls_iq_transfer_phi_at_hz(nu_eval_hz))
-        if passive_gain == 0.0:
+        vnorm = self.iq_voltage_normalization_V
+        if vnorm <= 0.0:
             return float("nan")
-        return self.tls_phi_asd_at_hz_per_rtHz(nu_eval_hz) / passive_gain
+        return 4.0 * self.asd_v_usb_tls_at_hz_per_rtHz(nu_eval_hz) / vnorm
 
     @cached_property
     def passive_tls_iq_transfer_phi_100hz_abs(self) -> float:
@@ -1335,16 +1350,8 @@ class Sensor:
         return self.tls_iq_source_asd_at_hz_per_rtHz(100.0)
 
     def n_tls_phi_at_hz(self, nu_hz: float) -> Tuple[complex, complex, complex, complex]:
-        """TLS source vector with legacy and SB->IQ consistency enforcement."""
-        legacy = self._n_tls_phi_legacy_at_hz(nu_hz)
-        sb = self._n_tls_phi_sb_at_hz(nu_hz)
-        self._assert_noise_vector_agreement("n_tls_phi_at_hz", legacy, sb)
-        return sb
-
-    def _n_tls_phi_legacy_at_hz(self, nu_hz: float) -> Tuple[complex, complex, complex, complex]:
-        """Legacy TLS IQ source vector, normalized by passive resonator reference."""
-        nu_eval_hz = 1.0 if nu_hz <= 0.0 else nu_hz
-        return (0.0 + 0.0j, 1j * self.tls_iq_source_asd_at_hz_per_rtHz(nu_eval_hz), 0.0 + 0.0j, 0.0 + 0.0j)
+        """TLS source vector built from SB voltage noise then mapped into IQ basis."""
+        return self._n_tls_phi_sb_at_hz(nu_hz)
 
     def _n_tls_phi_sb_at_hz(self, nu_hz: float) -> Tuple[complex, complex, complex, complex]:
         """TLS vector built explicitly from SB coordinates then mapped to IQ."""

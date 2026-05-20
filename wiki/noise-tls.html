@@ -15,18 +15,18 @@
 <p>In the Lindeman mapping, TLS is treated as an effective fluctuating resonance frequency, aligned with the phase-like direction.</p>
 </section>
 <section class="card" id="design-scaling-and-geometry-controls"><h2>Design Scaling and Geometry Controls</h2>
-<p>For this project, TLS is parameterized directly by phase ASD at 100 Hz offset and a spectral exponent:</p>
+<p>For this project, TLS is parameterized by fractional-capacitance ASD at 100 Hz offset and a spectral exponent:</p>
 <p>\[
-\sqrt{S_{\phi,\mathrm{TLS}}}(100\,\mathrm{Hz}),\qquad \beta_{\mathrm{TLS}}.
+\sqrt{S_{\delta C/C,\mathrm{TLS}}}(100\,\mathrm{Hz}),\qquad \beta_{\mathrm{TLS}}.
 \]</p>
 <p>Offset-frequency scaling is:</p>
 <p>\[
-\sqrt{S_{\phi,\mathrm{TLS}}}(\nu)=\sqrt{S_{\phi,\mathrm{TLS}}}(100\,\mathrm{Hz})\left(\frac{\nu}{100\,\mathrm{Hz}}\right)^{-\beta_{\mathrm{TLS}}/2}.
+\sqrt{S_{\delta C/C,\mathrm{TLS}}}(\nu)=\sqrt{S_{\delta C/C,\mathrm{TLS}}}(100\,\mathrm{Hz})\left(\frac{\nu}{100\,\mathrm{Hz}}\right)^{-\beta_{\mathrm{TLS}}/2}.
 \]</p>
-<p>Then convert to fractional-frequency noise using the local phase slope:</p>
+<p>Then convert to fractional-frequency noise and phase using:</p>
 <p>\[
-\left(\frac{S_f}{f_0^2}\right)_{\mathrm{TLS}}(\nu)=
-\left(\frac{\sqrt{S_{\phi,\mathrm{TLS}}}(\nu)}{f_0\left|d\phi/df\right|_{\delta f}}\right)^2.
+\left(\frac{S_f}{f_0^2}\right)_{\mathrm{TLS}}(\nu)=\frac{1}{4}S_{\delta C/C,\mathrm{TLS}}(\nu),\qquad
+\sqrt{S_{\phi,\mathrm{TLS}}}(\nu)=f_0\left|d\phi/df\right|_{\delta f}\sqrt{\left(\frac{S_f}{f_0^2}\right)_{\mathrm{TLS}}(\nu)}.
 \]</p>
 <p>IDC design intent is to reduce \(F\) and local electric field. For fixed stored energy \(U\),</p>
 <p>\[
@@ -48,18 +48,20 @@ H_{\mathrm{TLS,passive}}(\nu)=
 \begin{bmatrix}0\\ i\end{bmatrix}
 \right]_{\phi}.
 \]</p>
-<p>The target TLS phase ASD is</p>
+<p>The target TLS fractional-capacitance ASD is</p>
 <p>\[
-\sqrt{S_{\phi,\mathrm{TLS}}(\nu)}=
-\sqrt{S_{\phi,\mathrm{TLS}}}(100\,\mathrm{Hz})
+\sqrt{S_{\delta C/C,\mathrm{TLS}}(\nu)}=
+\sqrt{S_{\delta C/C,\mathrm{TLS}}}(100\,\mathrm{Hz})
 \left(\frac{\nu}{100\,\mathrm{Hz}}\right)^{-\beta_{\mathrm{TLS}}/2}.
 \]</p>
-<p>The IQ source amplitude is chosen so the passive resonator would produce that target phase ASD:</p>
+<p>Map that into correlated antisymmetric USB/LSB voltage sidebands:</p>
 <p>\[
-\sqrt{S_{N,\mathrm{TLS}}(\nu)}=
-\frac{\sqrt{S_{\phi,\mathrm{TLS}}(\nu)}}{|H_{\mathrm{TLS,passive}}(\nu)|}.
+\sqrt{S_{V,\mathrm{USB},\mathrm{TLS}}(\nu)}=
+\frac{I_0}{\omega_0 C_0}\sqrt{\left(\frac{S_f}{f_0^2}\right)_{\mathrm{TLS}}(\nu)},
+\qquad
+V_{LSB}^*=-V_{USB}.
 \]</p>
-<p>Equivalently, the USB/LSB TLS source is chosen once from the passive reference level, transformed into the model's normalized I/Q source coordinates, and then held fixed when the active electrothermal matrix is used.</p>
+<p>The sideband source is then transformed through the same demodulation and normalization matrices used for the other microwave-noise sources.</p>
 <p>The active-model TLS vector is therefore:</p>
 <p>\[
 N_{TLS}(f)=
@@ -73,13 +75,11 @@ i\sqrt{S_{N,\mathrm{TLS}}(f)}\\
 <p>Using the project TLS parameterization:</p>
 <p>\[
 \left(\frac{S_f}{f_0^2}\right)_{\mathrm{TLS}}(\nu)=
-\left(\frac{
-\sqrt{S_{\phi,\mathrm{TLS}}}(100\,\mathrm{Hz})\left(\dfrac{\nu}{100\,\mathrm{Hz}}\right)^{-\beta_{\mathrm{TLS}}/2}
-}{
-f_0\left|d\phi/df\right|_{\delta f}
-}\right)^2.
+\frac{1}{4}\left(
+\sqrt{S_{\delta C/C,\mathrm{TLS}}}(100\,\mathrm{Hz})\left(\dfrac{\nu}{100\,\mathrm{Hz}}\right)^{-\beta_{\mathrm{TLS}}/2}
+\right)^2.
 \]</p>
-<p>This is a capacitor/frequency-noise interpretation only; the active source vector uses the passive-reference IQ normalization above.</p>
+<p>This keeps TLS source definition in physical capacitor units and leaves readout-basis effects to the SB→IQ mapping and active matrix propagation.</p>
 <p>Implemented pipeline: choose the TLS source level in SB coordinates from the passive-reference target, map SB\(\rightarrow\)IQ with the active normalization matrix, and propagate with \(Y=M^{-1}N\). The code includes an explicit constructed-form comparison check and raises an error on significant mismatch.</p>
 </section>
 <section class="card"><h2>Feedback Independence</h2>
@@ -102,7 +102,7 @@ N_{TLS}(\nu)\ \mathrm{independent\ of}\ K_{\mathrm{fb}}.
 0
 \end{bmatrix}.
 \]</p>
-<p>The \(\phi\)-component is an IQ-source ASD in \(1/\sqrt{\mathrm{Hz}}\), calibrated so the passive reference output equals the configured TLS phase ASD.</p>
+<p>The \(\phi\)-component is an IQ-source ASD in \(1/\sqrt{\mathrm{Hz}}\), obtained from the TLS USB/LSB source through the same SB-to-IQ normalization as Johnson/electronic sources.</p>
 </section>
 <section class="card" id="use-in-total-budget"><h2>Use In Total Budget</h2>
 <p>Compute \\(Y_{TLS}=M^{-1}N_{TLS}\\), then combine in quadrature with other sources (and include correlations if measured).</p>

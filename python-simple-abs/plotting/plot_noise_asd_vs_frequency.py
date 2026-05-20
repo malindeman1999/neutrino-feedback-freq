@@ -50,7 +50,7 @@ INPUT_SECTIONS = [
     (
         "TLS",
         [
-            "tls_phi_asd_100hz_per_rtHz",
+            "asd_deltaC_over_C_tls_100hz_per_rtHz",
             "tls_beta",
         ],
     ),
@@ -68,7 +68,7 @@ INPUT_SECTIONS = [
     (
         "KID2 / Island2",
         [
-            "heater2_offset_dBm",
+            "heater2_over_p2_ratio",
             "heat_capacity2_ratio",
             "G2_ratio",
             "alpha_A2",
@@ -82,7 +82,7 @@ INPUT_SECTIONS = [
 ]
 INPUT_KEYS = [k for _, keys in INPUT_SECTIONS for k in keys]
 KID2_KEYS = (
-    "heater2_offset_dBm",
+    "heater2_over_p2_ratio",
     "heat_capacity2_ratio",
     "G2_ratio",
     "alpha_A2",
@@ -117,7 +117,7 @@ LABELS = {
     "event_power_fraction_kid1": "Event frac KID1",
     "heat_capacity_eV_per_mK": "C [eV/mK]",
     "ho_in_au_atomic_fraction": "Ho/Au frac",
-    "tls_phi_asd_100hz_per_rtHz": "TLS ASD @100Hz",
+    "asd_deltaC_over_C_tls_100hz_per_rtHz": "TLS dC/C ASD @100Hz",
     "tls_beta": "TLS beta",
     "Qi": "Qi",
     "Qc": "Qc",
@@ -125,7 +125,7 @@ LABELS = {
     "kinetic_inductance_fraction": "kinetic frac",
     "alpha_A": "alpha_A",
     "alpha_phi": "alpha_phi",
-    "heater2_offset_dBm": "Heater2 off [dBm]",
+    "heater2_over_p2_ratio": "Heater/P2",
     "heat_capacity2_ratio": "C2/C1",
     "G2_ratio": "G2/G1",
     "alpha_A2": "alpha_A2",
@@ -230,10 +230,7 @@ class NoiseGui:
         self.defaults["G2_ratio"] = self.defaults["G2_W_per_K"] / max(float(s0.G_W_per_K), 1.0e-30)
         self.defaults["series_L2_ratio"] = self.defaults["series_L2_H"] / max(float(s0.L_total_H), 1.0e-30)
         self.defaults["series_R2_ratio"] = self.defaults["series_R2_Ohm"] / max(float(s0.R1_series_Ohm), 1.0e-30)
-        if float(s0.heater2_dc_power_W) > 0.0:
-            self.defaults["heater2_offset_dBm"] = float(10.0 * np.log10(s0.heater2_dc_power_W / 1.0e-3))
-        else:
-            self.defaults["heater2_offset_dBm"] = -1000.0
+        self.defaults["heater2_over_p2_ratio"] = float(s0.heater2_dc_power_W) / max(float(s0.P2_W), 1.0e-30)
         (
             self.current,
             self.last_loaded,
@@ -445,8 +442,14 @@ class NoiseGui:
         merged["G2_ratio"] = float(loaded.get("G2_W_per_K", merged["G2_W_per_K"])) / max(float(s1.G_W_per_K), 1.0e-30)
         merged["series_L2_ratio"] = float(loaded.get("series_L2_H", merged["series_L2_H"])) / max(float(s1.L_total_H), 1.0e-30)
         merged["series_R2_ratio"] = float(loaded.get("series_R2_Ohm", merged["series_R2_Ohm"])) / max(float(s1.R1_series_Ohm), 1.0e-30)
-        if "heater2_offset_dBm" not in loaded:
-            merged["heater2_offset_dBm"] = float(self.defaults.get("heater2_offset_dBm", -1000.0))
+        if "heater2_over_p2_ratio" not in loaded:
+            if "heater2_offset_dBm" in loaded:
+                kwargs = dict(merged)
+                kwargs["heater2_offset_dBm"] = float(loaded.get("heater2_offset_dBm", -1000.0))
+                s_loaded = Sensor(Version1SensorInputs(**{k: kwargs[k] for k in asdict(Version1SensorInputs()).keys()}))
+                merged["heater2_over_p2_ratio"] = float(s_loaded.heater2_offset_power_W) / max(float(s_loaded.P2_W), 1.0e-30)
+            else:
+                merged["heater2_over_p2_ratio"] = float(self.defaults.get("heater2_over_p2_ratio", 0.0))
 
     def _load_settings_file(self, path: Path) -> dict[str, float] | None:
         try:
@@ -564,6 +567,8 @@ class NoiseGui:
         pileup_pct = 100.0 * float(s.pileup_probability_max)
         shorten = float(s.mt_pulse_shortening_ratio)
         heater2_pW = 1.0e12 * float(s.heater2_dc_power_W)
+        t2_k = float(s.T02_eff_K)
+        t2_elev_mk = 1.0e3 * float(s.T02_eff_K - s.Tb_K)
         eigs = np.array(s.mt_eigenvalues, dtype=complex)
         pulse_tau_s = float("nan")
         if s.mt_stable:
@@ -582,6 +587,8 @@ class NoiseGui:
             f"{shorten:.3g}\n"
             "Event pulse time: "
             f"{pulse_tau_txt}\n"
+            "T2 elevated temperature: "
+            f"{t2_k:.5g} K ({t2_elev_mk:.3g} mK above Tb)\n"
             "KID2 heater power: "
             f"{heater2_pW:.3g} pW"
         )
@@ -673,7 +680,17 @@ class NoiseGui:
         kwargs.pop("G2_ratio", None)
         kwargs.pop("series_L2_ratio", None)
         kwargs.pop("series_R2_ratio", None)
-        kwargs["heater2_offset_dBm"] = float(kwargs.get("heater2_offset_dBm", self.defaults.get("heater2_offset_dBm", -1000.0)))
+        heater_ratio = max(float(kwargs.get("heater2_over_p2_ratio", self.defaults.get("heater2_over_p2_ratio", 0.0))), 0.0)
+        kwargs.pop("heater2_over_p2_ratio", None)
+        tmp_for_p2 = dict(kwargs)
+        tmp_for_p2["heater2_offset_dBm"] = -1000.0
+        s_tmp = Sensor(Version1SensorInputs(**tmp_for_p2))
+        p2_ref = max(float(s_tmp.P2_W), 0.0)
+        heater_w = heater_ratio * p2_ref
+        if heater_w > 0.0:
+            kwargs["heater2_offset_dBm"] = float(10.0 * np.log10(heater_w / 1.0e-3))
+        else:
+            kwargs["heater2_offset_dBm"] = -1000.0
         if self.kid2_mode_var.get() == "Single KID":
             kwargs["heater2_offset_dBm"] = -1000.0
             kwargs["heat_capacity2_eV_per_mK"] = 0.0
@@ -699,7 +716,7 @@ class NoiseGui:
         if not _all_kid2_zero(self.current):
             return
         base = dict(self.current)
-        base["heater2_offset_dBm"] = float(self.defaults.get("heater2_offset_dBm", -1000.0))
+        base["heater2_over_p2_ratio"] = float(self.defaults.get("heater2_over_p2_ratio", 0.0))
         base["heat_capacity2_ratio"] = 1.0
         base["G2_ratio"] = 1.0
         base["alpha_A2"] = float(base.get("alpha_A", 0.1))
@@ -759,7 +776,7 @@ class NoiseGui:
                 # With fixed L_geo, this maps k -> k' = 2k - 1 (clamped to [0,1)).
                 k_old = float(self.current.get("kinetic_inductance_fraction", 0.0))
                 self.current["kinetic_inductance_fraction"] = min(max((2.0 * k_old) - 1.0, 0.0), 0.999999)
-                self.current["heater2_offset_dBm"] = float(self.defaults.get("heater2_offset_dBm", -1000.0))
+                self.current["heater2_over_p2_ratio"] = float(self.defaults.get("heater2_over_p2_ratio", 0.0))
                 self.current["heat_capacity2_ratio"] = 1.0
                 self.current["G2_ratio"] = 1.0
                 self.current["alpha_A2"] = float(self.current.get("alpha_A", 0.1))
@@ -792,7 +809,7 @@ class NoiseGui:
             self.current["heat_capacity_eV_per_mK"] = 0.5 * float(self.current.get("heat_capacity_eV_per_mK", 0.0))
             k_old = float(self.current.get("kinetic_inductance_fraction", 0.0))
             self.current["kinetic_inductance_fraction"] = min(max((2.0 * k_old) - 1.0, 0.0), 0.999999)
-            self.current["heater2_offset_dBm"] = float(self.defaults.get("heater2_offset_dBm", -1000.0))
+            self.current["heater2_over_p2_ratio"] = float(self.defaults.get("heater2_over_p2_ratio", 0.0))
             self.current["heat_capacity2_ratio"] = 1.0
             self.current["G2_ratio"] = 1.0
             self.current["alpha_A2"] = float(self.current.get("alpha_A", 0.1))
@@ -878,7 +895,7 @@ class NoiseGui:
 
         asd_phase_total = np.sqrt(asd_phase_johnson**2 + asd_phase_phonon**2 + asd_phase_tls**2 + asd_phase_electronic**2)
         asd_amp_total = np.sqrt(asd_amp_johnson**2 + asd_amp_phonon**2 + asd_amp_tls**2 + asd_amp_electronic**2)
-        asd_tls_direct = s.tls_phi_asd_100hz_per_rtHz * ((freqs_hz / 100.0) ** (-s.tls_beta / 2.0))
+        asd_tls_direct = np.array([s.tls_phi_asd_at_hz_per_rtHz(float(f)) for f in freqs_hz], dtype=float)
         asd_johnson_simple = abs(s.f0_Hz * s.dphi_df_detuning_per_hz) * np.sqrt(s.sf_over_f0sq_johnson_simple)
         nep_phase_johnson = np.where(phase_resp > 0.0, asd_phase_johnson / phase_resp, np.nan)
         nep_phase_johnson_2 = np.where(phase_resp > 0.0, asd_phase_johnson_2 / phase_resp, np.nan)
@@ -1306,6 +1323,7 @@ class EventResponseWindow:
         self.win.geometry("1200x760")
         self.win.protocol("WM_DELETE_WINDOW", self._handle_close)
         self.domain_var = tk.StringVar(value="Time")
+        self.time_axis_var = tk.StringVar(value="Linear")
         self.var_var = tk.StringVar(value="phi")
         self._build()
         self._recompute_and_draw()
@@ -1334,16 +1352,24 @@ class EventResponseWindow:
         ttk.Radiobutton(domain, text="Time", variable=self.domain_var, value="Time", command=self._draw).grid(row=0, column=0, sticky="w")
         ttk.Radiobutton(domain, text="Frequency", variable=self.domain_var, value="Frequency", command=self._draw).grid(row=0, column=1, sticky="w", padx=(8, 0))
 
+        taxis = ttk.LabelFrame(ctl, text="Time Axis", padding=4)
+        taxis.grid(row=2, column=0, sticky="ew", pady=(0, 6))
+        ttk.Radiobutton(taxis, text="Linear", variable=self.time_axis_var, value="Linear", command=self._draw).grid(row=0, column=0, sticky="w")
+        ttk.Radiobutton(taxis, text="Log", variable=self.time_axis_var, value="Log", command=self._draw).grid(row=0, column=1, sticky="w", padx=(8, 0))
+
         varf = ttk.LabelFrame(ctl, text="Variable", padding=4)
-        varf.grid(row=2, column=0, sticky="ew", pady=(0, 6))
+        varf.grid(row=3, column=0, sticky="ew", pady=(0, 6))
         names = [("r", "r"), ("phi", "phi"), ("T1", "T1")]
         if self.sensor.second_kid_active:
             names.append(("T2", "T2"))
+            names.append(("L1 term", "L1_term"))
+            names.append(("L2 term", "L2_term"))
+            names.append(("L1+L2 terms", "L_terms"))
         for i, (lbl, v) in enumerate(names):
             ttk.Radiobutton(varf, text=lbl, variable=self.var_var, value=v, command=self._draw).grid(row=i, column=0, sticky="w")
 
         self.status = tk.StringVar(value="")
-        ttk.Label(ctl, textvariable=self.status, wraplength=260, foreground="#333").grid(row=3, column=0, sticky="w")
+        ttk.Label(ctl, textvariable=self.status, wraplength=260, foreground="#333").grid(row=4, column=0, sticky="w")
 
     @staticmethod
     def _var_index(var: str) -> int:
@@ -1356,8 +1382,29 @@ class EventResponseWindow:
         if var == "r":
             return ("1", "1·s")
         if var == "phi":
-            return ("rad", "rad·s")
-        return ("K", "K·s")
+            return ("rad", "rad*s")
+        if var in ("L1_term", "L2_term", "L_terms"):
+            return ("1", "1*s")
+        return ("K", "K*s")
+
+
+    def _var_time_series(self, var: str) -> np.ndarray:
+        if var in ("r", "phi", "T1", "T2"):
+            idx = self._var_index(var)
+            if idx >= self.y_t.shape[0]:
+                return np.zeros_like(self.t_s, dtype=complex)
+            return self.y_t[idx]
+        if var == "L1_term":
+            if self.y_t.shape[0] <= 2:
+                return np.zeros_like(self.t_s, dtype=complex)
+            return (2.0 * float(self.sensor.alpha_phi) / max(float(self.sensor.T0_K), 1.0e-30)) * self.y_t[2]
+        if var == "L2_term":
+            if self.y_t.shape[0] <= 3:
+                return np.zeros_like(self.t_s, dtype=complex)
+            return (2.0 * float(self.sensor.alpha_phi2) / max(float(self.sensor.T02_eff_K), 1.0e-30)) * self.y_t[3]
+        if var == "L_terms":
+            return self._var_time_series("L1_term") + self._var_time_series("L2_term")
+        return np.zeros_like(self.t_s, dtype=complex)
 
     def _recompute_and_draw(self) -> None:
         s = self.sensor
@@ -1442,24 +1489,76 @@ class EventResponseWindow:
 
     def _draw(self) -> None:
         var_name = self.var_var.get()
-        idx = self._var_index(var_name)
-        if idx >= self.y_t.shape[0]:
+        idx = self._var_index(var_name) if var_name in ("r", "phi", "T1", "T2") else -1
+        if (idx >= 0 and idx >= self.y_t.shape[0]) or (var_name in ("L1_term", "L2_term", "L_terms") and self.y_t.shape[0] < 4):
             self.var_var.set("phi")
             var_name = "phi"
             idx = self._var_index(var_name)
         unit_t, unit_f = self._var_units(var_name)
+        y_series = self._var_time_series(var_name)
         self.ax.clear()
         if self.domain_var.get() == "Time":
-            y = np.real(self.y_t[idx])
-            self.ax.plot(self.t_s * 1e3, y, color="tab:blue")
-            self.ax.set_xlabel("Time [ms]")
+            y = np.real(y_series)
+            t_ms = self.t_s * 1e3
+            if self.time_axis_var.get() == "Log":
+                pos = t_ms > 0.0
+                if var_name == "L_terms":
+                    y1 = np.real(self._var_time_series("L1_term"))
+                    y2 = np.real(self._var_time_series("L2_term"))
+                    r = np.real(self._var_time_series("r"))
+                    rdot = np.gradient(r, self.t_s)
+                    rterm = ((4.0 * float(self.sensor.Qi_eff) * float(self.sensor.Qr) * float(self.sensor.x)) / (2.0 * pi * float(self.sensor.f0_Hz))) * rdot - float(self.sensor.beta_phi) * r
+                    ysum = y1 + y2
+                    self.ax.semilogx(t_ms[pos], y1[pos], color="tab:blue", label="L1 term")
+                    self.ax.semilogx(t_ms[pos], y2[pos], color="tab:orange", label="L2 term")
+                    self.ax.semilogx(t_ms[pos], ysum[pos], color="black", linestyle=":", label="L1+L2")
+                    self.ax.semilogx(t_ms[pos], rterm[pos], color="tab:green", label="r term")
+                    self.ax.legend(loc="best")
+                else:
+                    self.ax.semilogx(t_ms[pos], y[pos], color="tab:blue")
+                self.ax.set_xlabel("Time [ms] (log)")
+            else:
+                if var_name == "L_terms":
+                    y1 = np.real(self._var_time_series("L1_term"))
+                    y2 = np.real(self._var_time_series("L2_term"))
+                    r = np.real(self._var_time_series("r"))
+                    rdot = np.gradient(r, self.t_s)
+                    rterm = ((4.0 * float(self.sensor.Qi_eff) * float(self.sensor.Qr) * float(self.sensor.x)) / (2.0 * pi * float(self.sensor.f0_Hz))) * rdot - float(self.sensor.beta_phi) * r
+                    ysum = y1 + y2
+                    self.ax.plot(t_ms, y1, color="tab:blue", label="L1 term")
+                    self.ax.plot(t_ms, y2, color="tab:orange", label="L2 term")
+                    self.ax.plot(t_ms, ysum, color="black", linestyle=":", label="L1+L2")
+                    self.ax.plot(t_ms, rterm, color="tab:green", label="r term")
+                    self.ax.legend(loc="best")
+                else:
+                    self.ax.plot(t_ms, y, color="tab:blue")
+                self.ax.set_xlabel("Time [ms]")
             self.ax.set_ylabel(f"{var_name}(t) [{unit_t}]")
             self.ax.set_title(f"Ho Event Response: {var_name}(t)")
         else:
-            ym = np.abs(self.h_f_matrix[idx])
-            yf = np.abs(self.y_fft[idx])
-            self.ax.loglog(self.freq_hz[1:], ym[1:], color="tab:blue", label="Matrix responsivity")
-            self.ax.loglog(self.freq_hz[1:], yf[1:], color="tab:orange", linestyle="--", label="FFT(time response)")
+            dt = float(self.t_s[1] - self.t_s[0])
+            if var_name == "L_terms":
+                y1 = self._var_time_series("L1_term")
+                y2 = self._var_time_series("L2_term")
+                r = np.real(self._var_time_series("r"))
+                rdot = np.gradient(r, self.t_s)
+                rterm = ((4.0 * float(self.sensor.Qi_eff) * float(self.sensor.Qr) * float(self.sensor.x)) / (2.0 * pi * float(self.sensor.f0_Hz))) * rdot - float(self.sensor.beta_phi) * r
+                ysum = y1 + y2
+                yf1 = np.abs(np.fft.fft(y1)[: self.freq_hz.size] * dt)
+                yf2 = np.abs(np.fft.fft(y2)[: self.freq_hz.size] * dt)
+                yfs = np.abs(np.fft.fft(ysum)[: self.freq_hz.size] * dt)
+                yfr = np.abs(np.fft.fft(rterm)[: self.freq_hz.size] * dt)
+                self.ax.loglog(self.freq_hz[1:], yf1[1:], color="tab:blue", linestyle="--", label="L1 FFT")
+                self.ax.loglog(self.freq_hz[1:], yf2[1:], color="tab:orange", linestyle="--", label="L2 FFT")
+                self.ax.loglog(self.freq_hz[1:], yfs[1:], color="black", linestyle=":", label="(L1+L2) FFT")
+                self.ax.loglog(self.freq_hz[1:], yfr[1:], color="tab:green", linestyle="-.", label="r-term FFT")
+            else:
+                yf_all = np.fft.fft(y_series) * dt
+                yf = np.abs(yf_all[: self.freq_hz.size])
+                self.ax.loglog(self.freq_hz[1:], yf[1:], color="tab:orange", linestyle="--", label="FFT(time response)")
+            if idx >= 0 and var_name != "L_terms":
+                ym = np.abs(self.h_f_matrix[idx])
+                self.ax.loglog(self.freq_hz[1:], ym[1:], color="tab:blue", label="Matrix responsivity")
             self.ax.set_xlabel("Frequency [Hz]")
             self.ax.set_ylabel(f"|{var_name}(f)| [{unit_f}]")
             self.ax.set_title(f"Ho Event Response: {var_name}(f)")
@@ -1467,7 +1566,7 @@ class EventResponseWindow:
         self.ax.grid(True, which="both", alpha=0.25)
         self.canvas.draw_idle()
         err = np.nan
-        if self.domain_var.get() == "Frequency":
+        if self.domain_var.get() == "Frequency" and idx >= 0:
             denom = np.maximum(np.abs(self.h_f_matrix[idx, 1:]), 1.0e-30)
             err = float(np.median(np.abs(np.abs(self.y_fft[idx, 1:]) - np.abs(self.h_f_matrix[idx, 1:])) / denom))
         if np.isfinite(err):
@@ -1486,3 +1585,4 @@ class EventResponseWindow:
 
 if __name__ == "__main__":
     main()
+

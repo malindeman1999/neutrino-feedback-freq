@@ -75,7 +75,7 @@
 
     <section class="card" id="practical-c-to-usb-mapping">
       <h2>5) Practical Mapping: \(C\)-Fluctuations \(\rightarrow\) TLS Noise \(\rightarrow\) USB Voltage</h2>
-      <p>This section gives the direct algebra used to convert a TLS fractional-frequency-noise model into equivalent capacitor sideband voltage noise.</p>
+      <p>This section gives the direct algebra used in the code path where TLS is input as \(\sqrt{S_{\delta C/C,\mathrm{TLS}}}(100\,\mathrm{Hz})\) and converted into sideband source vectors.</p>
       <p><strong>Step A: frequency shift from capacitance shift</strong></p>
       <p>\[
       \frac{\delta f}{f_0}\approx -\frac{1}{2}\frac{\delta C}{C_0}.
@@ -111,6 +111,7 @@
       =V_0\sqrt{S_y},
       \]</p>
       <p>where \(V_0=I_0/(\omega_0 C_0)\) is the carrier RMS capacitor voltage.</p>
+      <p>In the active model, these USB/LSB sources are mapped into normalized IQ with the demodulation/normalization matrices, then propagated with \(Y=M^{-1}N\).</p>
     </section>
 
     <section class="card">
