@@ -205,6 +205,8 @@
 <tr><td>L_total_H</td><td><a href="theory.html#kid-lumped-formulas">\(L_{\mathrm{tot}}\)</a></td><td>\(L_{\mathrm{tot}}=\dfrac{L_g}{1-\alpha_k}\)</td><td><code>1.220237e-07</code></td><td>H</td></tr>
 <tr><td>C_res_F</td><td><a href="theory.html#kid-lumped-formulas">\(C_{\mathrm{res}}\)</a></td><td>\(C_{\mathrm{res}}=\dfrac{1}{(2\pi f_0)^2L_{\mathrm{tot}}}\)</td><td><code>2.075850e-13</code></td><td>F</td></tr>
 <tr><td>Z0_res_Ohm</td><td><a href="theory.html#kid-lumped-formulas">\(Z_0\)</a></td><td>\(Z_0=(2\pi f_0)L_{\mathrm{tot}}\)</td><td><code>766.698</code></td><td>Ohm</td></tr>
+<tr><td>Z0_readout_Ohm</td><td>\(Z_{\mathrm{readout}}\)</td><td>\(Z_{\mathrm{readout}}=50\,\Omega\)</td><td><code>50</code></td><td>Ohm</td></tr>
+<tr><td>readout_circle_radius_V</td><td>\(r_V\)</td><td>\(r_V=\sqrt{P_0Z_{\mathrm{readout}}}/2\)</td><td><code>7.752171e-07</code></td><td>V</td></tr>
 <tr><td>R0_Ohm</td><td><a href="theory.html#kid-lumped-formulas">\(R_0\)</a></td><td>\(R_0=\dfrac{Z_0}{Q_r}\)</td><td><code>0.00306679</code></td><td>Ohm</td></tr>
 <tr><td>P0_W</td><td>\(P_0\)</td><td>\(P_0=\left(P_0/P_g\right)P_g\)</td><td><code>4.807692e-14</code></td><td>W</td></tr>
 <tr><td>P0_undetuned_W</td><td>\(P_{0,x=0}\)</td><td>\(P_{0,x=0}=\dfrac{1}{2}\dfrac{4Q_cQ_i}{(Q_c+Q_i)^2}P_g\)</td><td><code>5.000000e-14</code></td><td>W</td></tr>
@@ -215,6 +217,8 @@
 <tr><td>eqp_J</td><td><a href="theory.html#gap-formulas">\(E_{qp}\)</a></td><td>\(E_{qp}=\Delta\)</td><td><code>4.870930e-23</code></td><td>J</td></tr>
 <tr><td>johnson_voltage_rms_V</td><td><a href="noise-johnson.html#physical-expression">\(V_{e}\)</a></td><td>\(V_e=\sqrt{4k_BT_0R_0}\)</td><td><code>8.230832e-14</code></td><td>V</td></tr>
 <tr><td>johnson_sv_V2_per_Hz</td><td><a href="noise-johnson.html#physical-expression">\(S_{V,J}\)</a></td><td>\(S_{V,J}=4k_BT_0R_0\)</td><td><code>6.774659e-27</code></td><td>V^2/Hz</td></tr>
+<tr><td>amplifier_sideband_voltage_asd_V_per_rtHz</td><td>\(V_A\)</td><td>\(V_A=\sqrt{k_BT_AZ_{\mathrm{readout}}}\)</td><td><code>2.995700e-11</code></td><td>V/Hz^(1/2)</td></tr>
+<tr><td>amplifier_normalized_asd_per_rtHz</td><td>\(\sigma_{\mathrm{amp}}\)</td><td>\(\sigma_{\mathrm{amp}}=\sqrt{8k_BT_A/P_0}\)</td><td><code>5.464998e-05</code></td><td>1/Hz^(1/2)</td></tr>
 <tr><td>N_J_scale</td><td><a href="noise-johnson.html#normalized-vector-derivation-eq-18">\(N_{J,\mathrm{scale}}\)</a></td><td>\(N_{J,\mathrm{scale}}=\sqrt{\dfrac{16k_BT_0}{P_0}}\)</td><td><code>1.355699e-05</code></td><td>s^(1/2)</td></tr>
 <tr><td>N_J_thermal_scale</td><td><a href="noise-johnson.html#normalized-vector-derivation-eq-18">\(N_{J,\mathrm{th}}\)</a></td><td>\(N_{J,\mathrm{th}}=\sqrt{4k_BT_0P_0}\)</td><td><code>3.258892e-19</code></td><td>W s^(1/2)</td></tr>
 <tr><td>detuning_pid_transfer_Hz_per_rad</td><td>\(|H_f|\)</td><td></td><td><code>0</code></td><td>Hz/rad</td></tr>
@@ -231,6 +235,8 @@
         <tr><td>sphi_johnson_full_per_hz</td><td><a href="noise-johnson.html#role-in-nep-and-electronic-noise-scaling">\(S_{\phi,J}^{\mathrm{full}}\)</a></td><td>\(S_{\phi,J}^{\mathrm{full}}=\left|[Y_{J,A}]_{\phi}\right|^2+\left|[Y_{J,\phi}]_{\phi}\right|^2\)</td><td><code>2.024038e-12</code></td><td>1/Hz</td></tr>
 <tr><td>sphi_tls_per_hz</td><td><a href="noise-tls.html#use-in-total-budget">\(S_{\phi,\mathrm{TLS}}\)</a></td><td>\(S_{\phi,\mathrm{TLS}}=\left|[Y_{\mathrm{TLS}}]_{\phi}\right|^2\)</td><td><code>1.013439e-08</code></td><td>1/Hz</td></tr>
 <tr><td>asd_phi_tls_per_rtHz</td><td><a href="noise-tls.html#use-in-total-budget">\(\sqrt{S_{\phi,\mathrm{TLS}}}\)</a></td><td>\(\sqrt{S_{\phi,\mathrm{TLS}}}\)</td><td><code>1.006697e-04</code></td><td>1/Hz^(1/2)</td></tr>
+<tr><td>sphi_amplifier_per_hz</td><td>\(S_{\phi,\mathrm{amp}}\)</td><td>\(S_{\phi,\mathrm{amp}}=\left|[Y_{\mathrm{amp},A}]_{\phi}\right|^2+\left|[Y_{\mathrm{amp},\phi}]_{\phi}\right|^2\)</td><td><code>2.986620e-09</code></td><td>1/Hz</td></tr>
+<tr><td>asd_phi_amplifier_per_rtHz</td><td>\(\sqrt{S_{\phi,\mathrm{amp}}}\)</td><td>\(\sqrt{S_{\phi,\mathrm{amp}}}\)</td><td><code>5.464998e-05</code></td><td>1/Hz^(1/2)</td></tr>
 <tr><td>asd_phi_tls_100hz_model_per_rtHz</td><td><a href="project.html#core-rule-checks">\(\sqrt{S_{\phi,\mathrm{TLS}}}(100\,\mathrm{Hz})\)</a></td><td>\(\sqrt{S_{\phi,\mathrm{TLS}}}(100\,\mathrm{Hz})=f_0\left|d\phi/df\right|_{\delta f}\sqrt{\left(S_f/f_0^2\right)_{\mathrm{TLS}}(100\,\mathrm{Hz})}\)</td><td><code>2.403846e-04</code></td><td>1/Hz^(1/2)</td></tr>
 <tr><td>passive_tls_iq_transfer_phi_100hz_abs</td><td><a href="noise-tls.html">\(|H_{\mathrm{TLS,passive}}(100\,\mathrm{Hz})|\)</a></td><td>\(|H_{\mathrm{TLS,passive}}|=\left|[M_{\mathrm{passive}}^{-1}(0,i)^T]_{\phi}\right|\)</td><td><code>0.480641</code></td><td>1</td></tr>
 <tr><td>tls_iq_source_asd_100hz_per_rtHz</td><td><a href="noise-tls.html">\(\sqrt{S_{N,\mathrm{TLS}}}(100\,\mathrm{Hz})\)</a></td><td>\(\sqrt{S_{N,\mathrm{TLS}}}(100\,\mathrm{Hz})=\dfrac{4\sqrt{S_{V,\mathrm{USB},\mathrm{TLS}}}(100\,\mathrm{Hz})}{I_0R_0}\)</td><td><code>5.000000e-04</code></td><td>1/Hz^(1/2)</td></tr>

@@ -40,6 +40,7 @@ INPUT_SECTIONS = [
             "detuning_pid_integrator_time_s",
             "detuning_pid_derivative_time_s",
             "detuning_pid_derivative_filter_factor",
+            "amplifier_noise_temperature_K",
             "nep_sufficiency_percent",
             "event_power_fraction_kid1",
         ],
@@ -71,12 +72,6 @@ INPUT_SECTIONS = [
     ),
 ]
 INPUT_KEYS = [k for _, keys in INPUT_SECTIONS for k in keys]
-KID2_KEYS = ()
-KID2_ACTIVITY_KEYS = ()
-
-
-def _all_kid2_zero(settings: dict[str, float]) -> bool:
-    return True
 
 LABELS = {
     "T0_K": "T0 [K]",
@@ -88,6 +83,7 @@ LABELS = {
     "detuning_pid_integrator_time_s": "PID tau_i [s]",
     "detuning_pid_derivative_time_s": "PID tau_d [s]",
     "detuning_pid_derivative_filter_factor": "PID N",
+    "amplifier_noise_temperature_K": "Amp Tn [K]",
     "nep_sufficiency_percent": "NEP suff [%]",
     "event_power_fraction_kid1": "Event frac KID1",
     "heat_capacity_eV_per_mK": "C [eV/mK]",
@@ -100,13 +96,6 @@ LABELS = {
     "kinetic_inductance_fraction": "kinetic frac",
     "alpha_A": "alpha_A",
     "alpha_phi": "alpha_phi",
-    "heater2_over_p2_ratio": "Heater/P2",
-    "heat_capacity2_ratio": "C2/C1",
-    "G2_ratio": "G2/G1",
-    "alpha_A2": "alpha_A2",
-    "alpha_phi2": "alpha_phi2",
-    "series_L2_ratio": "L2/L1",
-    "series_R2_ratio": "R2/R1",
     "feedback_heater_gain_W_per_rad": "Kp [W/rad]",
     "feedback_heater_derivative_gain_W_s_per_rad": "Kd [W*s/rad]",
 }
@@ -197,15 +186,6 @@ class NoiseGui:
         SAVES_DIR.mkdir(parents=True, exist_ok=True)
         self.defaults = asdict(Version1SensorInputs())
         self.defaults.setdefault("event_power_fraction_kid1", 1.0)
-        self.defaults["heat_capacity2_ratio"] = self.defaults["heat_capacity2_eV_per_mK"] / max(
-            self.defaults["heat_capacity_eV_per_mK"], 1.0e-30
-        )
-        # Use physical baseline from a default sensor for L1, R1, G1 ratio anchors.
-        s0 = Sensor(Version1SensorInputs())
-        self.defaults["G2_ratio"] = self.defaults["G2_W_per_K"] / max(float(s0.G_W_per_K), 1.0e-30)
-        self.defaults["series_L2_ratio"] = self.defaults["series_L2_H"] / max(float(s0.L_total_H), 1.0e-30)
-        self.defaults["series_R2_ratio"] = self.defaults["series_R2_Ohm"] / max(float(s0.R1_series_Ohm), 1.0e-30)
-        self.defaults["heater2_over_p2_ratio"] = float(s0.heater2_dc_power_W) / max(float(s0.P2_W), 1.0e-30)
         (
             self.current,
             self.last_loaded,
@@ -214,7 +194,6 @@ class NoiseGui:
             self.last_loaded_ui_state,
         ) = self._load_startup_settings()
         self.undo_stack: list[dict[str, float]] = []
-        self.single_mode_snapshot: dict[str, float] | None = None
 
         self.root = tk.Tk()
         self.root.title("Noise ASD / NEP Plotter")
@@ -222,7 +201,8 @@ class NoiseGui:
 
         self.mode_var = tk.StringVar(value="Noise ASD")
         self.readout_var = tk.StringVar(value="Phase")
-        self.kid2_mode_var = tk.StringVar(value="Single KID")
+        self.kid_power_on_var = tk.BooleanVar(value=True)
+        self.feedback_on_var = tk.BooleanVar(value=True)
         self.status_var = tk.StringVar(value="")
         self.summary_var = tk.StringVar(value="")
         self.loaded_name_var = tk.StringVar(value="")
@@ -310,11 +290,14 @@ class NoiseGui:
             readout_frame, text="Amplitude", variable=self.readout_var, value="Amplitude", command=self._on_mode
         ).grid(row=0, column=1, sticky="w", padx=(12, 0))
 
-        kid_mode_frame = ttk.LabelFrame(controls, text="Configuration", padding=4)
-        kid_mode_frame.grid(row=4, column=0, columnspan=2, sticky="ew", pady=(0, 4))
-        ttk.Radiobutton(
-            kid_mode_frame, text="Single KID", variable=self.kid2_mode_var, value="Single KID", command=self._on_kid2_mode
+        toggle_frame = ttk.LabelFrame(controls, text="Toggles", padding=4)
+        toggle_frame.grid(row=4, column=0, columnspan=2, sticky="ew", pady=(0, 4))
+        ttk.Checkbutton(
+            toggle_frame, text="KID Power", variable=self.kid_power_on_var, command=self._on_toggle
         ).grid(row=0, column=0, sticky="w")
+        ttk.Checkbutton(
+            toggle_frame, text="Feedback", variable=self.feedback_on_var, command=self._on_toggle
+        ).grid(row=0, column=1, sticky="w", padx=(12, 0))
 
         section_container = ttk.Frame(controls)
         section_container.grid(row=5, column=0, columnspan=2, sticky="nsew", pady=(0, 4))
@@ -339,8 +322,6 @@ class NoiseGui:
             section.columnconfigure(1, weight=1)
             section.columnconfigure(3, weight=1)
 
-        self._set_kid2_fields_enabled()
-
         button_frame = ttk.Frame(controls)
         button_frame.grid(row=6, column=0, columnspan=2, sticky="ew", pady=(1, 3))
 
@@ -352,10 +333,6 @@ class NoiseGui:
         ttk.Button(button_frame, text="Event Response", command=self._open_event_response).grid(
             row=2, column=0, columnspan=3, padx=2, pady=2, sticky="ew"
         )
-        ttk.Button(button_frame, text="Auto Critical Kd", command=self._set_critical_kd).grid(
-            row=3, column=0, columnspan=3, padx=2, pady=2, sticky="ew"
-        )
-
         for i in range(3):
             button_frame.columnconfigure(i, weight=1)
 
@@ -383,41 +360,10 @@ class NoiseGui:
                     for k in INPUT_KEYS:
                         if k in loaded_settings:
                             merged[k] = float(loaded_settings[k])
-                    self._backfill_ratio_fields_from_absolute(merged, loaded_settings)
                     return merged
             except Exception:
                 pass
         return dict(self.defaults)
-
-    def _backfill_ratio_fields_from_absolute(self, merged: dict[str, float], loaded: dict) -> None:
-        if (
-            "heat_capacity2_ratio" in loaded
-            and "G2_ratio" in loaded
-            and "series_L2_ratio" in loaded
-            and "series_R2_ratio" in loaded
-        ):
-            return
-        ctor_keys = set(asdict(Version1SensorInputs()).keys())
-        base_kwargs = {k: float(merged[k]) for k in ctor_keys if k in merged}
-        base_kwargs["heat_capacity2_eV_per_mK"] = 0.0
-        base_kwargs["G2_W_per_K"] = 0.0
-        base_kwargs["series_L2_H"] = 0.0
-        base_kwargs["series_R2_Ohm"] = 0.0
-        s1 = Sensor(Version1SensorInputs(**base_kwargs))
-        merged["heat_capacity2_ratio"] = float(loaded.get("heat_capacity2_eV_per_mK", merged["heat_capacity2_eV_per_mK"])) / max(
-            float(merged.get("heat_capacity_eV_per_mK", 0.0)), 1.0e-30
-        )
-        merged["G2_ratio"] = float(loaded.get("G2_W_per_K", merged["G2_W_per_K"])) / max(float(s1.G_W_per_K), 1.0e-30)
-        merged["series_L2_ratio"] = float(loaded.get("series_L2_H", merged["series_L2_H"])) / max(float(s1.L_total_H), 1.0e-30)
-        merged["series_R2_ratio"] = float(loaded.get("series_R2_Ohm", merged["series_R2_Ohm"])) / max(float(s1.R1_series_Ohm), 1.0e-30)
-        if "heater2_over_p2_ratio" not in loaded:
-            if "heater2_offset_dBm" in loaded:
-                kwargs = dict(merged)
-                kwargs["heater2_offset_dBm"] = float(loaded.get("heater2_offset_dBm", -1000.0))
-                s_loaded = Sensor(Version1SensorInputs(**{k: kwargs[k] for k in asdict(Version1SensorInputs()).keys()}))
-                merged["heater2_over_p2_ratio"] = float(s_loaded.heater2_offset_power_W) / max(float(s_loaded.P2_W), 1.0e-30)
-            else:
-                merged["heater2_over_p2_ratio"] = float(self.defaults.get("heater2_over_p2_ratio", 0.0))
 
     def _load_settings_file(self, path: Path) -> dict[str, float] | None:
         try:
@@ -430,7 +376,6 @@ class NoiseGui:
             for k in INPUT_KEYS:
                 if k in loaded_settings:
                     vals[k] = float(loaded_settings[k])
-            self._backfill_ratio_fields_from_absolute(vals, loaded_settings)
             return vals
         except Exception:
             return None
@@ -448,7 +393,7 @@ class NoiseGui:
         if isinstance(loaded, dict) and isinstance(loaded.get("ui"), dict):
             ui = loaded["ui"]
             out: dict[str, str] = {}
-            for k in ("mode", "readout", "kid2_mode"):
+            for k in ("mode", "readout", "kid_power_on", "feedback_on"):
                 v = ui.get(k)
                 if isinstance(v, str):
                     out[k] = v
@@ -459,7 +404,8 @@ class NoiseGui:
         return {
             "mode": self.mode_var.get(),
             "readout": self.readout_var.get(),
-            "kid2_mode": self.kid2_mode_var.get(),
+            "kid_power_on": "on" if bool(self.kid_power_on_var.get()) else "off",
+            "feedback_on": "on" if bool(self.feedback_on_var.get()) else "off",
         }
 
     def _apply_ui_state(self, ui: dict[str, str]) -> None:
@@ -469,10 +415,12 @@ class NoiseGui:
         readout = ui.get("readout")
         if readout in ("Phase", "Amplitude"):
             self.readout_var.set(readout)
-        kid2_mode = ui.get("kid2_mode")
-        if kid2_mode in ("Single KID", "Dual KID"):
-            self.kid2_mode_var.set(kid2_mode)
-        self._set_kid2_fields_enabled()
+        kid_power_on = ui.get("kid_power_on")
+        if kid_power_on in ("on", "off"):
+            self.kid_power_on_var.set(kid_power_on == "on")
+        feedback_on = ui.get("feedback_on")
+        if feedback_on in ("on", "off"):
+            self.feedback_on_var.set(feedback_on == "on")
 
     def _load_startup_settings(self) -> tuple[dict[str, float], dict[str, float], str | None, dict[str, str], dict[str, str]]:
         # Startup should always reflect current code defaults.
@@ -520,6 +468,10 @@ class NoiseGui:
                 pulse_tau_s = 1.0 / slowest_decay_per_s
         pulse_tau_txt = f"{pulse_tau_s:.3g} s" if np.isfinite(pulse_tau_s) else "n/a"
         self.summary_var.set(
+            "KID power: "
+            f"{'On' if self.kid_power_on_var.get() else 'Off'}\n"
+            "Feedback: "
+            f"{'On' if self.feedback_on_var.get() else 'Off'}\n"
             "Event dT (island): "
             f"{delta_t_mk:.3g} mK\n"
             "Average event rate: "
@@ -537,47 +489,6 @@ class NoiseGui:
             "tau_th = C/G: "
             f"{float(s.tau_th_s):.3g} s"
         )
-
-    def _critical_kd_value(self, s: Sensor) -> float:
-        if not s.second_kid_active:
-            return float("nan")
-        qi = float(s.Qi_eff)
-        q = float(s.Qr)
-        w0 = 2.0 * pi * float(s.f0_Hz)
-        if w0 <= 0.0 or q <= 0.0 or qi <= 0.0 or s.T02_eff_K <= 0.0:
-            return float("nan")
-        x = float(s.x)
-        c2 = max(float(s.heat_capacity2_eV_per_mK), 0.0) * 1.0e3 * 1.602176634e-19
-        gbar = max(float(s.G2_W_per_K), 0.0) - (float(s.P2_W) * float(s.alpha_A2) / float(s.T02_eff_K))
-        b = (qi / q) + (4.0 * qi * q * x * x) + (2.0 * q * x * float(s.beta_phi))
-        cphi2 = 2.0 * float(s.alpha_phi2) / float(s.T02_eff_K)
-        kp = float(s.feedback_heater_gain_W_per_rad)
-        m = c2 * (2.0 * qi / w0)
-        k = (gbar * b) + (cphi2 * (q * x * (float(s.beta_A) + 2.0) * float(s.P2_W) - kp))
-        gamma0 = (c2 * b) + (gbar * (2.0 * qi / w0))
-        if m <= 0.0 or k <= 0.0 or abs(cphi2) <= 0.0:
-            return float("nan")
-        gamma_crit = 2.0 * np.sqrt(m * k)
-        return float((gamma0 - gamma_crit) / cphi2)
-
-    def _set_critical_kd(self) -> None:
-        prev = dict(self.current)
-        try:
-            self.current = self._read_fields()
-            s = self._build_sensor(self.current)
-            kd_crit = self._critical_kd_value(s)
-            if not np.isfinite(kd_crit):
-                self._set_status("Auto Critical Kd unavailable for current settings (requires stable positive M and K)")
-                return
-            self.current["feedback_heater_derivative_gain_W_s_per_rad"] = float(kd_crit)
-            self._write_fields(self.current)
-            self._recompute_and_draw()
-            self._push_undo(prev)
-            self._set_status(f"Set Kd to critical damping estimate: {kd_crit:.6g} W*s/rad")
-        except Exception as exc:
-            self.current = prev
-            self._write_fields(self.current)
-            self._set_status(f"Auto Critical Kd failed: {exc}")
 
     @staticmethod
     def _settings_match(a: dict[str, float], b: dict[str, float], rtol: float = 1.0e-12, atol: float = 0.0) -> bool:
@@ -597,134 +508,15 @@ class NoiseGui:
     def _build_sensor(self, settings: dict[str, float]) -> Sensor:
         kwargs = dict(self.defaults)
         kwargs.update(settings)
+        # UI toggles are runtime overrides; keep entry values unchanged.
+        if not bool(self.kid_power_on_var.get()):
+            kwargs["pg_drive_dBm"] = -300.0
+        if (not bool(self.feedback_on_var.get())) or (not bool(self.kid_power_on_var.get())):
+            kwargs["detuning_pid_gain_Hz_per_rad"] = 0.0
         ctor_keys = set(asdict(Version1SensorInputs()).keys())
         clean = {k: v for k, v in kwargs.items() if k in ctor_keys}
         clean["event_power_fraction_kid1"] = 1.0
         return Sensor(Version1SensorInputs(**clean))
-
-    def _set_kid2_fields_enabled(self) -> None:
-        dual = self.kid2_mode_var.get() == "Dual KID"
-        state = "normal" if dual else "disabled"
-        for k in KID2_KEYS:
-            w = self.entry_widgets.get(k)
-            if w is not None:
-                w.configure(state=state)
-
-    def _populate_kid2_from_kid1(self, g1: float, l1: float, r1: float) -> None:
-        """Initialize KID2 parameters to a nonzero mirror of KID1-side values."""
-        if not _all_kid2_zero(self.current):
-            return
-        base = dict(self.current)
-        base["heater2_over_p2_ratio"] = float(self.defaults.get("heater2_over_p2_ratio", 0.0))
-        base["heat_capacity2_ratio"] = 1.0
-        base["G2_ratio"] = 1.0
-        base["alpha_A2"] = float(base.get("alpha_A", 0.1))
-        base["alpha_phi2"] = float(base.get("alpha_phi", 140.0))
-        base["series_L2_ratio"] = 1.0
-        base["series_R2_ratio"] = 1.0
-        base["event_power_fraction_kid1"] = 0.5
-        base["feedback_heater_gain_W_per_rad"] = 0.0
-        base["feedback_heater_derivative_gain_W_s_per_rad"] = 0.0
-        self.current = base
-        self._write_fields(self.current)
-
-    def _collapse_dual_to_single_equivalent(self) -> None:
-        """Map current dual-KID settings to an equivalent single-KID parameter set."""
-        s = self._build_sensor(self.current)
-        c1 = float(self.current.get("heat_capacity_eV_per_mK", 0.0))
-        c2 = float(self.current.get("heat_capacity2_ratio", 0.0)) * c1
-        g1 = float(s.G_W_per_K)
-        g2 = float(self.current.get("G2_ratio", 0.0)) * g1
-        l1 = float(s.L_total_H)
-        l2 = float(self.current.get("series_L2_ratio", 0.0)) * l1
-        r1 = float(s.R1_series_Ohm)
-        r2 = float(self.current.get("series_R2_ratio", 0.0)) * r1
-
-        lsum = max(l1 + l2, 1.0e-30)
-        rsum = max(r1 + r2, 1.0e-30)
-        psum = max(float(s.P1_W + s.P2_W), 1.0e-30)
-        qieq = (2.0 * pi * float(self.current.get("f0_Hz", 1.0e9)) * lsum) / rsum
-        kfrac_eq = 1.0 - (float(s.L_geo_H) / lsum)
-        kfrac_eq = min(max(kfrac_eq, 0.0), 0.999999)
-
-        alpha_a1 = float(self.current.get("alpha_A", 0.0))
-        alpha_a2 = float(self.current.get("alpha_A2", alpha_a1))
-        alpha_p1 = float(self.current.get("alpha_phi", 0.0))
-        alpha_p2 = float(self.current.get("alpha_phi2", alpha_p1))
-        alpha_a_eq = (alpha_a1 * float(s.P1_W) + alpha_a2 * float(s.P2_W)) / psum
-        alpha_p_eq = (alpha_p1 * l1 + alpha_p2 * l2) / lsum
-
-        self.current["heat_capacity_eV_per_mK"] = c1 + c2
-        self.current["kinetic_inductance_fraction"] = kfrac_eq
-        self.current["Qi"] = qieq
-        self.current["alpha_A"] = alpha_a_eq
-        self.current["alpha_phi"] = alpha_p_eq
-        self.current["event_power_fraction_kid1"] = 1.0
-
-    def _on_kid2_mode(self) -> None:
-        mode = self.kid2_mode_var.get()
-        if mode == "Dual KID":
-            try:
-                # Sync from latest user-edited values before mirroring.
-                self.current = self._read_fields()
-                self.single_mode_snapshot = dict(self.current)
-                # Always apply equal-split match when entering Dual mode,
-                # so toggling Single<->Dual cycles deterministically.
-                self.current["heat_capacity_eV_per_mK"] = 0.5 * float(self.current.get("heat_capacity_eV_per_mK", 0.0))
-                # Split KID1 inductance in half so L1+L2 matches prior single-KID L.
-                # With fixed L_geo, this maps k -> k' = 2k - 1 (clamped to [0,1)).
-                k_old = float(self.current.get("kinetic_inductance_fraction", 0.0))
-                self.current["kinetic_inductance_fraction"] = min(max((2.0 * k_old) - 1.0, 0.0), 0.999999)
-                self.current["heater2_over_p2_ratio"] = float(self.defaults.get("heater2_over_p2_ratio", 0.0))
-                self.current["heat_capacity2_ratio"] = 1.0
-                self.current["G2_ratio"] = 1.0
-                self.current["alpha_A2"] = float(self.current.get("alpha_A", 0.1))
-                self.current["alpha_phi2"] = float(self.current.get("alpha_phi", 140.0))
-                self.current["series_L2_ratio"] = 1.0
-                self.current["series_R2_ratio"] = 1.0
-                self.current["event_power_fraction_kid1"] = 0.5
-                self.current["feedback_heater_gain_W_per_rad"] = 0.0
-                self.current["feedback_heater_derivative_gain_W_s_per_rad"] = 0.0
-                self._write_fields(self.current)
-            except Exception:
-                pass
-        else:
-            try:
-                if self.single_mode_snapshot is not None:
-                    self.current = dict(self.single_mode_snapshot)
-                    self._write_fields(self.current)
-                else:
-                    self.current = self._read_fields()
-                    self._collapse_dual_to_single_equivalent()
-                    self._write_fields(self.current)
-            except Exception:
-                pass
-        self._set_kid2_fields_enabled()
-        self._recompute_and_draw()
-
-    def _match_kid2_to_kid1(self) -> None:
-        try:
-            self.current = self._read_fields()
-            self.current["heat_capacity_eV_per_mK"] = 0.5 * float(self.current.get("heat_capacity_eV_per_mK", 0.0))
-            k_old = float(self.current.get("kinetic_inductance_fraction", 0.0))
-            self.current["kinetic_inductance_fraction"] = min(max((2.0 * k_old) - 1.0, 0.0), 0.999999)
-            self.current["heater2_over_p2_ratio"] = float(self.defaults.get("heater2_over_p2_ratio", 0.0))
-            self.current["heat_capacity2_ratio"] = 1.0
-            self.current["G2_ratio"] = 1.0
-            self.current["alpha_A2"] = float(self.current.get("alpha_A", 0.1))
-            self.current["alpha_phi2"] = float(self.current.get("alpha_phi", 140.0))
-            self.current["series_L2_ratio"] = 1.0
-            self.current["series_R2_ratio"] = 1.0
-            self.current["event_power_fraction_kid1"] = 0.5
-            self.current["feedback_heater_gain_W_per_rad"] = 0.0
-            self.current["feedback_heater_derivative_gain_W_s_per_rad"] = 0.0
-            self.kid2_mode_var.set("Dual KID")
-            self._write_fields(self.current)
-            self._set_kid2_fields_enabled()
-            self._recompute_and_draw()
-            self._set_status("KID2 set to equal split (ratios=1, event split=0.5/0.5)")
-        except Exception as exc:
-            self._set_status(f"Match KID2->KID1 failed: {exc}")
 
     def _compute_data(self, s: Sensor) -> dict[str, object]:
         eigs = np.array(s.mt_eigenvalues, dtype=complex)
@@ -734,49 +526,38 @@ class NoiseGui:
         freqs_hz = np.logspace(np.log10(f_min_hz), np.log10(f_max_hz), 1000)
 
         asd_phase_johnson = np.zeros_like(freqs_hz)
-        asd_phase_johnson_2 = np.zeros_like(freqs_hz)
         asd_phase_phonon = np.zeros_like(freqs_hz)
-        asd_phase_phonon_2 = np.zeros_like(freqs_hz)
         asd_phase_tls = np.zeros_like(freqs_hz)
         asd_phase_electronic = np.zeros_like(freqs_hz)
-        asd_phase_electronic_2 = np.zeros_like(freqs_hz)
+        asd_phase_amplifier = np.zeros_like(freqs_hz)
         asd_amp_johnson = np.zeros_like(freqs_hz)
-        asd_amp_johnson_2 = np.zeros_like(freqs_hz)
         asd_amp_phonon = np.zeros_like(freqs_hz)
-        asd_amp_phonon_2 = np.zeros_like(freqs_hz)
         asd_amp_tls = np.zeros_like(freqs_hz)
         asd_amp_electronic = np.zeros_like(freqs_hz)
-        asd_amp_electronic_2 = np.zeros_like(freqs_hz)
+        asd_amp_amplifier = np.zeros_like(freqs_hz)
         phase_resp = np.zeros_like(freqs_hz)
         amp_resp = np.zeros_like(freqs_hz)
 
         for i, f_hz in enumerate(freqs_hz):
             y_j_a1 = s._propagate_noise_vector(s.n_johnson_A_1(), f_hz)
             y_j_phi1 = s._propagate_noise_vector(s.n_johnson_phi_1(), f_hz)
-            y_j_a_2 = s._propagate_noise_vector(s.n_johnson_A_2(), f_hz)
-            y_j_phi_2 = s._propagate_noise_vector(s.n_johnson_phi_2(), f_hz)
             y_ph1 = s._propagate_noise_vector(s.n_phonon_1(), f_hz)
-            y_ph_2 = s._propagate_noise_vector(s.n_phonon_2(), f_hz)
             y_tls = s._propagate_noise_vector(s.n_tls_phi_at_hz(float(f_hz)), f_hz)
             y_e_a1 = s._propagate_noise_vector(s.n_electronic_A_1(), f_hz)
             y_e_phi1 = s._propagate_noise_vector(s.n_electronic_phi_1(), f_hz)
-            y_e_a_2 = s._propagate_noise_vector(s.n_electronic_A_2(), f_hz)
-            y_e_phi_2 = s._propagate_noise_vector(s.n_electronic_phi_2(), f_hz)
+            y_amp_a = s.y_amplifier_A_at_hz(float(f_hz))
+            y_amp_phi = s.y_amplifier_phi_at_hz(float(f_hz))
 
-            asd_phase_johnson[i] = np.sqrt(abs(y_j_a1[1]) ** 2 + abs(y_j_phi1[1]) ** 2 + abs(y_j_a_2[1]) ** 2 + abs(y_j_phi_2[1]) ** 2)
-            asd_phase_johnson_2[i] = np.sqrt(abs(y_j_a_2[1]) ** 2 + abs(y_j_phi_2[1]) ** 2)
-            asd_phase_phonon[i] = np.sqrt(abs(y_ph1[1]) ** 2 + abs(y_ph_2[1]) ** 2)
-            asd_phase_phonon_2[i] = abs(y_ph_2[1])
+            asd_phase_johnson[i] = np.sqrt(abs(y_j_a1[1]) ** 2 + abs(y_j_phi1[1]) ** 2)
+            asd_phase_phonon[i] = abs(y_ph1[1])
             asd_phase_tls[i] = abs(y_tls[1])
-            asd_phase_electronic[i] = np.sqrt(abs(y_e_a1[1]) ** 2 + abs(y_e_phi1[1]) ** 2 + abs(y_e_a_2[1]) ** 2 + abs(y_e_phi_2[1]) ** 2)
-            asd_phase_electronic_2[i] = np.sqrt(abs(y_e_a_2[1]) ** 2 + abs(y_e_phi_2[1]) ** 2)
-            asd_amp_johnson[i] = np.sqrt(abs(y_j_a1[0]) ** 2 + abs(y_j_phi1[0]) ** 2 + abs(y_j_a_2[0]) ** 2 + abs(y_j_phi_2[0]) ** 2)
-            asd_amp_johnson_2[i] = np.sqrt(abs(y_j_a_2[0]) ** 2 + abs(y_j_phi_2[0]) ** 2)
-            asd_amp_phonon[i] = np.sqrt(abs(y_ph1[0]) ** 2 + abs(y_ph_2[0]) ** 2)
-            asd_amp_phonon_2[i] = abs(y_ph_2[0])
+            asd_phase_electronic[i] = np.sqrt(abs(y_e_a1[1]) ** 2 + abs(y_e_phi1[1]) ** 2)
+            asd_phase_amplifier[i] = np.sqrt(abs(y_amp_a[1]) ** 2 + abs(y_amp_phi[1]) ** 2)
+            asd_amp_johnson[i] = np.sqrt(abs(y_j_a1[0]) ** 2 + abs(y_j_phi1[0]) ** 2)
+            asd_amp_phonon[i] = abs(y_ph1[0])
             asd_amp_tls[i] = abs(y_tls[0])
-            asd_amp_electronic[i] = np.sqrt(abs(y_e_a1[0]) ** 2 + abs(y_e_phi1[0]) ** 2 + abs(y_e_a_2[0]) ** 2 + abs(y_e_phi_2[0]) ** 2)
-            asd_amp_electronic_2[i] = np.sqrt(abs(y_e_a_2[0]) ** 2 + abs(y_e_phi_2[0]) ** 2)
+            asd_amp_electronic[i] = np.sqrt(abs(y_e_a1[0]) ** 2 + abs(y_e_phi1[0]) ** 2)
+            asd_amp_amplifier[i] = np.sqrt(abs(y_amp_a[0]) ** 2 + abs(y_amp_phi[0]) ** 2)
             phase_resp[i] = s.phase_responsivity_mag_rad_per_W_at_hz(float(f_hz))
             y_unit_power = s._solve_response_vector(
                 (0.0 + 0.0j, 0.0 + 0.0j, s.event_power_fraction_kid1_clamped + 0.0j),
@@ -784,25 +565,21 @@ class NoiseGui:
             )
             amp_resp[i] = abs(y_unit_power[0])
 
-        asd_phase_total = np.sqrt(asd_phase_johnson**2 + asd_phase_phonon**2 + asd_phase_tls**2 + asd_phase_electronic**2)
-        asd_amp_total = np.sqrt(asd_amp_johnson**2 + asd_amp_phonon**2 + asd_amp_tls**2 + asd_amp_electronic**2)
+        asd_phase_total = np.sqrt(asd_phase_johnson**2 + asd_phase_phonon**2 + asd_phase_tls**2 + asd_phase_electronic**2 + asd_phase_amplifier**2)
+        asd_amp_total = np.sqrt(asd_amp_johnson**2 + asd_amp_phonon**2 + asd_amp_tls**2 + asd_amp_electronic**2 + asd_amp_amplifier**2)
         asd_tls_direct = np.array([s.tls_phi_asd_at_hz_per_rtHz(float(f)) for f in freqs_hz], dtype=float)
         asd_johnson_simple = abs(s.f0_Hz * s.dphi_df_detuning_per_hz) * np.sqrt(s.sf_over_f0sq_johnson_simple)
         nep_phase_johnson = np.where(phase_resp > 0.0, asd_phase_johnson / phase_resp, np.nan)
-        nep_phase_johnson_2 = np.where(phase_resp > 0.0, asd_phase_johnson_2 / phase_resp, np.nan)
         nep_phase_phonon = np.where(phase_resp > 0.0, asd_phase_phonon / phase_resp, np.nan)
-        nep_phase_phonon_2 = np.where(phase_resp > 0.0, asd_phase_phonon_2 / phase_resp, np.nan)
         nep_phase_tls = np.where(phase_resp > 0.0, asd_phase_tls / phase_resp, np.nan)
         nep_phase_electronic = np.where(phase_resp > 0.0, asd_phase_electronic / phase_resp, np.nan)
-        nep_phase_electronic_2 = np.where(phase_resp > 0.0, asd_phase_electronic_2 / phase_resp, np.nan)
+        nep_phase_amplifier = np.where(phase_resp > 0.0, asd_phase_amplifier / phase_resp, np.nan)
         nep_phase_total = np.where(phase_resp > 0.0, asd_phase_total / phase_resp, np.nan)
         nep_amp_johnson = np.where(amp_resp > 0.0, asd_amp_johnson / amp_resp, np.nan)
-        nep_amp_johnson_2 = np.where(amp_resp > 0.0, asd_amp_johnson_2 / amp_resp, np.nan)
         nep_amp_phonon = np.where(amp_resp > 0.0, asd_amp_phonon / amp_resp, np.nan)
-        nep_amp_phonon_2 = np.where(amp_resp > 0.0, asd_amp_phonon_2 / amp_resp, np.nan)
         nep_amp_tls = np.where(amp_resp > 0.0, asd_amp_tls / amp_resp, np.nan)
         nep_amp_electronic = np.where(amp_resp > 0.0, asd_amp_electronic / amp_resp, np.nan)
-        nep_amp_electronic_2 = np.where(amp_resp > 0.0, asd_amp_electronic_2 / amp_resp, np.nan)
+        nep_amp_amplifier = np.where(amp_resp > 0.0, asd_amp_amplifier / amp_resp, np.nan)
         nep_amp_total = np.where(amp_resp > 0.0, asd_amp_total / amp_resp, np.nan)
 
         sigma_e_phase_mev = _safe_sigma_energy_mev(s, freqs_hz, nep_phase_total)
@@ -820,24 +597,20 @@ class NoiseGui:
         valid_markers.sort(key=lambda x: x[0])
 
         asd_phase_ylim = _positive_limits(
-            [asd_phase_johnson, asd_phase_phonon, asd_phase_tls, asd_phase_electronic, asd_phase_total, asd_tls_direct, np.array([asd_johnson_simple])]
+            [asd_phase_johnson, asd_phase_phonon, asd_phase_tls, asd_phase_electronic, asd_phase_amplifier, asd_phase_total, asd_tls_direct, np.array([asd_johnson_simple])]
         )
-        asd_amp_ylim = _positive_limits([asd_amp_johnson, asd_amp_phonon, asd_amp_tls, asd_amp_electronic, asd_amp_total])
-        nep_phase_ylim = _positive_limits([nep_phase_johnson, nep_phase_phonon, nep_phase_tls, nep_phase_electronic, nep_phase_total])
-        nep_amp_ylim = _positive_limits([nep_amp_johnson, nep_amp_phonon, nep_amp_tls, nep_amp_electronic, nep_amp_total])
+        asd_amp_ylim = _positive_limits([asd_amp_johnson, asd_amp_phonon, asd_amp_tls, asd_amp_electronic, asd_amp_amplifier, asd_amp_total])
+        nep_phase_ylim = _positive_limits([nep_phase_johnson, nep_phase_phonon, nep_phase_tls, nep_phase_electronic, nep_phase_amplifier, nep_phase_total])
+        nep_amp_ylim = _positive_limits([nep_amp_johnson, nep_amp_phonon, nep_amp_tls, nep_amp_electronic, nep_amp_amplifier, nep_amp_total])
 
         return {
             "sensor": s,
             "freqs": freqs_hz,
-            "asd_phase": (asd_phase_johnson, asd_phase_phonon, asd_phase_tls, asd_phase_electronic, asd_phase_total),
-            "asd_phase_2": (asd_phase_johnson_2, asd_phase_phonon_2, asd_phase_electronic_2),
-            "asd_amp": (asd_amp_johnson, asd_amp_phonon, asd_amp_tls, asd_amp_electronic, asd_amp_total),
-            "asd_amp_2": (asd_amp_johnson_2, asd_amp_phonon_2, asd_amp_electronic_2),
+            "asd_phase": (asd_phase_johnson, asd_phase_phonon, asd_phase_tls, asd_phase_electronic, asd_phase_amplifier, asd_phase_total),
+            "asd_amp": (asd_amp_johnson, asd_amp_phonon, asd_amp_tls, asd_amp_electronic, asd_amp_amplifier, asd_amp_total),
             "asd_tls_direct": asd_tls_direct,
-            "nep_phase": (nep_phase_johnson, nep_phase_phonon, nep_phase_tls, nep_phase_electronic, nep_phase_total),
-            "nep_phase_2": (nep_phase_johnson_2, nep_phase_phonon_2, nep_phase_electronic_2),
-            "nep_amp": (nep_amp_johnson, nep_amp_phonon, nep_amp_tls, nep_amp_electronic, nep_amp_total),
-            "nep_amp_2": (nep_amp_johnson_2, nep_amp_phonon_2, nep_amp_electronic_2),
+            "nep_phase": (nep_phase_johnson, nep_phase_phonon, nep_phase_tls, nep_phase_electronic, nep_phase_amplifier, nep_phase_total),
+            "nep_amp": (nep_amp_johnson, nep_amp_phonon, nep_amp_tls, nep_amp_electronic, nep_amp_amplifier, nep_amp_total),
             "res_threshold_phase": _resolution_threshold_markers(freqs_hz, nep_phase_total),
             "res_threshold_amp": _resolution_threshold_markers(freqs_hz, nep_amp_total),
             "asd_johnson_simple": asd_johnson_simple,
@@ -856,53 +629,28 @@ class NoiseGui:
         freqs = d["freqs"]
         readout = self.readout_var.get()
         is_phase = readout == "Phase"
-        asd_johnson, asd_phonon, asd_tls, asd_electronic, asd_total = d["asd_phase"] if is_phase else d["asd_amp"]
-        asd_johnson_2, asd_phonon_2, asd_electronic_2 = d["asd_phase_2"] if is_phase else d["asd_amp_2"]
-        nep_johnson, nep_phonon, nep_tls, nep_electronic, nep_total = d["nep_phase"] if is_phase else d["nep_amp"]
-        nep_johnson_2, nep_phonon_2, nep_electronic_2 = d["nep_phase_2"] if is_phase else d["nep_amp_2"]
+        asd_johnson, asd_phonon, asd_tls, asd_electronic, asd_amplifier, asd_total = d["asd_phase"] if is_phase else d["asd_amp"]
+        nep_johnson, nep_phonon, nep_tls, nep_electronic, nep_amplifier, nep_total = d["nep_phase"] if is_phase else d["nep_amp"]
 
         self.ax.clear()
         mode = self.mode_var.get()
-        dual = self.kid2_mode_var.get() == "Dual KID"
         if mode == "NEP":
-            ysets = (nep_johnson, nep_phonon, nep_tls, nep_electronic, nep_total)
-            branch1 = (
-                np.sqrt(np.maximum(nep_johnson**2 - nep_johnson_2**2, 0.0)),
-                np.sqrt(np.maximum(nep_phonon**2 - nep_phonon_2**2, 0.0)),
-                nep_tls,
-                np.sqrt(np.maximum(nep_electronic**2 - nep_electronic_2**2, 0.0)),
-            )
-            branch2 = (nep_johnson_2, nep_phonon_2, nep_electronic_2)
+            ysets = (nep_johnson, nep_phonon, nep_tls, nep_electronic, nep_amplifier, nep_total)
             ylab = "NEP [W/rtHz]"
             title = f"Noise-Equivalent Power vs Frequency ({readout} readout)"
             self.ax.set_ylim(*(d["nep_phase_ylim"] if is_phase else d["nep_amp_ylim"]))
         else:
-            ysets = (asd_johnson, asd_phonon, asd_tls, asd_electronic, asd_total)
-            branch1 = (
-                np.sqrt(np.maximum(asd_johnson**2 - asd_johnson_2**2, 0.0)),
-                np.sqrt(np.maximum(asd_phonon**2 - asd_phonon_2**2, 0.0)),
-                asd_tls,
-                np.sqrt(np.maximum(asd_electronic**2 - asd_electronic_2**2, 0.0)),
-            )
-            branch2 = (asd_johnson_2, asd_phonon_2, asd_electronic_2)
+            ysets = (asd_johnson, asd_phonon, asd_tls, asd_electronic, asd_amplifier, asd_total)
             ylab = "Phase ASD [rad/rtHz]" if is_phase else "Amplitude ASD [1/rtHz]"
             title = f"Noise ASD vs Frequency ({readout} readout)"
             self.ax.set_ylim(*(d["asd_phase_ylim"] if is_phase else d["asd_amp_ylim"]))
 
-        if dual:
-            self.ax.loglog(freqs, branch1[0], label="Johnson (KID1)", color="tab:blue")
-            self.ax.loglog(freqs, branch1[1], label="Phonon (KID1)", color="tab:orange")
-            self.ax.loglog(freqs, branch1[2], label="TLS", color="tab:green")
-            self.ax.loglog(freqs, branch1[3], label="Electronic (KID1)", color="tab:red")
-            self.ax.loglog(freqs, branch2[0], linestyle="--", linewidth=2.0, color="#8fb7ff", alpha=0.98, label="Johnson (KID2)")
-            self.ax.loglog(freqs, branch2[1], linestyle="--", linewidth=2.0, color="#ffd59a", alpha=0.98, label="Phonon (KID2)")
-            self.ax.loglog(freqs, branch2[2], linestyle="--", linewidth=2.0, color="#ffb3b3", alpha=0.98, label="Electronic (KID2)")
-        else:
-            self.ax.loglog(freqs, ysets[0], label="Johnson", color="tab:blue")
-            self.ax.loglog(freqs, ysets[1], label="Phonon", color="tab:orange")
-            self.ax.loglog(freqs, ysets[2], label="TLS", color="tab:green")
-            self.ax.loglog(freqs, ysets[3], label="Electronic", color="tab:red")
-        self.ax.loglog(freqs, ysets[4], color="k", linestyle=":", linewidth=2.2, label="Total (quadrature)")
+        self.ax.loglog(freqs, ysets[0], label="Johnson", color="tab:blue")
+        self.ax.loglog(freqs, ysets[1], label="Phonon", color="tab:orange")
+        self.ax.loglog(freqs, ysets[2], label="TLS", color="tab:green")
+        self.ax.loglog(freqs, ysets[3], label="Electronic", color="tab:red")
+        self.ax.loglog(freqs, ysets[4], label="Amplifier", color="tab:purple")
+        self.ax.loglog(freqs, ysets[5], color="k", linestyle=":", linewidth=2.2, label="Total (quadrature)")
 
         if mode == "Noise ASD" and is_phase:
             self.ax.axhline(
@@ -953,7 +701,7 @@ class NoiseGui:
         threshold_marks = d["res_threshold_phase"] if is_phase else d["res_threshold_amp"]
         for f_thr_hz, label in threshold_marks:
             idx = int(np.argmin(np.abs(freqs - f_thr_hz)))
-            y_thr = float(ysets[4][idx])
+            y_thr = float(ysets[5][idx])
             if np.isfinite(y_thr) and y_thr > 0.0:
                 self.ax.plot([f_thr_hz], [y_thr], linestyle="None", marker="|", markersize=11, color="k", zorder=5)
                 self.ax.text(f_thr_hz, y_thr * 1.18, label, ha="center", va="bottom", color="k")
@@ -1009,16 +757,6 @@ class NoiseGui:
         self._update_rule_indicators(sensor)
         self._draw()
         self._sync_event_windows(sensor)
-        if self.kid2_mode_var.get() == "Dual KID":
-            no_kid2_noise = (
-                abs(sensor.nj2_scale) == 0.0
-                and abs(sensor.nj2_thermal_scale) == 0.0
-                and abs(sensor.G2_W_per_K) == 0.0
-            )
-            if no_kid2_noise:
-                self._set_status(
-                    "Dual KID selected, but KID2 noise is zero. Set series_R2_Ohm (>0) for Johnson/electronic and G2_W_per_K (>0) for phonon."
-                )
 
     def _update_rule_indicators(self, s: Sensor) -> None:
         style = ttk.Style(self.root)
@@ -1043,6 +781,9 @@ class NoiseGui:
 
     def _on_mode(self) -> None:
         self._draw()
+
+    def _on_toggle(self) -> None:
+        self._recompute_and_draw()
 
     def _apply_from_fields(self) -> None:
         try:
@@ -1251,11 +992,6 @@ class EventResponseWindow:
         varf = ttk.LabelFrame(ctl, text="Variable", padding=4)
         varf.grid(row=3, column=0, sticky="ew", pady=(0, 6))
         names = [("r", "r"), ("phi", "phi"), ("T1", "T1"), ("dx", "dx")]
-        if self.sensor.second_kid_active:
-            names.append(("T2", "T2"))
-            names.append(("L1 term", "L1_term"))
-            names.append(("L2 term", "L2_term"))
-            names.append(("L1+L2 terms", "L_terms"))
         for i, (lbl, v) in enumerate(names):
             ttk.Radiobutton(varf, text=lbl, variable=self.var_var, value=v, command=self._draw).grid(row=i, column=0, sticky="w")
 
@@ -1264,7 +1000,7 @@ class EventResponseWindow:
 
     @staticmethod
     def _var_index(var: str) -> int:
-        return {"r": 0, "phi": 1, "T1": 2, "dx": 3, "T2": 3}[var]
+        return {"r": 0, "phi": 1, "T1": 2, "dx": 3}[var]
 
     @staticmethod
     def _var_units(var: str) -> tuple[str, str]:
@@ -1276,45 +1012,22 @@ class EventResponseWindow:
             return ("rad", "rad*s")
         if var == "dx":
             return ("1", "1*s")
-        if var in ("L1_term", "L2_term", "L_terms"):
-            return ("1", "1*s")
         return ("K", "K*s")
 
 
     def _var_time_series(self, var: str) -> np.ndarray:
-        if var in ("r", "phi", "T1", "dx", "T2"):
+        if var in ("r", "phi", "T1", "dx"):
             idx = self._var_index(var)
             if idx >= self.y_t.shape[0]:
                 return np.zeros_like(self.t_s, dtype=complex)
             return self.y_t[idx]
-        if var == "L1_term":
-            if self.y_t.shape[0] <= 2:
-                return np.zeros_like(self.t_s, dtype=complex)
-            return (2.0 * float(self.sensor.alpha_phi) / max(float(self.sensor.T0_K), 1.0e-30)) * self.y_t[2]
-        if var == "L2_term":
-            if self.y_t.shape[0] <= 3:
-                return np.zeros_like(self.t_s, dtype=complex)
-            return (2.0 * float(self.sensor.alpha_phi2) / max(float(self.sensor.T02_eff_K), 1.0e-30)) * self.y_t[3]
-        if var == "L_terms":
-            return self._var_time_series("L1_term") + self._var_time_series("L2_term")
         return np.zeros_like(self.t_s, dtype=complex)
 
     def _recompute_and_draw(self) -> None:
         s = self.sensor
         mt = np.array(s.mt_matrix, dtype=complex)
         d1 = np.array(s.d1_matrix, dtype=complex)
-        if mt.shape[0] == 3:
-            src = np.array((0.0 + 0.0j, 0.0 + 0.0j, s.event_power_fraction_kid1_clamped + 0.0j), dtype=complex)
-        else:
-            src = np.array(
-                (
-                    0.0 + 0.0j,
-                    0.0 + 0.0j,
-                    s.event_power_fraction_kid1_clamped + 0.0j,
-                    s.event_power_fraction_kid2 + 0.0j,
-                ),
-                dtype=complex,
-            )
+        src = np.array((0.0 + 0.0j, 0.0 + 0.0j, s.event_power_fraction_kid1_clamped + 0.0j), dtype=complex)
         b = np.linalg.solve(d1, src)
 
         evals, evecs = np.linalg.eig(mt)
@@ -1382,8 +1095,8 @@ class EventResponseWindow:
 
     def _draw(self) -> None:
         var_name = self.var_var.get()
-        idx = self._var_index(var_name) if var_name in ("r", "phi", "T1", "T2") else -1
-        if (idx >= 0 and idx >= self.y_t.shape[0]) or (var_name in ("L1_term", "L2_term", "L_terms") and self.y_t.shape[0] < 4):
+        idx = self._var_index(var_name) if var_name in ("r", "phi", "T1", "dx") else -1
+        if idx >= 0 and idx >= self.y_t.shape[0]:
             self.var_var.set("phi")
             var_name = "phi"
             idx = self._var_index(var_name)

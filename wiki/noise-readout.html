@@ -13,13 +13,22 @@
 <p>Input-referred sideband voltages:</p>
 <p>\[V_A=\sqrt{k_B T_A Z_0},\qquad V_G\approx |S_{21}|\sqrt{k_B T_G Z_0}.\]</p>
 <p>These enter similarly to external series sideband voltage sources.</p>
+<p>The active model includes amplifier noise through the parameter \(T_A\), defaulting to \(1.3\,\mathrm{K}\), with \(Z_0=50\,\Omega\) at the readout reference plane.</p>
 </section>
 <section class="card"><h2>Noise Vector Derivation</h2>
 <p>For a source that is uncorrelated between USB and LSB and uncorrelated with thermal power, use:</p>
 <p>\[n_{RO}=\begin{bmatrix}v_{USB}\\v_{LSB}^*\\0\end{bmatrix},\quad
 \langle|v_{USB}|^2\rangle=\langle|v_{LSB}|^2\rangle=V_A^2+V_G^2.
 \]</p>
-<p>Transform to normalized coordinates with Eq. (12):</p>
+<p>The code constructs the amplifier modes in the sideband representation first:</p>
+<p>\[
+n_{\mathrm{amp},A}^{SB}=\frac{V_A}{\sqrt{2}}
+\begin{bmatrix}1\\1\\0\end{bmatrix},
+\qquad
+n_{\mathrm{amp},\phi}^{SB}=\frac{V_A}{\sqrt{2}}
+\begin{bmatrix}-1\\1\\0\end{bmatrix}.
+\]</p>
+<p>Transform to normalized coordinates with the readout-plane version of the Eq. (12) demodulation/normalization transform:</p>
 <p>\[N_{RO}=T_V^{-1}d^{-1}n_{RO}.\]</p>
 <p>Equivalent explicit decomposition is:</p>
 <p>\[
@@ -38,8 +47,61 @@ i\sigma_{RO,\phi}\\
 \end{bmatrix},
 \]</p>
 <p>with \(\sigma_{RO,A}\) and \(\sigma_{RO,\phi}\) set from measured or modeled readout PSD levels after demodulation/normalization.</p>
+<p>For the paper's matched-resonator estimate, the resonance-circle radius at the amplifier is</p>
+<p>\[
+r_V=\frac{\sqrt{P_0Z_0}}{2}.
+\]</p>
+<p>Demodulation adds the two independent sidebands in quadrature, so the normalized amplifier-noise ASD in both amplitude and phase coordinates is</p>
+<p>\[
+\sigma_{\mathrm{amp}}=\frac{\sqrt{2}V_A}{r_V}
+=\sqrt{\frac{8k_BT_A}{P_0}}.
+\]</p>
+<p>The implementation uses the SB-derived vectors as the active source. It also computes the closed-form vectors
+\(N_{\mathrm{amp},A}=[\sigma_{\mathrm{amp}},0,0]^T\) and
+\(N_{\mathrm{amp},\phi}=[0,i\sigma_{\mathrm{amp}},0]^T\), and raises an error if the SB transform and algebraic estimate disagree.</p>
 <p>If readout noise is measured directly in I/Q, it can be added as \\(\mathbf{S}_{amp}(\omega)\\) instead of via explicit \\(N\\) vectors.</p>
-<p>Implemented pipeline: readout-originated voltage noise starts in SB (USB/LSB) form, is transformed by the SB\(\rightarrow\)IQ normalization matrix, and then propagated with \(Y=M^{-1}N\) when represented as source vectors.</p>
+<p>Implemented pipeline: readout-originated voltage noise starts in SB (USB/LSB) form, is transformed by the SB\(\rightarrow\)IQ normalization matrix. Because amplifier noise is added after the resonator/bolometer, it is not injected as a thermal-power source.</p>
+</section>
+<section class="card"><h2>Feedback Treatment</h2>
+<p>With detuning feedback, the controller uses measured phase, not only the device phase:</p>
+<p>\[
+\phi_{\mathrm{meas}}=\phi_{\mathrm{dev}}+q_{\phi,\mathrm{amp}},
+\qquad
+dx=H_x(\omega)\phi_{\mathrm{meas}}.
+\]</p>
+<p>Therefore amplifier noise contributes in two ways:</p>
+<ul>
+  <li>direct additive readout noise in the measured \(r\) or \(\phi\) channel;</li>
+  <li>feedback-injected detuning noise when the phase component \(q_{\phi,\mathrm{amp}}\) drives \(dx\).</li>
+</ul>
+<p>For a readout-noise realization \(q=[q_r,q_\phi]^T\), the plant motion is solved from the augmented feedback matrix using</p>
+<p>\[
+\begin{bmatrix}
+M & -B_x\\
+-H_x C_\phi & 1
+\end{bmatrix}
+\begin{bmatrix}
+Y_{\mathrm{dev}}\\
+dx
+\end{bmatrix}
+=
+\begin{bmatrix}
+0\\
+0\\
+0\\
+H_x q_\phi
+\end{bmatrix}.
+\]</p>
+<p>The measured output is then</p>
+<p>\[
+Y_{\mathrm{meas}}=Y_{\mathrm{dev}}+
+\begin{bmatrix}
+q_r\\
+q_\phi\\
+0
+\end{bmatrix}.
+\]</p>
+<p>If \(H_x=0\), amplifier noise reduces to direct additive measurement noise and produces no device-state or temperature response. At the DC limit of an active integrator, the code uses \(\phi_{\mathrm{dev}}+q_\phi=0\), which is the finite equation's infinite-loop-gain limit.</p>
 </section>
 <section class="card"><h2>Vector Component Units</h2>
 <p>Sideband-source vector units:</p>
@@ -69,6 +131,7 @@ i\sigma_{RO,\phi}\\
 \]</p>
 </section>
 <section class="card"><h2>Integration Into Model</h2>
-<p>Include either as vector-propagated term \\(Y_{RO}=M^{-1}N_{RO}\\) or as additive readout PSD block in \\(\mathbf{S}_{IQ}(\omega)\\), but avoid double counting.</p>
+<p>The model includes two independent amplifier modes, \(q_A=[\sigma_{\mathrm{amp}},0]^T\) and \(q_\phi=[0,i\sigma_{\mathrm{amp}}]^T\). Their measured output PSDs are added in quadrature with Johnson, phonon, TLS, and electronic noise.</p>
+<p>Do not also add a separate measured amplifier PSD block unless this internal amplifier-noise path is disabled; otherwise the readout noise is double counted.</p>
 </section>
 </main></body></html>
