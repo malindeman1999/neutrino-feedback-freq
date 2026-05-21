@@ -36,6 +36,10 @@ INPUT_SECTIONS = [
             "pg_drive_dBm",
             "f0_Hz",
             "detuning_widths",
+            "detuning_pid_gain_Hz_per_rad",
+            "detuning_pid_integrator_time_s",
+            "detuning_pid_derivative_time_s",
+            "detuning_pid_derivative_filter_factor",
             "nep_sufficiency_percent",
             "event_power_fraction_kid1",
         ],
@@ -65,47 +69,14 @@ INPUT_SECTIONS = [
             "alpha_phi",
         ],
     ),
-    (
-        "KID2 / Island2",
-        [
-            "heater2_over_p2_ratio",
-            "heat_capacity2_ratio",
-            "G2_ratio",
-            "alpha_A2",
-            "alpha_phi2",
-            "series_L2_ratio",
-            "series_R2_ratio",
-            "feedback_heater_gain_W_per_rad",
-            "feedback_heater_derivative_gain_W_s_per_rad",
-        ],
-    ),
 ]
 INPUT_KEYS = [k for _, keys in INPUT_SECTIONS for k in keys]
-KID2_KEYS = (
-    "heater2_over_p2_ratio",
-    "heat_capacity2_ratio",
-    "G2_ratio",
-    "alpha_A2",
-    "alpha_phi2",
-    "series_L2_ratio",
-    "series_R2_ratio",
-    "feedback_heater_gain_W_per_rad",
-    "feedback_heater_derivative_gain_W_s_per_rad",
-)
-KID2_ACTIVITY_KEYS = (
-    "heat_capacity2_ratio",
-    "G2_ratio",
-    "alpha_A2",
-    "alpha_phi2",
-    "series_L2_ratio",
-    "series_R2_ratio",
-    "feedback_heater_gain_W_per_rad",
-    "feedback_heater_derivative_gain_W_s_per_rad",
-)
+KID2_KEYS = ()
+KID2_ACTIVITY_KEYS = ()
 
 
 def _all_kid2_zero(settings: dict[str, float]) -> bool:
-    return all(abs(float(settings.get(k, 0.0))) == 0.0 for k in KID2_ACTIVITY_KEYS)
+    return True
 
 LABELS = {
     "T0_K": "T0 [K]",
@@ -113,6 +84,10 @@ LABELS = {
     "pg_drive_dBm": "Drive [dBm]",
     "f0_Hz": "f0 [Hz]",
     "detuning_widths": "Detuning [widths]",
+    "detuning_pid_gain_Hz_per_rad": "PID K [Hz/rad]",
+    "detuning_pid_integrator_time_s": "PID tau_i [s]",
+    "detuning_pid_derivative_time_s": "PID tau_d [s]",
+    "detuning_pid_derivative_filter_factor": "PID N",
     "nep_sufficiency_percent": "NEP suff [%]",
     "event_power_fraction_kid1": "Event frac KID1",
     "heat_capacity_eV_per_mK": "C [eV/mK]",
@@ -247,8 +222,7 @@ class NoiseGui:
 
         self.mode_var = tk.StringVar(value="Noise ASD")
         self.readout_var = tk.StringVar(value="Phase")
-        kid2_active_default = any(abs(float(self.current.get(k, 0.0))) > 0.0 for k in KID2_ACTIVITY_KEYS)
-        self.kid2_mode_var = tk.StringVar(value="Dual KID" if kid2_active_default else "Single KID")
+        self.kid2_mode_var = tk.StringVar(value="Single KID")
         self.status_var = tk.StringVar(value="")
         self.summary_var = tk.StringVar(value="")
         self.loaded_name_var = tk.StringVar(value="")
@@ -341,9 +315,6 @@ class NoiseGui:
         ttk.Radiobutton(
             kid_mode_frame, text="Single KID", variable=self.kid2_mode_var, value="Single KID", command=self._on_kid2_mode
         ).grid(row=0, column=0, sticky="w")
-        ttk.Radiobutton(
-            kid_mode_frame, text="Dual KID", variable=self.kid2_mode_var, value="Dual KID", command=self._on_kid2_mode
-        ).grid(row=0, column=1, sticky="w", padx=(12, 0))
 
         section_container = ttk.Frame(controls)
         section_container.grid(row=5, column=0, columnspan=2, sticky="nsew", pady=(0, 4))
@@ -378,9 +349,6 @@ class NoiseGui:
         ttk.Button(button_frame, text="Save", command=self._save_current).grid(row=0, column=2, padx=2, pady=2, sticky="ew")
         ttk.Button(button_frame, text="Load", command=self._load_saved).grid(row=1, column=0, padx=2, pady=2, sticky="ew")
         ttk.Button(button_frame, text="Restore", command=self._restore_last_loaded).grid(row=1, column=1, padx=2, pady=2, sticky="ew")
-        ttk.Button(button_frame, text="Match KID2->KID1", command=self._match_kid2_to_kid1).grid(
-            row=1, column=2, padx=2, pady=2, sticky="ew"
-        )
         ttk.Button(button_frame, text="Event Response", command=self._open_event_response).grid(
             row=2, column=0, columnspan=3, padx=2, pady=2, sticky="ew"
         )
@@ -544,10 +512,6 @@ class NoiseGui:
         rate_hz = float(s.count_rate_Hz)
         pileup_pct = 100.0 * float(s.pileup_probability_max)
         shorten = float(s.mt_pulse_shortening_ratio)
-        heater2_pW = 1.0e12 * float(s.heater2_dc_power_W)
-        t2_k = float(s.T02_eff_K)
-        t2_elev_mk = 1.0e3 * float(s.T02_eff_K - s.Tb_K)
-        t2_heater_headroom_mk = 1.0e3 * float(s.kid2_heater_headroom_over_baseline_K)
         eigs = np.array(s.mt_eigenvalues, dtype=complex)
         pulse_tau_s = float("nan")
         if s.mt_stable:
@@ -566,12 +530,12 @@ class NoiseGui:
             f"{shorten:.3g}\n"
             "Event pulse time: "
             f"{pulse_tau_txt}\n"
-            "T2 elevated temperature: "
-            f"{t2_k:.5g} K ({t2_elev_mk:.3g} mK above Tb)\n"
-            "T2 heater-only elevation: "
-            f"{t2_heater_headroom_mk:.3g} mK (vs T2 at P2 only)\n"
-            "KID2 heater power: "
-            f"{heater2_pW:.3g} pW"
+            "C absorber: "
+            f"{float(s.C_eV_per_mK):.3g} eV/mK\n"
+            "G thermal link: "
+            f"{float(s.G_W_per_K):.3e} W/K\n"
+            "tau_th = C/G: "
+            f"{float(s.tau_th_s):.3g} s"
         )
 
     def _critical_kd_value(self, s: Sensor) -> float:
@@ -633,56 +597,10 @@ class NoiseGui:
     def _build_sensor(self, settings: dict[str, float]) -> Sensor:
         kwargs = dict(self.defaults)
         kwargs.update(settings)
-        # Convert KID2 ratio controls to physical KID2 parameters.
-        c1 = float(kwargs.get("heat_capacity_eV_per_mK", 0.0))
         ctor_keys = set(asdict(Version1SensorInputs()).keys())
-        base_kwargs = {k: v for k, v in kwargs.items() if k in ctor_keys}
-        base_kwargs.pop("heat_capacity2_eV_per_mK", None)
-        base_kwargs.pop("G2_W_per_K", None)
-        base_kwargs.pop("series_L2_H", None)
-        base_kwargs.pop("series_R2_Ohm", None)
-        base_kwargs["heat_capacity2_eV_per_mK"] = 0.0
-        base_kwargs["G2_W_per_K"] = 0.0
-        base_kwargs["series_L2_H"] = 0.0
-        base_kwargs["series_R2_Ohm"] = 0.0
-        s1 = Sensor(Version1SensorInputs(**base_kwargs))
-        dt = max(float(kwargs.get("T0_K", 0.0)) - float(kwargs.get("Tb_K", 0.0)), 1.0e-30)
-        r2_ratio = max(float(kwargs.get("series_R2_ratio", 0.0)), 0.0)
-        r1_frac = 1.0 if r2_ratio <= 0.0 else 1.0 / (1.0 + r2_ratio)
-        p1_anchor = float(s1.P0_W) * r1_frac
-        g1 = p1_anchor / dt
-        l1 = float(s1.L_total_H)
-        r1 = float(s1.R1_series_Ohm)
-        kwargs["heat_capacity2_eV_per_mK"] = float(kwargs.get("heat_capacity2_ratio", 0.0)) * c1
-        kwargs["G2_W_per_K"] = float(kwargs.get("G2_ratio", 0.0)) * g1
-        kwargs["series_L2_H"] = float(kwargs.get("series_L2_ratio", 0.0)) * l1
-        kwargs["series_R2_Ohm"] = float(kwargs.get("series_R2_ratio", 0.0)) * r1
-        kwargs.pop("heat_capacity2_ratio", None)
-        kwargs.pop("G2_ratio", None)
-        kwargs.pop("series_L2_ratio", None)
-        kwargs.pop("series_R2_ratio", None)
-        heater_ratio = max(float(kwargs.get("heater2_over_p2_ratio", self.defaults.get("heater2_over_p2_ratio", 0.0))), 0.0)
-        kwargs.pop("heater2_over_p2_ratio", None)
-        tmp_for_p2 = dict(kwargs)
-        tmp_for_p2["heater2_offset_dBm"] = -1000.0
-        s_tmp = Sensor(Version1SensorInputs(**tmp_for_p2))
-        p2_ref = max(float(s_tmp.P2_W), 0.0)
-        heater_w = heater_ratio * p2_ref
-        if heater_w > 0.0:
-            kwargs["heater2_offset_dBm"] = float(10.0 * np.log10(heater_w / 1.0e-3))
-        else:
-            kwargs["heater2_offset_dBm"] = -1000.0
-        if self.kid2_mode_var.get() == "Single KID":
-            kwargs["heater2_offset_dBm"] = -1000.0
-            kwargs["heat_capacity2_eV_per_mK"] = 0.0
-            kwargs["G2_W_per_K"] = 0.0
-            kwargs["alpha_A2"] = 0.0
-            kwargs["alpha_phi2"] = 0.0
-            kwargs["series_L2_H"] = 0.0
-            kwargs["series_R2_Ohm"] = 0.0
-            kwargs["feedback_heater_gain_W_per_rad"] = 0.0
-            kwargs["feedback_heater_derivative_gain_W_s_per_rad"] = 0.0
-        return Sensor(Version1SensorInputs(**kwargs))
+        clean = {k: v for k, v in kwargs.items() if k in ctor_keys}
+        clean["event_power_fraction_kid1"] = 1.0
+        return Sensor(Version1SensorInputs(**clean))
 
     def _set_kid2_fields_enabled(self) -> None:
         dual = self.kid2_mode_var.get() == "Dual KID"
@@ -860,17 +778,9 @@ class NoiseGui:
             asd_amp_electronic[i] = np.sqrt(abs(y_e_a1[0]) ** 2 + abs(y_e_phi1[0]) ** 2 + abs(y_e_a_2[0]) ** 2 + abs(y_e_phi_2[0]) ** 2)
             asd_amp_electronic_2[i] = np.sqrt(abs(y_e_a_2[0]) ** 2 + abs(y_e_phi_2[0]) ** 2)
             phase_resp[i] = s.phase_responsivity_mag_rad_per_W_at_hz(float(f_hz))
-            y_unit_power = np.linalg.solve(
-                s.m_matrix_array(float(f_hz)),
-                np.array(
-                    (
-                        0.0 + 0.0j,
-                        0.0 + 0.0j,
-                        s.event_power_fraction_kid1_clamped + 0.0j,
-                        s.event_power_fraction_kid2 + 0.0j,
-                    ),
-                    dtype=complex,
-                ),
+            y_unit_power = s._solve_response_vector(
+                (0.0 + 0.0j, 0.0 + 0.0j, s.event_power_fraction_kid1_clamped + 0.0j),
+                float(f_hz),
             )
             amp_resp[i] = abs(y_unit_power[0])
 
@@ -1340,7 +1250,7 @@ class EventResponseWindow:
 
         varf = ttk.LabelFrame(ctl, text="Variable", padding=4)
         varf.grid(row=3, column=0, sticky="ew", pady=(0, 6))
-        names = [("r", "r"), ("phi", "phi"), ("T1", "T1")]
+        names = [("r", "r"), ("phi", "phi"), ("T1", "T1"), ("dx", "dx")]
         if self.sensor.second_kid_active:
             names.append(("T2", "T2"))
             names.append(("L1 term", "L1_term"))
@@ -1354,7 +1264,7 @@ class EventResponseWindow:
 
     @staticmethod
     def _var_index(var: str) -> int:
-        return {"r": 0, "phi": 1, "T1": 2, "T2": 3}[var]
+        return {"r": 0, "phi": 1, "T1": 2, "dx": 3, "T2": 3}[var]
 
     @staticmethod
     def _var_units(var: str) -> tuple[str, str]:
@@ -1364,13 +1274,15 @@ class EventResponseWindow:
             return ("1", "1·s")
         if var == "phi":
             return ("rad", "rad*s")
+        if var == "dx":
+            return ("1", "1*s")
         if var in ("L1_term", "L2_term", "L_terms"):
             return ("1", "1*s")
         return ("K", "K*s")
 
 
     def _var_time_series(self, var: str) -> np.ndarray:
-        if var in ("r", "phi", "T1", "T2"):
+        if var in ("r", "phi", "T1", "dx", "T2"):
             idx = self._var_index(var)
             if idx >= self.y_t.shape[0]:
                 return np.zeros_like(self.t_s, dtype=complex)
@@ -1430,10 +1342,17 @@ class EventResponseWindow:
         coeff = vinv @ b
         exp_terms = np.exp(np.outer(evals, self.t_s))
         h = evecs @ (coeff[:, None] * exp_terms)
-        self.y_t = h * s.ho_decay_energy_J
+        y3_t = h * s.ho_decay_energy_J
 
         dt = float(self.t_s[1] - self.t_s[0])
         f_all = np.fft.fftfreq(self.t_s.size, d=dt)
+        hf = np.zeros((4, self.t_s.size), dtype=complex)
+        src3 = tuple(complex(v) for v in src[:3])
+        for i, f_hz in enumerate(f_all):
+            hf[:, i] = s._solve_response_vector(src3, float(f_hz)) * s.ho_decay_energy_J
+        dx_t = np.fft.ifft(hf[3] / float(self.t_s[1] - self.t_s[0]))
+        self.y_t = np.vstack((y3_t, dx_t))
+
         pos = f_all >= 0.0
         freqs = f_all[pos]
         y_fft_all = np.fft.fft(self.y_t, axis=1) * dt
@@ -1443,14 +1362,7 @@ class EventResponseWindow:
         # Matrix frequency response for unit power input.
         h_f = np.zeros((self.y_t.shape[0], freqs.size), dtype=complex)
         for i, f_hz in enumerate(freqs):
-            m = s.m_matrix_array(float(f_hz))
-            if self.y_t.shape[0] == 3:
-                m = m[:3, :3]
-                rhs = np.array((src[0], src[1], src[2]), dtype=complex)
-            else:
-                rhs = src
-            y = np.linalg.solve(m, rhs)
-            h_f[:, i] = y
+            h_f[:, i] = s._solve_response_vector(src3, float(f_hz))
         self.h_f_matrix = h_f * s.ho_decay_energy_J
         self._draw()
 

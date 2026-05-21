@@ -115,6 +115,13 @@ def main() -> None:
         "delta_J": "J",
         "eqp_J": "J",
         "detuning_widths": "fr/Qr",
+        "detuning_pid_gain_Hz_per_rad": "Hz/rad",
+        "detuning_pid_integrator_time_s": "s",
+        "detuning_pid_derivative_time_s": "s",
+        "detuning_pid_derivative_filter_factor": "1",
+        "detuning_pid_transfer_Hz_per_rad": "Hz/rad",
+        "detuning_pid_transfer_dx_per_rad": "1/rad",
+        "dx_response_to_event_power_at_f_demod": "1/W",
         "nep_sufficiency_percent": "%",
         "detuning_Hz": "Hz",
         "x": "1",
@@ -295,6 +302,13 @@ def main() -> None:
         "delta_J": r"\(\Delta\)",
         "eqp_J": r"\(E_{qp}\)",
         "detuning_widths": r"\(xQ_r\)",
+        "detuning_pid_gain_Hz_per_rad": r"\(K_f\)",
+        "detuning_pid_integrator_time_s": r"\(\tau_i\)",
+        "detuning_pid_derivative_time_s": r"\(\tau_d\)",
+        "detuning_pid_derivative_filter_factor": r"\(N_d\)",
+        "detuning_pid_transfer_Hz_per_rad": r"\(|H_f|\)",
+        "detuning_pid_transfer_dx_per_rad": r"\(|H_x|\)",
+        "dx_response_to_event_power_at_f_demod": r"\(|dx/P|\)",
         "nep_sufficiency_percent": r"\(p_{\mathrm{NEP,suff}}\)",
         "detuning_Hz": r"\(\delta f\)",
         "x": r"\(x\)",
@@ -911,6 +925,10 @@ def main() -> None:
             "f0_Hz",
             "f_demod_Hz",
             "detuning_widths",
+            "detuning_pid_gain_Hz_per_rad",
+            "detuning_pid_integrator_time_s",
+            "detuning_pid_derivative_time_s",
+            "detuning_pid_derivative_filter_factor",
             "pbif_typical_min_dBm",
             "pbif_typical_max_dBm",
             "thermal_energy_resolution_target_eV",
@@ -930,17 +948,6 @@ def main() -> None:
             "beta_A",
             "beta_phi",
             "Tc_K",
-        ],
-        "KID2 / Island2": [
-            "heater2_offset_dBm",
-            "T02_K",
-            "heat_capacity2_eV_per_mK",
-            "G2_W_per_K",
-            "alpha_A2",
-            "alpha_phi2",
-            "series_L2_H",
-            "series_R2_Ohm",
-            "feedback_heater_gain_W_per_rad",
         ],
         "Material and Activity": [
             "ho_in_au_atomic_fraction",
@@ -1052,6 +1059,9 @@ def main() -> None:
             "johnson_sv_V2_per_Hz",
             "N_J_scale",
             "N_J_thermal_scale",
+            "detuning_pid_transfer_Hz_per_rad",
+            "detuning_pid_transfer_dx_per_rad",
+            "dx_response_to_event_power_at_f_demod",
         ],
         "Derived TLS": [
             "sphi_johnson_full_per_hz",
@@ -1089,13 +1099,8 @@ def main() -> None:
             "core_rule2_ratio",
             "thermal_energy_fluct_rms_eV",
             "deltaT_event_full_absorption_K",
-            "kid2_thermal_headroom_K",
-            "kid2_thermal_headroom_over_event_ratio",
             "dL1_dT_H_per_K",
-            "dL2_dT_H_per_K",
             "deltaL1_event_H",
-            "deltaL2_compensation_headroom_H",
-            "kid2_inductance_headroom_over_event_ratio",
             "p_bifurcation_W",
             "mt_eig1_per_s",
             "mt_eig2_per_s",
@@ -1256,6 +1261,10 @@ def main() -> None:
         <tr><td>\\(T_b\\)</td><td><code>{_fmt(model_inputs['Tb_K'])}</code> K</td></tr>
         <tr><td>\\(f_0\\)</td><td><code>{_fmt(model_inputs['f0_Hz'])}</code> Hz</td></tr>
         <tr><td>Detuning</td><td><code>{_fmt(model_inputs['detuning_widths'])}</code> widths (<code>{_fmt(model_outputs['detuning_Hz'])}</code> Hz)</td></tr>
+        <tr><td>Detuning PID gain \(K_f\)</td><td><code>{_fmt(model_inputs['detuning_pid_gain_Hz_per_rad'])}</code> Hz/rad</td></tr>
+        <tr><td>Integrator time \(\tau_i\)</td><td><code>{_fmt(model_inputs['detuning_pid_integrator_time_s'])}</code> s</td></tr>
+        <tr><td>Derivative time \(\tau_d\)</td><td><code>{_fmt(model_inputs['detuning_pid_derivative_time_s'])}</code> s</td></tr>
+        <tr><td>Derivative filter \(N_d\)</td><td><code>{_fmt(model_inputs['detuning_pid_derivative_filter_factor'])}</code></td></tr>
         <tr><td>NEP sufficiency threshold</td><td><code>{_fmt(model_inputs['nep_sufficiency_percent'])}</code> %</td></tr>
         <tr><td>Demod frequency</td><td><code>{_fmt(model_inputs['f_demod_Hz'])}</code> Hz</td></tr>
         <tr><td>\\(P_{{0,x=0}}/P_{{bif}}\\)</td><td><code>{_fmt(model_outputs['p0_over_pbif_target'])}</code></td></tr>
@@ -1325,7 +1334,6 @@ def main() -> None:
         <tr><td>Rule 15</td><td><code>{_pf_html(model_outputs['core_rule15_ok'])}</code></td></tr>
         <tr><td><strong>Bifurcation Metrics</strong></td><td></td></tr>
         <tr><td>\\(\\Delta T_{{event}}\\)</td><td><code>{_fmt(model_outputs['deltaT_event_full_absorption_K'])}</code> K</td></tr>
-        <tr><td>\\(\\Delta L_{{2,head}}/\\Delta L_{{1,event}}\\)</td><td><code>{_fmt(model_outputs['kid2_inductance_headroom_over_event_ratio'])}</code></td></tr>
         <tr><td>\\(P_{{bif}}\\)</td><td><code>{_fmt(model_outputs['p_bifurcation_W'])}</code> W</td></tr>
         <tr><td>\\(P_{{bif,dBm}}\\)</td><td><code>{_fmt(model_outputs['p_bifurcation_dBm'])}</code> dBm</td></tr>
         <tr><td>\\(P_{{0,x=0}}/P_{{bif}}\\)</td><td><code>{_fmt(model_outputs['bifurcation_power_ratio'])}</code></td></tr>

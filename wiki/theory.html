@@ -56,8 +56,7 @@
       \begin{bmatrix}
       r(\omega)\\
       \phi(\omega)\\
-      T_1(\omega)\\
-      T_2(\omega)
+      T_1(\omega)
       \end{bmatrix},
       \]</p>
       <p>and source vector \(N(\omega)\), related by Eq. (11):</p>
@@ -95,8 +94,8 @@
 
     <section class="card">
       <h2>Eq. (10)-(13): Normalized Sideband-to-Demodulated Model</h2>
-      <p>Eq. (10) defines voltage normalization (\(V_0=I_0R_0/2\)). Eq. (11) is the central linear system \(M\,Y=N\). In code, \(Y=[r,\phi,T_1,T_2]^T\) extends the paper's single-thermal-node form.</p>
-      <p>Eq. (12) gives the coordinate transforms from sideband variables to demodulated normalized variables. The code keeps this normalization and extends Eq. (13)-style coefficients to two coupled thermal islands.</p>
+      <p>Eq. (10) defines voltage normalization (\(V_0=I_0R_0/2\)). Eq. (11) is the central linear system \(M\,Y=N\). In code, \(Y=[r,\phi,T_1]^T\) uses the paper's single-thermal-node form.</p>
+      <p>Eq. (12) gives the coordinate transforms from sideband variables to demodulated normalized variables. The code keeps this normalization and adds optional linear detuning feedback as a closed-loop rank-1 matrix update.</p>
       <p>Concise step-by-step transformation summary: <a href="paper-transform-summary.html">Paper Transform Summary</a>.</p>
       <p>Interpretation for implementation: build \(M(\omega)\) directly from measured or fitted resonator parameters, then solve \(Y=M^{-1}N\) for each source and frequency bin.</p>
       <p>Dedicated reference: <a href="m-matrix.html">M Matrix</a>.</p>
@@ -107,7 +106,7 @@
     <section class="card">
       <h2>Eq. (14)-(15): Time-Domain Dynamics and Pulse Model</h2>
       <p>Eq. (14) converts the frequency-domain model to time-domain dynamics \(\dot{Y}=M_tY+D_1^{-1}N\), where <a href="mt-stability.html#mt-from-momega">\(M_t\)</a> is obtained from \(M(\omega)\).</p>
-      <p>Eq. (15) gives explicit coupled ODEs for \(r(t)\), \(\phi(t)\), and thermal coordinates. In the current model those thermal coordinates are \((T_1,T_2)\), with optional reduction to a single thermal coordinate when KID2 is inactive.</p>
+      <p>Eq. (15) gives explicit coupled ODEs for \(r(t)\), \(\phi(t)\), and the thermal coordinate \(T_1\).</p>
       <p>Use this form to check stability (all eigenvalues of \(M_t\) must have negative real parts), pulse shape, and thermal/electrical coupling behavior before noise propagation.</p>
     </section>
 
@@ -136,7 +135,8 @@
       </ul>
       <p>Notation convention used here: \(T_b\) is bath temperature and \(T_0\) is bolometer operating-point temperature under bias.</p>
       <p>Python implementation links: <a href="../python-simple-abs/sensor.py"><code>Sensor.estimates()</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.tau_res_s</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.tau_th_s</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.sphi_total_per_hz</code></a>, and <a href="../python-simple-abs/sensor.py"><code>Sensor.nep_phi_total_W_per_rtHz</code></a>.</p>
-      <p>Dual-KID resonator implementation uses effective series parameters \((L_1+L_2,\;R_1+R_2)\) for \(f_{0,\mathrm{eff}}\) and \(Q_{i,\mathrm{eff}}\), while preserving one shared normalized I/Q reference circle.</p>
+      <p>Detuning feedback is represented as a small commanded \(dx=df/f_0\) drive in the normalized phase source direction, closed through the measured \(\phi\) coordinate.</p>
+      <p>The frequency-domain solve keeps \(dx\) as a fourth unknown until the controller equation \(dx-H_x(\omega)\phi=0\) is appended. With PID off, this equation sets \(dx=0\) and the response reduces to the paper's \(Y=M^{-1}N\) form.</p>
     </section>
 
     <section class="card" id="kid-lumped-formulas">

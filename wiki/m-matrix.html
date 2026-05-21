@@ -35,6 +35,7 @@
     <section class="card">
       <h2>Source Citation</h2>
       <p>Primary source: M. A. Lindeman, <em>Resonator-bolometer theory: microwave read-out and kinetic inductance bolometers</em>, J. Appl. Phys. 116, 024506 (2014).</p>
+      <p>Related local reference: <em>Model of superconducting alternating current bolometers</em> (2013), in the same bolometer-theory paper folder.</p>
       <p>Matrix-system form is from Eq. (11), with transformations in Eq. (12), and coefficient structure from Eq. (13). Eq. (15) is the corresponding on-resonance dynamical form reference.</p>
       <p>For a concise walkthrough of the coordinate/normalization chain, see <a href="paper-transform-summary.html">Paper Transform Summary</a>.</p>
       <p>Local copy: <a href="../papers/2014-Resonator-bolometer_theory_microwave_read_out_and_kinetic_inductance_bolometers.pdf">paper PDF</a>.</p>
@@ -47,15 +48,15 @@
       M(\omega)\,Y(\omega)=N(\omega),\qquad
       Y(\omega)=M^{-1}(\omega)\,N(\omega).
       \]</p>
-      <p>\(Y=[r,\phi,T_1,T_2]^T\) are demodulated normalized states and \(N\) is the source vector.</p>
+      <p>\(Y=[r,\phi,T_1]^T\) are demodulated normalized states and \(N\) is the source vector.</p>
     </section>
 
     <section class="card">
       <h2>Role of \(M(\omega)\)</h2>
-      <p>\(M(\omega)\) is the dynamic coupling operator that includes resonator response, dual-island thermal response, and electrothermal coupling.</p>
+      <p>\(M(\omega)\) is the dynamic coupling operator that includes resonator response, single-island thermal response, electrothermal coupling, and optional linear detuning feedback.</p>
       <ul>
         <li>Diagonal terms set intrinsic response poles/scales.</li>
-        <li>Off-diagonal terms encode coupling between \(r,\phi,T_1,T_2\).</li>
+        <li>Off-diagonal terms encode coupling between \(r,\phi,T_1\).</li>
         <li>Detuning enters through model coefficients and changes phase slope/responsivity.</li>
       </ul>
       <p>Every source/noise path is computed through this same operator via \(Y=M^{-1}N\).</p>
@@ -63,42 +64,80 @@
 
     <section class="card">
       <h2>Implementation Form</h2>
-      <p>In code, \(M(\omega)\) is built directly from project parameters and evaluated at demodulated frequency \(f\). The current implementation uses a dual-KID state \([r,\phi,T_1,T_2]\) with optional fallback to the original single-KID thermal subspace.</p>
+      <p>In code, \(M(\omega)\) is built directly from project parameters and evaluated at demodulated frequency \(f\). The current implementation uses the single-KID state \([r,\phi,T_1]\).</p>
       <p>For this projectâ€™s nominal estimates, \(f=0\) Hz in the demodulated band is used by default.</p>
       <p>Python: <a href="../python-simple-abs/sensor.py"><code>Sensor.m_matrix()</code></a>, <a href="../python-simple-abs/sensor.py"><code>Sensor.m_matrix_array()</code></a>.</p>
     </section>
 
     <section class="card">
       <h2>Full \(M(\omega)\) Matrix Form Used in Code</h2>
-      <p>Let \(\omega_0=2\pi f_{0,\mathrm{eff}}\), demodulated angular frequency \(\omega\), loaded \(Q\equiv Q_r\), and dimensionless detuning \(x\equiv \delta f/f_{0,\mathrm{eff}}\). The implementation keeps the Eq. (13)-style electrical block and extends the thermal block to two islands:</p>
+      <p>Let \(\omega_0=2\pi f_{0,\mathrm{eff}}\), demodulated angular frequency \(\omega\), loaded \(Q\equiv Q_r\), and dimensionless operating detuning \(x\equiv \delta f/f_{0,\mathrm{eff}}\). The open-loop single-KID matrix is:</p>
       <p>\[
       M(\omega)=
       \begin{bmatrix}
       \dfrac{2i\omega Q_i}{\omega_0}+\dfrac{Q_i}{Q}+\beta_A+4Q_iQx^2 &
       -\dfrac{4i\omega Q_iQx}{\omega_0} &
-      -2Qx\beta_A+\dfrac{2\alpha_{A1}}{T_{01}} &
-      \dfrac{2\alpha_{A2}}{T_{02}}\\[1.0em]
+      -2Qx\beta_A+\dfrac{2\alpha_{A1}}{T_{01}}\\[1.0em]
       \dfrac{4i\omega Q_iQx}{\omega_0}-\beta_\phi &
       \dfrac{2i\omega Q_i}{\omega_0}+\dfrac{Q_i}{Q}+4Q_iQx^2+2Qx\beta_\phi &
-      -\dfrac{2\alpha_{\phi1}}{T_{01}} &
-      -\dfrac{2\alpha_{\phi2}}{T_{02}}\\[1.0em]
+      -\dfrac{2\alpha_{\phi1}}{T_{01}}\\[1.0em]
       -\left(1+\dfrac{\beta_A}{2}\right)P_1 &
       Qx(\beta_A+2)P_1 &
-      i\omega C_1+G_1-\dfrac{P_1\alpha_{A1}}{T_{01}} &
-      0\\[1.0em]
-      -\left(1+\dfrac{\beta_A}{2}\right)P_2 &
-      Qx(\beta_A+2)P_2-K_p-i\omega K_d &
-      0 &
-      i\omega C_2+G_2-\dfrac{P_2\alpha_{A2}}{T_{02}}
+      i\omega C_1+G_1-\dfrac{P_1\alpha_{A1}}{T_{01}}
       \end{bmatrix}.
       \]</p>
-      <p>Here \(K_p\) is heater proportional gain (\(\mathrm{W/rad}\)) and \(K_d\) is heater derivative gain (\(\mathrm{W\cdot s/rad}\)).</p>
-      <p>Here \(P_1+P_2=P_0\), with \(P_j\) split by series loss (\(P_j\propto R_j\)).</p>
+      <p>Here \(P_1=P_0\) in the single-KID model.</p>
+      <p>A small commanded drive-frequency offset is represented as \(dx=df/f_0\), expanded around the operating value \(x=x_0+dx\). In the sideband basis this is a first-order carrier-frequency perturbation. Applying the Eq. (12) demodulation/normalization transform used throughout the code gives a phase-like normalized source column:</p>
+      <p>\[
+      B_x=\begin{bmatrix}0\\4iQ_i\\0\end{bmatrix}.
+      \]</p>
+      <p>The sign follows the project convention \(x=\mathrm{detuning\_Hz}/f_0\); reversing the definition of detuning reverses this column.</p>
+      <p>With linear PID detuning feedback from the phase output,</p>
+      <p>\[
+      H_f(\omega)=K_f\left(1+\frac{1}{i\omega\tau_i}+
+      \frac{i\omega\tau_d}{1+i\omega\tau_d/N_d}\right),\qquad
+      H_x(\omega)=\frac{H_f(\omega)}{f_0},\qquad
+      C_\phi=\begin{bmatrix}0&1&0\end{bmatrix},
+      \]</p>
+      <p>Branches with nonpositive \(\tau_i\) or \(\tau_d\) are disabled in code. The derivative branch is filtered by \(N_d\) to avoid ideal high-frequency differentiator gain.</p>
+      <p>the reduced closed-loop matrix is:</p>
+      <p>\[
+      M_{\mathrm{closed}}(\omega)=M_{\mathrm{open}}(\omega)-B_xH_x(\omega)C_\phi.
+      \]</p>
+      <p>This keeps only first-order terms: \(dx\), \(\phi\), and \(H_x\phi\) are retained, while products such as \(dx\,\phi\), \(dx\,r\), and \(dx\,T_1\) are outside the linear model.</p>
       <p>This is the exact matrix structure currently implemented in <a href="../python-simple-abs/sensor.py"><code>Sensor.m_matrix()</code></a>.</p>
-      <p>Detailed branch-power split and its use in matrix/noise normalization: <a href="power-partitioning.html">Power Partitioning</a>.</p>
-      <p>Algebraic full-circle proof (3x3 -> 4x4 split -> 3x3 reduction): <a href="dual-to-single-reduction.html">Dual-to-Single Reduction</a>.</p>
-      <p>Microwave-basis check that SB->IQ conversion is identical in single vs halfed dual: <a href="sb-to-iq-equivalence.html">SB-to-IQ Equivalence</a>.</p>
-      <p>For the cofactor argument showing why Q-channel NEP should be independent of \(K_p\) and \(K_d\) when feedback appears only in the Q column, see <a href="feedback-nep-invariance.html">Feedback NEP Invariance</a>.</p>
+    </section>
+
+    <section class="card">
+      <h2>Augmented \(dx\) System</h2>
+      <p>For the controller derivation, \(dx\) is kept as an independent variable until the feedback equation is added. The first-order expansion around the operating detuning \(x_0\) is:</p>
+      <p>\[
+      M_{\mathrm{open}}(\omega,x_0)Y-B_x(x_0)dx=N,\qquad
+      Y=\begin{bmatrix}r&\phi&T_1\end{bmatrix}^{T}.
+      \]</p>
+      <p>The fourth equation introduces the controller after the sideband variables have been transformed into demodulated normalized coordinates:</p>
+      <p>\[
+      dx-H_x(\omega)C_\phi Y=0.
+      \]</p>
+      <p>The frequency-domain system inverted by the code is therefore:</p>
+      <p>\[
+      \begin{bmatrix}
+      M_{\mathrm{open}}(\omega,x_0) & -B_x(x_0)\\
+      -H_x(\omega)C_\phi & 1
+      \end{bmatrix}
+      \begin{bmatrix}
+      Y\\
+      dx
+      \end{bmatrix}
+      =
+      \begin{bmatrix}
+      N\\
+      0
+      \end{bmatrix}.
+      \]</p>
+      <p>When PID is off, \(H_x=0\). The fourth equation gives \(dx=0\), and the first three equations reduce exactly to the paper matrix \(M_{\mathrm{open}}(\omega,x_0)Y=N\).</p>
+      <p>Eliminating \(dx\) with a Schur complement gives the reduced matrix above, so the \(Y\) response from the augmented inverse is identical to \(Y=M_{\mathrm{closed}}^{-1}N\). With \(H_x=0\), this inverse reduces to the paper form \(Y=M_{\mathrm{open}}^{-1}N\) and a solved \(dx=0\).</p>
+      <p>Python: <a href="../python-simple-abs/sensor.py"><code>Sensor.m_matrix_augmented_array()</code></a> builds this matrix, and frequency-domain noise/source solves use the augmented inverse.</p>
     </section>
 
     <section class="card">

@@ -70,6 +70,13 @@
     "delta_J": "J",
     "eqp_J": "J",
     "detuning_widths": "fr/Qr",
+    "detuning_pid_gain_Hz_per_rad": "Hz/rad",
+    "detuning_pid_integrator_time_s": "s",
+    "detuning_pid_derivative_time_s": "s",
+    "detuning_pid_derivative_filter_factor": "1",
+    "detuning_pid_transfer_Hz_per_rad": "Hz/rad",
+    "detuning_pid_transfer_dx_per_rad": "1/rad",
+    "dx_response_to_event_power_at_f_demod": "1/W",
     "nep_sufficiency_percent": "%",
     "detuning_Hz": "Hz",
     "x": "1",
@@ -221,27 +228,34 @@
     "pbif_typical_max_dBm": -70.0,
     "thermal_energy_resolution_target_eV": 0.1,
     "detuning_widths": 0.1,
+    "detuning_pid_gain_Hz_per_rad": 0.0,
+    "detuning_pid_integrator_time_s": 0.0,
+    "detuning_pid_derivative_time_s": 0.0,
+    "detuning_pid_derivative_filter_factor": 10.0,
     "nep_sufficiency_percent": 10.0,
-    "event_power_fraction_kid1": 0.5,
-    "heater2_offset_dBm": -95.0,
-    "heat_capacity2_eV_per_mK": 3.0,
-    "G2_W_per_K": 2.403846153846154e-12,
-    "alpha_A2": 0.1,
-    "alpha_phi2": 68.0,
-    "series_L2_H": 1.2202373590582704e-07,
-    "series_R2_Ohm": 0.0030667909782826183,
-    "feedback_heater_gain_W_per_rad": -1e-10,
-    "feedback_heater_derivative_gain_W_s_per_rad": -5e-16,
+    "event_power_fraction_kid1": 1.0,
+    "heater2_offset_dBm": -1000.0,
+    "heat_capacity2_eV_per_mK": 0.0,
+    "G2_W_per_K": 0.0,
+    "alpha_A2": 0.0,
+    "alpha_phi2": 0.0,
+    "series_L2_H": 0.0,
+    "series_R2_Ohm": 0.0,
+    "feedback_heater_gain_W_per_rad": 0.0,
+    "feedback_heater_derivative_gain_W_s_per_rad": 0.0,
     "f_demod_Hz": 0.0
   },
   "model_outputs": {
     "detuning_Hz": 800.0,
     "x": 8e-07,
-    "T02_K": 0.1615507506630046,
+    "detuning_pid_transfer_Hz_per_rad": 0.0,
+    "detuning_pid_transfer_dx_per_rad": 0.0,
+    "dx_response_to_event_power_at_f_demod": 0.0,
+    "T02_K": 0.04,
     "count_rate_Hz": 3.4777454167382658,
-    "pileup_probability_max": 0.004676945077994654,
-    "nep_sufficient_frequency_hz": 1483.706305102141,
-    "nep_sufficient_time_s": 0.0006739878347629979,
+    "pileup_probability_max": 0.022716189169586398,
+    "nep_sufficient_frequency_hz": 302.69985479246384,
+    "nep_sufficient_time_s": 0.0033036025097719886,
     "au_number_density_per_m3": 5.900865140109816e+28,
     "ho_number_density_per_m3": 3.250765849395446e+28,
     "ho_decay_constant_per_s": 4.806238233179459e-12,
@@ -260,63 +274,63 @@
     "membrane_length_m": 0.00024281299483529484,
     "membrane_width_m": 0.00024281299483529484,
     "membrane_span_m": 0.00024281299483529484,
-    "leg_length_m": 0.0007488,
+    "leg_length_m": 0.0003744,
     "leg_thickness_m": 3e-07,
     "C_J_per_K": 4.806529902e-16,
     "C_eV_per_mK": 3.0,
     "C_ho_eV_per_mK": 3.0,
-    "G_W_per_K": 1.201923076923077e-12,
+    "G_W_per_K": 2.403846153846154e-12,
     "deltaT_abs_over_bath_setpoint_K": 0.02,
     "deltaT_abs_over_bath_K": 0.02,
     "tbath_from_link_K": 0.02,
-    "deltaT_event_full_absorption_K": 0.4681131805845572,
-    "deltaT2_event_full_absorption_K": 0.4681131805845572,
-    "kid2_thermal_headroom_K": 0.1415507506630046,
-    "kid2_thermal_headroom_over_event_ratio": 0.30238574031656795,
+    "deltaT_event_full_absorption_K": 0.9362263611691144,
+    "deltaT2_event_full_absorption_K": 0.0,
+    "kid2_thermal_headroom_K": NaN,
+    "kid2_thermal_headroom_over_event_ratio": NaN,
     "dL1_dT_H_per_K": 8.297614041596239e-10,
-    "dL2_dT_H_per_K": 2.054490989993625e-10,
-    "deltaL1_event_H": 3.8842225002746977e-10,
-    "deltaL2_compensation_headroom_H": 2.7026983196404084e-11,
-    "kid2_inductance_headroom_over_event_ratio": 0.06958144955520107,
+    "dL2_dT_H_per_K": NaN,
+    "deltaL1_event_H": 7.768445000549395e-10,
+    "deltaL2_compensation_headroom_H": NaN,
+    "kid2_inductance_headroom_over_event_ratio": NaN,
     "dfr_dT_Hz_per_K": -3400000.0,
     "dT_dE_K_per_J": 2080503024820254.2,
     "dphi_dE_rad_per_J": -3.400822252110031e+18,
-    "deltafr_event_Hz": -1591584.8139874944,
+    "deltafr_event_Hz": -3183169.627974989,
     "deltaphi_event_rad": -1530.3700134495139,
-    "phonon_power_asd_device_W_per_rtHz": 2.241653780981616e-19,
-    "phonon_temp_asd_device_K_per_rtHz": 1.8650559457767043e-07,
-    "phonon_energy_asd_device_J_per_rtHz": 8.964447172278619e-23,
-    "asd_phi_phonon_simple_per_rtHz": 0.00030486491421349973,
+    "phonon_power_asd_device_W_per_rtHz": 3.1701771792091287e-19,
+    "phonon_temp_asd_device_K_per_rtHz": 1.3187937065509976e-07,
+    "phonon_energy_asd_device_J_per_rtHz": 6.338821385106783e-23,
+    "asd_phi_phonon_simple_per_rtHz": 0.00021557204818622075,
     "thermal_energy_fluct_rms_J": 3.2584979859233052e-21,
     "thermal_energy_fluct_rms_eV": 0.02033794474825243,
     "ho_decay_energy_eV": 2808.6790835073434,
-    "tau_th_s": 0.0003999032878464,
+    "tau_th_s": 0.0001999516439232,
     "tau_target_from_rate_s": 0.00014377130585623596,
-    "tau_error_fraction": 1.781523652892762,
+    "tau_error_fraction": 0.390761826446381,
     "tau_res_s": 3.978873577297384e-05,
-    "tau_ratio_res_over_th": 0.09949589558827636,
+    "tau_ratio_res_over_th": 0.19899179117655272,
     "core_rule1_left_ratio": 0.001256637061435917,
-    "core_rule1_right_ratio": 0.09949589558827636,
-    "core_rule1_ok": 1.0,
-    "core_rule2_ratio": 0.09949589558827636,
+    "core_rule1_right_ratio": 0.19899179117655272,
+    "core_rule1_ok": 0.0,
+    "core_rule2_ratio": 0.19899179117655272,
     "core_rule2_ok": 1.0,
-    "core_rule3_ok": 1.0,
+    "core_rule3_ok": 0.0,
     "core_rule4_ok": 1.0,
     "core_rule5_ok": 1.0,
     "core_rule6_ok": 0.0,
     "core_rule7_ok": 1.0,
     "core_rule8_ok": 0.0,
     "core_rule9_ok": 1.0,
-    "core_rule10_ok": 0.0,
+    "core_rule10_ok": 1.0,
     "core_rule12_ok": 1.0,
     "core_rule13_ok": 1.0,
     "core_rule14_ok": 0.0,
     "core_rule15_ok": 1.0,
     "L_geo_H": 1.2202373590582704e-07,
     "L_total_H": 1.2202373590582704e-07,
-    "C_res_F": 1.037924946427363e-13,
-    "Z0_res_Ohm": 1533.395489141309,
-    "R0_Ohm": 0.006133581956565237,
+    "C_res_F": 2.075849892854726e-13,
+    "Z0_res_Ohm": 766.6977445706545,
+    "R0_Ohm": 0.0030667909782826183,
     "Qr": 125000.0,
     "p_bifurcation_W": 5.76e-14,
     "p_bifurcation_dBm": -102.39577516576787,
@@ -324,105 +338,107 @@
     "bifurcation_power_ratio": 0.8680555555555556,
     "tls_phi_asd_100hz_per_rtHz": 0.0002403846153846154,
     "passive_tls_iq_transfer_phi_100hz_abs": 0.48064147551995356,
-    "tls_iq_source_asd_100hz_per_rtHz": 0.0005000000000000001,
-    "sphi_johnson_full_per_hz": 9.444694626670298e-17,
-    "asd_phi_johnson_full_per_rtHz": 9.718381874916367e-09,
-    "sphi_tls_per_hz": 2.245275783925231e-15,
-    "asd_phi_tls_per_rtHz": 4.7384341125789973e-08,
-    "sphi_electronic_per_hz": 7.440957167533371e-15,
-    "asd_phi_electronic_per_rtHz": 8.626098288063597e-08,
-    "sphi_total_per_hz": 1.029297576028067e-14,
-    "asd_phi_total_per_rtHz": 1.0145430380363699e-07,
+    "tls_iq_source_asd_100hz_per_rtHz": 0.0005,
+    "sphi_johnson_full_per_hz": 2.024037964912906e-12,
+    "asd_phi_johnson_full_per_rtHz": 1.422686882245319e-06,
+    "sphi_tls_per_hz": 1.0134388000879193e-08,
+    "asd_phi_tls_per_rtHz": 0.00010066969753048428,
+    "sphi_electronic_per_hz": 1.7852014850531805e-10,
+    "asd_phi_electronic_per_rtHz": 1.3361143233470631e-05,
+    "sphi_total_per_hz": 1.1133097487612144e-08,
+    "asd_phi_total_per_rtHz": 0.00010551349433893347,
     "asd_phi_tls_100hz_model_per_rtHz": 0.0002403846153846154,
-    "asd_phi_phonon_full_per_rtHz": 2.2633953754378952e-08,
-    "phase_responsivity_rad_per_W": 47225796187.13942,
-    "nep_phi_johnson_W_per_rtHz": 2.0578545328078317e-19,
-    "nep_phi_tls_W_per_rtHz": 1.0033571681464575e-18,
-    "nep_phi_phonon_W_per_rtHz": 4.792709828477737e-19,
-    "nep_phi_electronic_W_per_rtHz": 1.826564925211926e-18,
-    "nep_phi_total_W_per_rtHz": 2.1482814900908995e-18,
-    "nep_phi_phonon_0hz_W_per_rtHz": 4.792709828477737e-19,
-    "nep_phi_total_0hz_W_per_rtHz": 2.1482814900908995e-18,
-    "nep_phi_0hz_over_phonon_ratio": 4.482394234105422,
+    "asd_phi_phonon_full_per_rtHz": 2.860358894024874e-05,
+    "phase_responsivity_rad_per_W": 90227098749681.06,
+    "nep_phi_johnson_W_per_rtHz": 1.5767844715835417e-20,
+    "nep_phi_tls_W_per_rtHz": 1.1157368343381443e-18,
+    "nep_phi_phonon_W_per_rtHz": 3.1701771792091287e-19,
+    "nep_phi_electronic_W_per_rtHz": 1.4808348510172906e-19,
+    "nep_phi_total_W_per_rtHz": 1.1694213357304303e-18,
+    "nep_phi_phonon_0hz_W_per_rtHz": 3.1701771792091287e-19,
+    "nep_phi_total_0hz_W_per_rtHz": 1.1694213357304303e-18,
+    "nep_phi_0hz_over_phonon_ratio": 3.6888201183195966,
     "dphi_df_detuning_per_hz": 0.00048076923076923074,
-    "sf_over_f0sq_johnson_full": 4.086152683282638e-28,
-    "sf_over_f0sq_johnson_simple": 3.777877850668119e-28,
-    "m_phonon_over_johnson_phi": 36.24253881347179,
-    "m_phonon_over_tls_phi": 1.2682380431281588,
+    "sf_over_f0sq_johnson_full": 8.756797851399198e-24,
+    "sf_over_f0sq_johnson_simple": 8.096151859651623e-24,
+    "m_phonon_over_johnson_phi": 33.13816629357304,
+    "m_phonon_over_tls_phi": 0.8967797204546782,
     "sf_over_f0sq_tls_model": 2.5e-18,
     "sf_over_f0sq_tls_1hz": 2.5e-18,
-    "I0_rms_A": 2.7996983811936123e-06,
-    "s_deltaC_tls_1hz_F2_per_Hz": 1.0772881944162443e-43,
-    "asd_deltaC_tls_1hz_F_per_rtHz": 3.282206871018712e-22,
+    "I0_rms_A": 3.959371421238005e-06,
+    "s_deltaC_tls_1hz_F2_per_Hz": 4.309152777664977e-43,
+    "asd_deltaC_tls_1hz_F_per_rtHz": 6.564413742037424e-22,
     "s_deltaC_over_C_tls_100hz_per_Hz": 1e-18,
-    "sv_usb_tls_1hz_V2_per_Hz": 4.607558561121723e-23,
-    "asd_v_usb_tls_1hz_V_per_rtHz": 6.787899941161274e-12,
-    "sv_usb_johnson_V2_per_Hz": 1.7067970176892136e-26,
-    "asd_v_usb_johnson_V_per_rtHz": 1.3064444181400193e-13,
-    "m_usb_tls_over_johnson_1hz": 51.95705111454481,
-    "P1_W": 2.403846153846154e-14,
-    "P2_W": 2.403846153846154e-14,
-    "heater2_dc_power_W": 3.1622776601683797e-13,
-    "heater2_dc_power_dBm": -95.0,
+    "sv_usb_tls_1hz_V2_per_Hz": 2.303779280560861e-23,
+    "asd_v_usb_tls_1hz_V_per_rtHz": 4.799770078410903e-12,
+    "sv_usb_johnson_V2_per_Hz": 3.387329517899935e-27,
+    "asd_v_usb_johnson_V_per_rtHz": 5.820076904904208e-14,
+    "m_usb_tls_over_johnson_1hz": 82.46918652168397,
+    "P1_W": 4.807692307692308e-14,
+    "P2_W": 0.0,
+    "heater2_dc_power_W": 0.0,
+    "heater2_dc_power_dBm": NaN,
     "P0_W": 4.807692307692308e-14,
     "Pg_W": 1e-13,
     "P0_undetuned_W": 5e-14,
     "pg_to_p0_factor": 0.4807692307692308,
     "delta_J": 4.8709296720000005e-23,
     "eqp_J": 4.8709296720000005e-23,
-    "phonon_power_rms_W": 2.241653780981616e-19,
-    "johnson_voltage_rms_V": 1.847591414620242e-13,
-    "johnson_sv_V2_per_Hz": 3.413594035378427e-26,
+    "phonon_power_rms_W": 3.1701771792091287e-19,
+    "johnson_voltage_rms_V": 8.230831692969958e-14,
+    "johnson_sv_V2_per_Hz": 6.77465903579987e-27,
     "M_e": 9.391485505499118,
     "N_J_scale": 1.3556990627716758e-05,
     "N_J_thermal_scale": 3.258891977816528e-19,
-    "mt_eig1_real_per_s": -2376.1388047864107,
-    "mt_eig1_imag_per_s": 0.0,
-    "mt_eig2_real_per_s": -26136.705617095828,
-    "mt_eig2_imag_per_s": 0.0,
-    "mt_eig3_real_per_s": -203355.17498679235,
-    "mt_eig3_imag_per_s": 0.0,
-    "mt_max_real_part_per_s": -2376.1388047864107,
+    "mt_eig1_real_per_s": -3992.6117827111184,
+    "mt_eig1_imag_per_s": 22594.846841477305,
+    "mt_eig2_real_per_s": -3992.6117827111266,
+    "mt_eig2_imag_per_s": -22594.84684147729,
+    "mt_eig3_real_per_s": -47031.40762657995,
+    "mt_eig3_imag_per_s": 3.637978807091713e-12,
+    "mt_eig4_real_per_s": NaN,
+    "mt_eig4_imag_per_s": NaN,
+    "mt_max_real_part_per_s": -3992.6117827111184,
     "mt_stable": 1.0,
-    "mt_pulse_shortening_ratio": 1.0523815326371502,
-    "mt_eig1_per_s": "-2376.14 + 0i",
-    "mt_eig2_per_s": "-2.613671e+04 + 0i",
-    "mt_eig3_per_s": "-2.033552e+05 + 0i",
-    "mt_eig4_per_s": "-1.041030e+07 + 0i"
+    "mt_pulse_shortening_ratio": 1.252615948271201,
+    "mt_eig1_per_s": "-3992.61 + 2.259485e+04i",
+    "mt_eig2_per_s": "-3992.61 - 2.259485e+04i",
+    "mt_eig3_per_s": "-4.703141e+04 + 3.637979e-12i",
+    "mt_eig4_per_s": "n/a"
   },
   "vectors": {
     "N_ph": [
       0.0,
       0.0,
-      2.241653780981616e-19,
-      1.2410626496115772e-18
+      3.1701771792091287e-19,
+      0.0
     ],
     "N_J_A": [
-      2.8851407646291813e-05,
+      1.3556990627716758e-05,
       0.0,
-      -2.304384616668507e-19,
-      -1.7423506041376833e-18
+      -3.258891977816528e-19,
+      0.0
     ],
     "N_J_phi": [
       0.0,
       [
         0.0,
-        2.8851407646291813e-05
+        1.3556990627716758e-05
       ],
       0.0,
       0.0
     ],
     "N_g_A": [
-      0.00018005806812479137,
+      0.0001273202809783893,
       0.0,
-      -2.1641594726537424e-18,
-      -8.142267163827561e-18
+      -3.0605836773651275e-18,
+      0.0
     ],
     "N_g_phi": [
       0.0,
       [
         0.0,
-        0.00018005806812479137
+        0.0001273202809783893
       ],
       0.0,
       0.0
@@ -431,7 +447,7 @@
       0.0,
       [
         0.0,
-        0.0015811388300841897
+        0.0015811388300841895
       ],
       0.0,
       0.0
@@ -497,10 +513,6 @@
         [
           5.0,
           0.0
-        ],
-        [
-          1.2380010565051516,
-          0.0
         ]
       ],
       [
@@ -515,45 +527,19 @@
         [
           -3400.0,
           0.0
-        ],
-        [
-          -841.8407184235031,
-          0.0
         ]
       ],
       [
         [
-          -2.403846153846154e-14,
+          -4.807692307692308e-14,
           0.0
         ],
         [
-          4.8076923076923075e-15,
+          9.615384615384615e-15,
           0.0
         ],
         [
-          1.141826923076923e-12,
-          3.0200318058765735e-15
-        ],
-        [
-          0.0,
-          0.0
-        ]
-      ],
-      [
-        [
-          -2.403846153846154e-14,
-          0.0
-        ],
-        [
-          1.000048076923077e-10,
-          3.1415926535897933e-15
-        ],
-        [
-          0.0,
-          0.0
-        ],
-        [
-          2.388966333455467e-12,
+          2.283653846153846e-12,
           3.0200318058765735e-15
         ]
       ]
@@ -575,10 +561,6 @@
         [
           8156057.850665809,
           0.0
-        ],
-        [
-          2019441.6472082813,
-          0.0
         ]
       ],
       [
@@ -593,45 +575,19 @@
         [
           41094448.51868802,
           0.0
-        ],
-        [
-          10174994.136526467,
-          0.0
         ]
       ],
       [
         [
-          50.01209194279458,
+          100.02418388558915,
           0.0
         ],
         [
-          -10.002418388558914,
+          -20.004836777117827,
           0.0
         ],
         [
-          -2375.574367282742,
-          0.0
-        ],
-        [
-          0.0,
-          0.0
-        ]
-      ],
-      [
-        [
-          -5178.862322894529,
-          0.0
-        ],
-        [
-          -181915.93282622736,
-          0.0
-        ],
-        [
-          -42748562.223225325,
-          0.0
-        ],
-        [
-          -10589523.290968781,
+          -4751.148734565484,
           0.0
         ]
       ]
@@ -641,23 +597,19 @@
     "format": "[real, imag]",
     "values": [
       [
-        -10410296.328384832,
-        0.0
+        -47031.40762657995,
+        3.637978807091713e-12
       ],
       [
-        -2376.1388047864107,
-        0.0
+        -3992.6117827111184,
+        22594.846841477305
       ],
       [
-        -26136.705617095828,
-        0.0
-      ],
-      [
-        -203355.17498679235,
-        0.0
+        -3992.6117827111266,
+        -22594.84684147729
       ]
     ],
-    "max_real_part_per_s": -2376.1388047864107,
+    "max_real_part_per_s": -3992.6117827111184,
     "stable": true
   }
 }

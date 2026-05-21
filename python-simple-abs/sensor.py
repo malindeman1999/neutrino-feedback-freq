@@ -83,6 +83,10 @@ class SensorInputs:
 
     # Readout condition
     detuning_widths: float
+    detuning_pid_gain_Hz_per_rad: float
+    detuning_pid_integrator_time_s: float
+    detuning_pid_derivative_time_s: float
+    detuning_pid_derivative_filter_factor: float
     nep_sufficiency_percent: float
     event_power_fraction_kid1: float
     # Optional second series KID / second island parameters
@@ -137,17 +141,21 @@ class Version1SensorInputs(SensorInputs):
     pbif_typical_max_dBm: float = -70.0
     thermal_energy_resolution_target_eV: float = 0.1
     detuning_widths: float = 0.1
+    detuning_pid_gain_Hz_per_rad: float = 0.0
+    detuning_pid_integrator_time_s: float = 0.0
+    detuning_pid_derivative_time_s: float = 0.0
+    detuning_pid_derivative_filter_factor: float = 10.0
     nep_sufficiency_percent: float = 10.0
-    event_power_fraction_kid1: float = 0.5
-    heater2_offset_dBm: float = -95.0
-    heat_capacity2_eV_per_mK: float = 3.0
-    G2_W_per_K: float = 2.403846153846154e-12
-    alpha_A2: float = 0.1
-    alpha_phi2: float = 68.0
-    series_L2_H: float = 1.2202373590582704e-07
-    series_R2_Ohm: float = 0.0030667909782826183
-    feedback_heater_gain_W_per_rad: float = -1.0e-10
-    feedback_heater_derivative_gain_W_s_per_rad: float = -5.0e-16
+    event_power_fraction_kid1: float = 1.0
+    heater2_offset_dBm: float = -1000.0
+    heat_capacity2_eV_per_mK: float = 0.0
+    G2_W_per_K: float = 0.0
+    alpha_A2: float = 0.0
+    alpha_phi2: float = 0.0
+    series_L2_H: float = 0.0
+    series_R2_Ohm: float = 0.0
+    feedback_heater_gain_W_per_rad: float = 0.0
+    feedback_heater_derivative_gain_W_s_per_rad: float = 0.0
     f_demod_Hz: float = 0.0
 
 @dataclass(frozen=True)
@@ -344,10 +352,14 @@ class Sensor:
 
     @cached_property
     def event_power_fraction_kid1_clamped(self) -> float:
+        if not self.second_kid_active:
+            return 1.0
         return float(min(1.0, max(0.0, self.event_power_fraction_kid1)))
 
     @cached_property
     def event_power_fraction_kid2(self) -> float:
+        if not self.second_kid_active:
+            return 0.0
         return 1.0 - self.event_power_fraction_kid1_clamped
 
     @cached_property
@@ -922,11 +934,9 @@ class Sensor:
         b = self.n_johnson_phi_2()
         return tuple(ai + bi for ai, bi in zip(a, b))
 
-    def _propagate_noise_vector(self, n_vec: Tuple[complex, complex, complex, complex], f_hz: float) -> np.ndarray:
+    def _propagate_noise_vector(self, n_vec: Tuple[complex, ...], f_hz: float) -> np.ndarray:
         """Propagate one source vector through Y = M^{-1} N."""
-        m = self.m_matrix_array(f_hz)
-        n = np.array(n_vec, dtype=complex)
-        return np.linalg.solve(m, n)
+        return self._solve_response_vector(n_vec, f_hz)[:3]
 
     @cached_property
     def y_johnson_A(self) -> np.ndarray:
@@ -981,17 +991,15 @@ class Sensor:
 
     def phase_responsivity_complex_rad_per_W_at_hz(self, f_hz: float) -> complex:
         """Complex phase responsivity to power source: (M^-1)_{phi,power}."""
-        m = self.m_matrix_array(f_hz)
         e_power = np.array(
             (
                 0.0 + 0.0j,
                 0.0 + 0.0j,
                 self.event_power_fraction_kid1_clamped + 0.0j,
-                self.event_power_fraction_kid2 + 0.0j,
             ),
             dtype=complex,
         )
-        y_unit_power = np.linalg.solve(m, e_power)
+        y_unit_power = self._solve_response_vector(tuple(e_power), f_hz)
         return complex(y_unit_power[1])
 
     def phase_responsivity_mag_rad_per_W_at_hz(self, f_hz: float) -> float:
@@ -1430,102 +1438,128 @@ class Sensor:
 
     def m_matrix(
         self, f_hz: float = 1.0
-    ) -> Tuple[Tuple[complex, complex, complex, complex], Tuple[complex, complex, complex, complex], Tuple[complex, complex, complex, complex], Tuple[complex, complex, complex, complex]]:
-        """Compute 4x4 complex dual-KID M(omega) for states [r, phi, T1, T2]."""
+    ) -> Tuple[Tuple[complex, complex, complex], Tuple[complex, complex, complex], Tuple[complex, complex, complex]]:
+        """Compute closed-loop 3x3 single-KID M(omega) for states [r, phi, T1]."""
+        return tuple(tuple(v for v in row) for row in self.m_matrix_array(f_hz))
+
+    def m_matrix_open_loop(
+        self, f_hz: float = 1.0
+    ) -> Tuple[Tuple[complex, complex, complex], Tuple[complex, complex, complex], Tuple[complex, complex, complex]]:
+        """Compute open-loop 3x3 single-KID M(omega) for states [r, phi, T1]."""
         w0 = 2.0 * pi * self.f0_Hz
         omega = 2.0 * pi * f_hz
         q = self.Qr
         qi = self.Qi_eff
         x = self.x
         c1 = self.C_J_per_K
-        c2 = max(self.heat_capacity2_eV_per_mK, 0.0) * 1.0e3 * J_PER_EV
         g1 = self.G_W_per_K
-        g2 = max(self.G2_W_per_K, 0.0)
-        t02 = self.T02_eff_K
-        r1 = max(self.R1_series_Ohm, 0.0)
-        r2 = max(self.series_R2_Ohm, 0.0)
-        rsum = r1 + r2
-        p1 = self.P0_W if rsum <= 0.0 else self.P0_W * (r1 / rsum)
-        p2 = 0.0 if rsum <= 0.0 else self.P0_W * (r2 / rsum)
+        p1 = self.P0_W
 
         m11 = (2.0j * omega * qi / w0) + (qi / q) + self.beta_A + (4.0 * qi * q * x * x)
         m12 = -(4.0j * omega * qi * q * x / w0)
         m13 = -(2.0 * q * x * self.beta_A) + (2.0 * self.alpha_A / self.T0_K)
-        m14 = 2.0 * self.alpha_A2 / t02
 
         m21 = +(4.0j * omega * qi * q * x / w0) - self.beta_phi
         m22 = (2.0j * omega * qi / w0) + (qi / q) + (4.0 * qi * q * x * x) + (2.0 * q * x * self.beta_phi)
         m23 = -(2.0 * self.alpha_phi / self.T0_K)
-        m24 = -(2.0 * self.alpha_phi2 / t02)
-
-        second_active = any(
-            v > 0.0
-            for v in (
-                c2,
-                g2,
-                p2,
-                abs(self.alpha_A2),
-                abs(self.alpha_phi2),
-                abs(self.feedback_heater_gain_W_per_rad),
-                abs(self.feedback_heater_derivative_gain_W_s_per_rad),
-            )
-        )
 
         m31 = -((1.0 + self.beta_A / 2.0) * p1)
         m32 = +(q * x * (self.beta_A + 2.0) * p1)
         m33 = (1.0j * omega * c1) + g1 - (p1 * self.alpha_A / self.T0_K)
-        m34 = 0.0 + 0.0j
-
-        if second_active:
-            m41 = -((1.0 + self.beta_A / 2.0) * p2)
-            m42 = (
-                +(q * x * (self.beta_A + 2.0) * p2)
-                - self.feedback_heater_gain_W_per_rad
-                - (1.0j * omega * self.feedback_heater_derivative_gain_W_s_per_rad)
-            )
-            m43 = 0.0 + 0.0j
-            m44 = (1.0j * omega * c2) + g2 - (p2 * self.alpha_A2 / t02)
-        else:
-            m41 = 0.0 + 0.0j
-            m42 = 0.0 + 0.0j
-            m43 = 0.0 + 0.0j
-            m44 = 1.0 + 0.0j
 
         return (
-            (m11, m12, m13, m14),
-            (m21, m22, m23, m24),
-            (m31, m32, m33, m34),
-            (m41, m42, m43, m44),
+            (m11, m12, m13),
+            (m21, m22, m23),
+            (m31, m32, m33),
         )
 
+    @cached_property
+    def detuning_actuator_column_dx(self) -> np.ndarray:
+        """Source-column for a dimensionless detuning command dx = df/f0.
+
+        This uses the same sideband-to-IQ normalization as TLS frequency noise:
+        a fractional frequency perturbation dx produces a phase-like source
+        with magnitude 4*Qi_eff*dx.
+        """
+        return np.array((0.0 + 0.0j, 4.0j * self.Qi_eff, 0.0 + 0.0j), dtype=complex)
+
+    def detuning_pid_transfer_Hz_per_rad(self, f_hz: float) -> complex:
+        """PID transfer from measured phase to commanded drive-frequency offset."""
+        k = self.detuning_pid_gain_Hz_per_rad
+        if k == 0.0:
+            return 0.0 + 0.0j
+        omega = 2.0 * pi * f_hz
+        s = 1j * omega
+        h = 1.0 + 0.0j
+        tau_i = self.detuning_pid_integrator_time_s
+        if tau_i > 0.0:
+            if omega == 0.0:
+                return complex(np.inf)
+            h += 1.0 / (s * tau_i)
+        tau_d = self.detuning_pid_derivative_time_s
+        if tau_d > 0.0:
+            n = self.detuning_pid_derivative_filter_factor
+            if n <= 0.0:
+                raise ValueError("detuning_pid_derivative_filter_factor must be > 0 when derivative PID is enabled")
+            h += (s * tau_d) / (1.0 + (s * tau_d / n))
+        return k * h
+
+    def detuning_pid_transfer_dx_per_rad(self, f_hz: float) -> complex:
+        if self.f0_Hz <= 0.0:
+            return 0.0 + 0.0j
+        return self.detuning_pid_transfer_Hz_per_rad(f_hz) / self.f0_Hz
+
+    @cached_property
+    def dx_response_to_event_power_at_f_demod(self) -> complex:
+        """Solved controller detuning response to a unit event-power source."""
+        e_power = (0.0 + 0.0j, 0.0 + 0.0j, self.event_power_fraction_kid1_clamped + 0.0j)
+        return complex(self._solve_response_vector(e_power, self.f_demod_Hz)[3])
+
+    def detuning_pid_matrix_term(self, f_hz: float) -> np.ndarray:
+        """Rank-1 closed-loop term Bx H_pid C_phi."""
+        h = self.detuning_pid_transfer_dx_per_rad(f_hz)
+        if not np.isfinite(h.real) or not np.isfinite(h.imag) or h == 0.0:
+            return np.zeros((3, 3), dtype=complex)
+        c_phi = np.array((0.0 + 0.0j, 1.0 + 0.0j, 0.0 + 0.0j), dtype=complex)
+        return np.outer(self.detuning_actuator_column_dx * h, c_phi)
+
     def m_matrix_array(self, f_hz: float = 1.0) -> np.ndarray:
-        """M matrix as a 4x4 complex ndarray."""
-        return np.array(self.m_matrix(f_hz), dtype=complex)
+        """Closed-loop M matrix as a 3x3 complex ndarray."""
+        m_open = np.array(self.m_matrix_open_loop(f_hz), dtype=complex)
+        return m_open - self.detuning_pid_matrix_term(f_hz)
+
+    def m_matrix_augmented_array(self, f_hz: float = 1.0) -> np.ndarray:
+        """Augmented [r, phi, T1, dx] matrix with dx constrained by PID."""
+        m_open = np.array(self.m_matrix_open_loop(f_hz), dtype=complex)
+        h = self.detuning_pid_transfer_dx_per_rad(f_hz)
+        out = np.zeros((4, 4), dtype=complex)
+        out[:3, :3] = m_open
+        out[:3, 3] = -self.detuning_actuator_column_dx
+        if not np.isfinite(h.real) or not np.isfinite(h.imag):
+            # DC limit of an active integrator: infinite loop gain enforces phi = 0.
+            out[3, 1] = 1.0 + 0.0j
+        else:
+            out[3, 1] = -h
+            out[3, 3] = 1.0 + 0.0j
+        return out
+
+    def _solve_response_vector(self, n_vec: Tuple[complex, ...], f_hz: float) -> np.ndarray:
+        """Solve the augmented system and return [r, phi, T1, dx]."""
+        m = self.m_matrix_augmented_array(f_hz)
+        n = np.zeros(4, dtype=complex)
+        raw = np.array(n_vec, dtype=complex)
+        n[: min(3, raw.size)] = raw[:3]
+        return np.linalg.solve(m, n)
 
     @cached_property
     def second_kid_active(self) -> bool:
-        c2 = max(self.heat_capacity2_eV_per_mK, 0.0) * 1.0e3 * J_PER_EV
-        return any(
-            v > 0.0
-            for v in (
-                c2,
-                max(self.G2_W_per_K, 0.0),
-                max(self.series_L2_H, 0.0),
-                max(self.series_R2_Ohm, 0.0),
-                abs(self.alpha_A2),
-                abs(self.alpha_phi2),
-                abs(self.feedback_heater_gain_W_per_rad),
-                abs(self.feedback_heater_derivative_gain_W_s_per_rad),
-            )
-        )
+        # Current project configuration is single-KID only.
+        return False
 
     @cached_property
     def d0_matrix(self) -> np.ndarray:
         """D0 = M(0)."""
-        d0 = self.m_matrix_array(0.0)
-        if not self.second_kid_active:
-            return d0[:3, :3]
-        return d0
+        return self.m_matrix_array(0.0)
 
     @cached_property
     def d1_matrix(self) -> np.ndarray:
@@ -1538,10 +1572,7 @@ class Sensor:
         mp = self.m_matrix_array(+df_hz)
         mm = self.m_matrix_array(-df_hz)
         dmdw = (mp - mm) / (2.0 * dw)
-        d1 = -1j * dmdw
-        if not self.second_kid_active:
-            return d1[:3, :3]
-        return d1
+        return -1j * dmdw
 
     @cached_property
     def mt_matrix(self) -> np.ndarray:
@@ -1821,6 +1852,13 @@ class Sensor:
             "detuning_Hz": self.detuning_Hz,
             "x": self.x,
             "f_demod_Hz": self.f_demod_Hz,
+            "detuning_pid_gain_Hz_per_rad": self.detuning_pid_gain_Hz_per_rad,
+            "detuning_pid_integrator_time_s": self.detuning_pid_integrator_time_s,
+            "detuning_pid_derivative_time_s": self.detuning_pid_derivative_time_s,
+            "detuning_pid_derivative_filter_factor": self.detuning_pid_derivative_filter_factor,
+            "detuning_pid_transfer_Hz_per_rad": abs(self.detuning_pid_transfer_Hz_per_rad(self.f_demod_Hz)),
+            "detuning_pid_transfer_dx_per_rad": abs(self.detuning_pid_transfer_dx_per_rad(self.f_demod_Hz)),
+            "dx_response_to_event_power_at_f_demod": abs(self.dx_response_to_event_power_at_f_demod),
             "heater2_offset_dBm": self.heater2_offset_dBm,
             "T02_K": self.T02_eff_K,
             "nep_sufficiency_percent": self.nep_sufficiency_percent,
@@ -1985,6 +2023,8 @@ class Sensor:
             "mt_eig2_imag_per_s": float(np.imag(self.mt_eigenvalues_sorted[1])),
             "mt_eig3_real_per_s": float(np.real(self.mt_eigenvalues_sorted[2])),
             "mt_eig3_imag_per_s": float(np.imag(self.mt_eigenvalues_sorted[2])),
+            "mt_eig4_real_per_s": float("nan"),
+            "mt_eig4_imag_per_s": float("nan"),
             "mt_max_real_part_per_s": self.mt_max_real_part,
             "mt_stable": float(self.mt_stable),
             "mt_pulse_shortening_ratio": self.mt_pulse_shortening_ratio,
