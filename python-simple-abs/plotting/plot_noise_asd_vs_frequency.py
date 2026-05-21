@@ -72,6 +72,9 @@ INPUT_SECTIONS = [
     ),
 ]
 INPUT_KEYS = [k for _, keys in INPUT_SECTIONS for k in keys]
+INPUT_ALIASES: dict[str, tuple[str, ...]] = {
+    "amplifier_noise_temperature_K": ("amp_noise_temp",),
+}
 
 LABELS = {
     "T0_K": "T0 [K]",
@@ -83,7 +86,7 @@ LABELS = {
     "detuning_pid_integrator_time_s": "PID tau_i [s]",
     "detuning_pid_derivative_time_s": "PID tau_d [s]",
     "detuning_pid_derivative_filter_factor": "PID N",
-    "amplifier_noise_temperature_K": "Amp Tn [K]",
+    "amplifier_noise_temperature_K": "Amp Noise Temp [K]",
     "nep_sufficiency_percent": "NEP suff [%]",
     "event_power_fraction_kid1": "Event frac KID1",
     "heat_capacity_eV_per_mK": "C [eV/mK]",
@@ -349,6 +352,15 @@ class NoiseGui:
             foreground="#222",
         ).grid(row=8, column=0, columnspan=2, sticky="e", pady=(6, 0))
 
+    @staticmethod
+    def _loaded_value_with_aliases(loaded_settings: dict, key: str) -> float | None:
+        if key in loaded_settings:
+            return float(loaded_settings[key])
+        for alias in INPUT_ALIASES.get(key, ()):
+            if alias in loaded_settings:
+                return float(loaded_settings[alias])
+        return None
+
     def _load_saved_or_defaults(self) -> dict[str, float]:
         if SETTINGS_FILE.exists():
             try:
@@ -358,8 +370,9 @@ class NoiseGui:
                 if isinstance(loaded_settings, dict):
                     merged = dict(self.defaults)
                     for k in INPUT_KEYS:
-                        if k in loaded_settings:
-                            merged[k] = float(loaded_settings[k])
+                        v = self._loaded_value_with_aliases(loaded_settings, k)
+                        if v is not None:
+                            merged[k] = v
                     return merged
             except Exception:
                 pass
@@ -374,8 +387,9 @@ class NoiseGui:
                 return None
             vals = dict(self.defaults)
             for k in INPUT_KEYS:
-                if k in loaded_settings:
-                    vals[k] = float(loaded_settings[k])
+                v = self._loaded_value_with_aliases(loaded_settings, k)
+                if v is not None:
+                    vals[k] = v
             return vals
         except Exception:
             return None
@@ -829,10 +843,12 @@ class NoiseGui:
                 self._set_status("Save cancelled")
                 return
             save_path = Path(path)
+            save_settings = {k: self.current[k] for k in INPUT_KEYS}
+            save_settings["amp_noise_temp"] = self.current["amplifier_noise_temperature_K"]
             with save_path.open("wb") as f:
                 pickle.dump(
                     {
-                        "settings": {k: self.current[k] for k in INPUT_KEYS},
+                        "settings": save_settings,
                         "ui": self._current_ui_state(),
                     },
                     f,
