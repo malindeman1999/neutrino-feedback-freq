@@ -34,7 +34,7 @@
   <main class="container">
     <section class="card">
       <h2>Nominal Settings</h2>
-      <p>All values use the <strong>version 1 preset</strong> (\(R=3.47775\,\mathrm{Hz}\)) with nominal <strong>f0 = 1.0 GHz</strong>, demodulated band frequency <strong>0 Hz</strong>, detuning <strong>0.1 widths</strong>, and derived detuning <strong>800 Hz</strong>.</p>
+      <p>All values use the <strong>version 1 preset</strong> (\(R=50.6448\,\mathrm{Hz}\)) with nominal <strong>f0 = 1.0 GHz</strong>, demodulated band frequency <strong>0 Hz</strong>, detuning <strong>0.1 widths</strong>, and derived detuning <strong>1400 Hz</strong>.</p>
       <p>JSON source: <code>../python/outputs/wiki_estimates.json</code></p>
     </section>
 
@@ -61,14 +61,14 @@
       <h3>Setpoints</h3>
       <table>
         <tr><th>Quantity</th><th>Symbol</th><th>Value</th><th>Units</th></tr>
-        <tr><td>T0_K</td><td>\(T_0\)</td><td><code>0.04</code></td><td>K</td></tr>
-<tr><td>Tb_K</td><td>\(T_b\)</td><td><code>0.02</code></td><td>K</td></tr>
-<tr><td>f0_Hz</td><td>\(f_0\)</td><td><code>1.000000e+09</code></td><td>Hz</td></tr>
+        <tr><td>T0_K</td><td>\(T_0\)</td><td><code>0.015</code></td><td>K</td></tr>
+<tr><td>Tb_K</td><td>\(T_b\)</td><td><code>0.01</code></td><td>K</td></tr>
+<tr><td>f0_Hz</td><td>\(f_0\)</td><td><code>7.000000e+08</code></td><td>Hz</td></tr>
 <tr><td>f_demod_Hz</td><td>\(f_{\mathrm{demod}}\)</td><td><code>0</code></td><td>Hz</td></tr>
 <tr><td>detuning_widths</td><td>\(xQ_r\)</td><td><code>0.1</code></td><td>fr/Qr</td></tr>
-<tr><td>detuning_pid_gain_Hz_per_rad</td><td>\(K_f\)</td><td><code>0</code></td><td>Hz/rad</td></tr>
+<tr><td>detuning_pid_gain_Hz_per_rad</td><td>\(K_f\)</td><td><code>-1.000000e+05</code></td><td>Hz/rad</td></tr>
 <tr><td>detuning_pid_integrator_time_s</td><td>\(\tau_i\)</td><td><code>0</code></td><td>s</td></tr>
-<tr><td>detuning_pid_derivative_time_s</td><td>\(\tau_d\)</td><td><code>0</code></td><td>s</td></tr>
+<tr><td>detuning_pid_derivative_time_s</td><td>\(\tau_d\)</td><td><code>0.001</code></td><td>s</td></tr>
 <tr><td>detuning_pid_derivative_filter_factor</td><td>\(N_d\)</td><td><code>10</code></td><td>1</td></tr>
 <tr><td>pbif_typical_min_dBm</td><td>\(P_{\mathrm{bif,min}}^{\mathrm{typ}}\)</td><td><code>-95</code></td><td>dBm</td></tr>
 <tr><td>pbif_typical_max_dBm</td><td>\(P_{\mathrm{bif,max}}^{\mathrm{typ}}\)</td><td><code>-70</code></td><td>dBm</td></tr>
@@ -90,13 +90,13 @@
       <h3>KID Properties</h3>
       <table>
         <tr><th>Quantity</th><th>Symbol</th><th>Value</th><th>Units</th></tr>
-        <tr><td>Qi</td><td>\(Q_i\)</td><td><code>2.500000e+05</code></td><td>1</td></tr>
+        <tr><td>Qi</td><td>\(Q_i\)</td><td><code>1.000000e+05</code></td><td>1</td></tr>
 <tr><td>tau_qp_s</td><td>\(\tau_{qp}\)</td><td><code>5.000000e-08</code></td><td>s</td></tr>
 <tr><td>kinetic_inductance_fraction</td><td>\(\alpha_k\)</td><td><code>0</code></td><td>1</td></tr>
 <tr><td>kid_trace_length_m</td><td>\(\ell\)</td><td><code>0.01</code></td><td>m</td></tr>
 <tr><td>kid_trace_width_m</td><td>\(w\)</td><td><code>2.000000e-06</code></td><td>m</td></tr>
 <tr><td>alpha_A</td><td>\(\alpha_A\)</td><td><code>0.1</code></td><td>1</td></tr>
-<tr><td>alpha_phi</td><td>\(\alpha_{\phi}\)</td><td><code>68</code></td><td>1</td></tr>
+<tr><td>alpha_phi</td><td>\(\alpha_{\phi}\)</td><td><code>136</code></td><td>1</td></tr>
 <tr><td>beta_A</td><td>\(\beta_A\)</td><td><code>0</code></td><td>1</td></tr>
 <tr><td>beta_phi</td><td>\(\beta_{\phi}\)</td><td><code>0</code></td><td>1</td></tr>
 <tr><td>Tc_K</td><td>\(T_c\)</td><td><code>2</code></td><td>K</td></tr>
@@ -108,7 +108,7 @@
       <h3>Material and Activity</h3>
       <table>
         <tr><th>Quantity</th><th>Symbol</th><th>Value</th><th>Units</th></tr>
-        <tr><td>ho_in_au_atomic_fraction</td><td>\(x_{\mathrm{Ho/Au}}\)</td><td><code>1</code></td><td>1</td></tr>
+        <tr><td>ho_in_au_atomic_fraction</td><td>\(x_{\mathrm{Ho/Au}}\)</td><td><code>0.03</code></td><td>1</td></tr>
 <tr><td>ho_decay_energy_J</td><td>\(E_{\mathrm{Ho}}\)</td><td><code>4.500000e-16</code></td><td>J</td></tr>
 <tr><td>cv_absorber_J_per_m3K</td><td>\(c_{V,\mathrm{abs}}\)</td><td><code>0.075</code></td><td>J/(m^3 K)</td></tr>
 <tr><td>kappa_leg_W_per_mK</td><td>\(\kappa_{\mathrm{leg}}\)</td><td><code>0.0015</code></td><td>W/(m K)</td></tr>
@@ -120,7 +120,7 @@
       <h3>Capacitor TLS</h3>
       <table>
         <tr><th>Quantity</th><th>Symbol</th><th>Value</th><th>Units</th></tr>
-        <tr><td>asd_deltaC_over_C_tls_100hz_per_rtHz</td><td>\(\sqrt{S_{\delta C/C,\mathrm{TLS}}}(100\,\mathrm{Hz})\)</td><td><code>1.000000e-09</code></td><td>1/Hz^(1/2)</td></tr>
+        <tr><td>asd_deltaC_over_C_tls_100hz_per_rtHz</td><td>\(\sqrt{S_{\delta C/C,\mathrm{TLS}}}(100\,\mathrm{Hz})\)</td><td><code>3.000000e-09</code></td><td>1/Hz^(1/2)</td></tr>
 <tr><td>tls_beta</td><td>\(\beta_{\mathrm{TLS}}\)</td><td><code>0.5</code></td><td>1</td></tr>
       </table>
     </section>
@@ -134,17 +134,17 @@
       <h3>Simple Estimates</h3>
       <table>
         <tr><th>Quantity</th><th>Symbol</th><th>Formula</th><th>Value</th><th>Units</th></tr>
-        <tr><td>dfr_dT_Hz_per_K</td><td><a href="simple-estimates.html">\(df_r/dT\)</a></td><td>\(\dfrac{df_r}{dT}=-\dfrac{\alpha_\phi f_r}{2Q_iT_0}\approx-\dfrac{\alpha_\phi f_0}{2Q_iT_0}\)</td><td><code>-3.400000e+06</code></td><td>Hz/K</td></tr>
-<tr><td>dT_dE_K_per_J</td><td><a href="simple-estimates.html">\(dT/dE\)</a></td><td>\(\dfrac{dT}{dE}=\dfrac{1}{C}\)</td><td><code>2.080503e+15</code></td><td>K/J</td></tr>
-<tr><td>dphi_dE_rad_per_J</td><td><a href="simple-estimates.html">\(d\phi/dE\)</a></td><td>\(\dfrac{d\phi}{dE}=\dfrac{d\phi}{df}\dfrac{df_r}{dT}\dfrac{dT}{dE}\)</td><td><code>-3.400822e+18</code></td><td>rad/J</td></tr>
-<tr><td>deltafr_event_Hz</td><td><a href="simple-estimates.html">\(\Delta f_{r,\mathrm{event}}\)</a></td><td>\(\Delta f_{r,\mathrm{event}}=\dfrac{df_r}{dT}\Delta T_{\mathrm{event}}\)</td><td><code>-3.183170e+06</code></td><td>Hz</td></tr>
-<tr><td>deltaphi_event_rad</td><td><a href="simple-estimates.html">\(\Delta\phi_{\mathrm{event}}\)</a></td><td>\(\Delta\phi_{\mathrm{event}}=\dfrac{d\phi}{dE}E_{\mathrm{Ho}}\)</td><td><code>-1530.37</code></td><td>rad</td></tr>
-<tr><td>sf_over_f0sq_johnson_simple</td><td><a href="noise-johnson-sf.html">\(\left(S_f/f_0^2\right)_{J,\mathrm{simple}}\)</a></td><td>\(\left(S_f/f_0^2\right)_{J,\mathrm{simple}}=\dfrac{S_{\phi,J}^{\mathrm{full}}}{(4Q_r)^2}\)</td><td><code>8.096152e-24</code></td><td>1/Hz</td></tr>
-<tr><td>phonon_power_asd_device_W_per_rtHz</td><td><a href="simple-estimates.html">\(\sqrt{S_{P,\mathrm{ph}}}(T_0)\)</a></td><td>\(\sqrt{S_{P,\mathrm{ph}}}(T_0)=\sqrt{4k_BT_0^2G}\)</td><td><code>3.170177e-19</code></td><td>W/Hz^(1/2)</td></tr>
-<tr><td>asd_phi_phonon_simple_per_rtHz</td><td><a href="simple-estimates.html">\(\sqrt{S_{\phi,\mathrm{ph}}}^{\,\mathrm{simple}}(T_0)\)</a></td><td>\(\sqrt{S_{\phi,\mathrm{ph}}}^{\,\mathrm{simple}}(T_0)=\left|\dfrac{d\phi}{dE}\right|\sqrt{S_{E,\mathrm{ph}}}(T_0)\)</td><td><code>2.155720e-04</code></td><td>1/Hz^(1/2)</td></tr>
-<tr><td>thermal_energy_fluct_rms_J</td><td><a href="simple-estimates.html">\(\sigma_{E,\mathrm{th}}\)</a></td><td>\(\sigma_{E,\mathrm{th}}=\sqrt{k_BT_0^2C}\)</td><td><code>3.258498e-21</code></td><td>J</td></tr>
-<tr><td>thermal_energy_fluct_rms_eV</td><td><a href="simple-estimates.html">\(\sigma_{E,\mathrm{th,eV}}\)</a></td><td>\(\sigma_{E,\mathrm{th,eV}}=\sigma_{E,\mathrm{th}}/q_e\)</td><td><code>0.0203379</code></td><td>eV</td></tr>
-<tr><td>p_bifurcation_dBm</td><td><a href="bifurcation-limit.html#operating-margin">\(P_{\mathrm{bif,dBm}}\)</a></td><td>\(P_{\mathrm{bif,dBm}}=10\log_{10}(P_{\mathrm{bif}}/1\,\mathrm{mW})\)</td><td><code>-102.396</code></td><td>dBm</td></tr>
+        <tr><td>dfr_dT_Hz_per_K</td><td><a href="simple-estimates.html">\(df_r/dT\)</a></td><td>\(\dfrac{df_r}{dT}=-\dfrac{\alpha_\phi f_r}{2Q_iT_0}\approx-\dfrac{\alpha_\phi f_0}{2Q_iT_0}\)</td><td><code>-3.173333e+07</code></td><td>Hz/K</td></tr>
+<tr><td>dT_dE_K_per_J</td><td><a href="simple-estimates.html">\(dT/dE\)</a></td><td>\(\dfrac{dT}{dE}=\dfrac{1}{C}\)</td><td><code>1.134820e+14</code></td><td>K/J</td></tr>
+<tr><td>dphi_dE_rad_per_J</td><td><a href="simple-estimates.html">\(d\phi/dE\)</a></td><td>\(\dfrac{d\phi}{dE}=\dfrac{d\phi}{df}\dfrac{df_r}{dT}\dfrac{dT}{dE}\)</td><td><code>-9.893301e+17</code></td><td>rad/J</td></tr>
+<tr><td>deltafr_event_Hz</td><td><a href="simple-estimates.html">\(\Delta f_{r,\mathrm{event}}\)</a></td><td>\(\Delta f_{r,\mathrm{event}}=\dfrac{df_r}{dT}\Delta T_{\mathrm{event}}\)</td><td><code>-1.620523e+06</code></td><td>Hz</td></tr>
+<tr><td>deltaphi_event_rad</td><td><a href="simple-estimates.html">\(\Delta\phi_{\mathrm{event}}\)</a></td><td>\(\Delta\phi_{\mathrm{event}}=\dfrac{d\phi}{dE}E_{\mathrm{Ho}}\)</td><td><code>-445.199</code></td><td>rad</td></tr>
+<tr><td>sf_over_f0sq_johnson_simple</td><td><a href="noise-johnson-sf.html">\(\left(S_f/f_0^2\right)_{J,\mathrm{simple}}\)</a></td><td>\(\left(S_f/f_0^2\right)_{J,\mathrm{simple}}=\dfrac{S_{\phi,J}^{\mathrm{full}}}{(4Q_r)^2}\)</td><td><code>1.897984e-24</code></td><td>1/Hz</td></tr>
+<tr><td>phonon_power_asd_device_W_per_rtHz</td><td><a href="simple-estimates.html">\(\sqrt{S_{P,\mathrm{ph}}}(T_0)\)</a></td><td>\(\sqrt{S_{P,\mathrm{ph}}}(T_0)=\sqrt{4k_BT_0^2G}\)</td><td><code>2.538736e-19</code></td><td>W/Hz^(1/2)</td></tr>
+<tr><td>asd_phi_phonon_simple_per_rtHz</td><td><a href="simple-estimates.html">\(\sqrt{S_{\phi,\mathrm{ph}}}^{\,\mathrm{simple}}(T_0)\)</a></td><td>\(\sqrt{S_{\phi,\mathrm{ph}}}^{\,\mathrm{simple}}(T_0)=\left|\dfrac{d\phi}{dE}\right|\sqrt{S_{E,\mathrm{ph}}}(T_0)\)</td><td><code>2.301787e-04</code></td><td>1/Hz^(1/2)</td></tr>
+<tr><td>thermal_energy_fluct_rms_J</td><td><a href="simple-estimates.html">\(\sigma_{E,\mathrm{th}}\)</a></td><td>\(\sigma_{E,\mathrm{th}}=\sqrt{k_BT_0^2C}\)</td><td><code>5.232021e-21</code></td><td>J</td></tr>
+<tr><td>thermal_energy_fluct_rms_eV</td><td><a href="simple-estimates.html">\(\sigma_{E,\mathrm{th,eV}}\)</a></td><td>\(\sigma_{E,\mathrm{th,eV}}=\sigma_{E,\mathrm{th}}/q_e\)</td><td><code>0.0326557</code></td><td>eV</td></tr>
+<tr><td>p_bifurcation_dBm</td><td><a href="bifurcation-limit.html#operating-margin">\(P_{\mathrm{bif,dBm}}\)</a></td><td>\(P_{\mathrm{bif,dBm}}=10\log_{10}(P_{\mathrm{bif}}/1\,\mathrm{mW})\)</td><td><code>-95.986</code></td><td>dBm</td></tr>
       </table>
     </section>
     
@@ -154,22 +154,22 @@
       <table>
         <tr><th>Quantity</th><th>Symbol</th><th>Formula</th><th>Value</th><th>Units</th></tr>
         <tr><td>au_number_density_per_m3</td><td><a href="project.html#source-activity-formulas">\(n_{\mathrm{Au}}\)</a></td><td>\(n_{\mathrm{Au}}=\dfrac{\rho_{\mathrm{Au}}}{M_{\mathrm{Au}}}N_A\)</td><td><code>5.900865e+28</code></td><td>1/m^3</td></tr>
-<tr><td>ho_number_density_per_m3</td><td><a href="project.html#source-activity-formulas">\(n_{\mathrm{Ho}}\)</a></td><td>\(n_{\mathrm{Ho}}=x_{\mathrm{Ho/Au}}\,n_{\mathrm{Au}}\)</td><td><code>3.250766e+28</code></td><td>1/m^3</td></tr>
+<tr><td>ho_number_density_per_m3</td><td><a href="project.html#source-activity-formulas">\(n_{\mathrm{Ho}}\)</a></td><td>\(n_{\mathrm{Ho}}=x_{\mathrm{Ho/Au}}\,n_{\mathrm{Au}}\)</td><td><code>1.727998e+27</code></td><td>1/m^3</td></tr>
 <tr><td>ho_decay_constant_per_s</td><td><a href="project.html#source-activity-formulas">\(\lambda_{\mathrm{Ho}}\)</a></td><td>\(\lambda_{\mathrm{Ho}}=\dfrac{\ln 2}{T_{1/2}}\)</td><td><code>4.806238e-12</code></td><td>1/s</td></tr>
-<tr><td>ho_activity_per_m3_Hz</td><td><a href="project.html#source-activity-formulas">\(A_{\mathrm{Ho}}\)</a></td><td>\(A_{\mathrm{Ho}}=\lambda_{\mathrm{Ho}}\,n_{\mathrm{Ho}}\)</td><td><code>1.562396e+17</code></td><td>Hz/m^3</td></tr>
-<tr><td>absorber_volume_m3</td><td><a href="project.html#source-activity-formulas">\(V_{\mathrm{abs}}\)</a></td><td>\(V_{\mathrm{abs}}=\dfrac{R}{A_{\mathrm{Ho}}}\)</td><td><code>2.225906e-17</code></td><td>m^3</td></tr>
-<tr><td>absorber_edge_m</td><td><a href="project.html#source-activity-formulas">\(a_{\mathrm{abs}}\)</a></td><td>\(a_{\mathrm{abs}}=V_{\mathrm{abs}}^{1/3}\)</td><td><code>2.812995e-06</code></td><td>m</td></tr>
-<tr><td>absorber_length_m</td><td><a href="project.html#source-activity-formulas">\(L_{\mathrm{abs}}\)</a></td><td>\(L_{\mathrm{abs}}=a_{\mathrm{abs}}\)</td><td><code>2.812995e-06</code></td><td>m</td></tr>
-<tr><td>absorber_width_m</td><td><a href="project.html#source-activity-formulas">\(W_{\mathrm{abs}}\)</a></td><td>\(W_{\mathrm{abs}}=a_{\mathrm{abs}}\)</td><td><code>2.812995e-06</code></td><td>m</td></tr>
-<tr><td>absorber_thickness_m</td><td><a href="project.html#source-activity-formulas">\(t_{\mathrm{abs}}\)</a></td><td>\(t_{\mathrm{abs}}=a_{\mathrm{abs}}\)</td><td><code>2.812995e-06</code></td><td>m</td></tr>
-<tr><td>absorber_island_length_m</td><td><a href="project.html#membrane-geometry-formulas">\(L_{\mathrm{island}}\)</a></td><td>\(L_{\mathrm{island}}=L_{\mathrm{mem}}\)</td><td><code>2.428130e-04</code></td><td>m</td></tr>
-<tr><td>absorber_island_width_m</td><td><a href="project.html#membrane-geometry-formulas">\(W_{\mathrm{island}}\)</a></td><td>\(W_{\mathrm{island}}=W_{\mathrm{mem}}\)</td><td><code>2.428130e-04</code></td><td>m</td></tr>
-<tr><td>absorber_island_area_m2</td><td><a href="project.html#membrane-geometry-formulas">\(A_{\mathrm{island}}\)</a></td><td>\(A_{\mathrm{island}}=L_{\mathrm{island}}W_{\mathrm{island}}\)</td><td><code>5.895815e-08</code></td><td>m^2</td></tr>
-<tr><td>membrane_volume_m3</td><td><a href="project.html#membrane-geometry-formulas">\(V_{\mathrm{mem}}\)</a></td><td>\(V_{\mathrm{mem}}=L_{\mathrm{mem}}W_{\mathrm{mem}}t_{\mathrm{mem}}\)</td><td><code>1.768745e-14</code></td><td>m^3</td></tr>
-<tr><td>membrane_length_m</td><td><a href="project.html#membrane-geometry-formulas">\(L_{\mathrm{mem}}\)</a></td><td>\(L_{\mathrm{mem}}=L_{\mathrm{abs}}+L_{\mathrm{KID}}+\Delta_{\mathrm{mem}}\)</td><td><code>2.428130e-04</code></td><td>m</td></tr>
-<tr><td>membrane_width_m</td><td><a href="project.html#membrane-geometry-formulas">\(W_{\mathrm{mem}}\)</a></td><td>\(W_{\mathrm{mem}}=W_{\mathrm{abs}}+W_{\mathrm{KID}}+\Delta_{\mathrm{mem}}\)</td><td><code>2.428130e-04</code></td><td>m</td></tr>
-<tr><td>membrane_span_m</td><td><a href="project.html#membrane-geometry-formulas">\(S_{\mathrm{mem}}\)</a></td><td>\(S_{\mathrm{mem}}=\max(L_{\mathrm{mem}},W_{\mathrm{mem}})\)</td><td><code>2.428130e-04</code></td><td>m</td></tr>
-<tr><td>leg_length_m</td><td><a href="physics.html#leg-geometry-formulas">\(L_{\mathrm{leg}}\)</a></td><td>\(L_{\mathrm{leg}}=\dfrac{N_{\mathrm{leg}}\kappa_{\mathrm{leg}}w_{\mathrm{leg}}t_{\mathrm{leg}}}{G}\)</td><td><code>3.744000e-04</code></td><td>m</td></tr>
+<tr><td>ho_activity_per_m3_Hz</td><td><a href="project.html#source-activity-formulas">\(A_{\mathrm{Ho}}\)</a></td><td>\(A_{\mathrm{Ho}}=\lambda_{\mathrm{Ho}}\,n_{\mathrm{Ho}}\)</td><td><code>8.305172e+15</code></td><td>Hz/m^3</td></tr>
+<tr><td>absorber_volume_m3</td><td><a href="project.html#source-activity-formulas">\(V_{\mathrm{abs}}\)</a></td><td>\(V_{\mathrm{abs}}=\dfrac{R}{A_{\mathrm{Ho}}}\)</td><td><code>6.097989e-15</code></td><td>m^3</td></tr>
+<tr><td>absorber_edge_m</td><td><a href="project.html#source-activity-formulas">\(a_{\mathrm{abs}}\)</a></td><td>\(a_{\mathrm{abs}}=V_{\mathrm{abs}}^{1/3}\)</td><td><code>1.826959e-05</code></td><td>m</td></tr>
+<tr><td>absorber_length_m</td><td><a href="project.html#source-activity-formulas">\(L_{\mathrm{abs}}\)</a></td><td>\(L_{\mathrm{abs}}=a_{\mathrm{abs}}\)</td><td><code>1.826959e-05</code></td><td>m</td></tr>
+<tr><td>absorber_width_m</td><td><a href="project.html#source-activity-formulas">\(W_{\mathrm{abs}}\)</a></td><td>\(W_{\mathrm{abs}}=a_{\mathrm{abs}}\)</td><td><code>1.826959e-05</code></td><td>m</td></tr>
+<tr><td>absorber_thickness_m</td><td><a href="project.html#source-activity-formulas">\(t_{\mathrm{abs}}\)</a></td><td>\(t_{\mathrm{abs}}=a_{\mathrm{abs}}\)</td><td><code>1.826959e-05</code></td><td>m</td></tr>
+<tr><td>absorber_island_length_m</td><td><a href="project.html#membrane-geometry-formulas">\(L_{\mathrm{island}}\)</a></td><td>\(L_{\mathrm{island}}=L_{\mathrm{mem}}\)</td><td><code>2.582696e-04</code></td><td>m</td></tr>
+<tr><td>absorber_island_width_m</td><td><a href="project.html#membrane-geometry-formulas">\(W_{\mathrm{island}}\)</a></td><td>\(W_{\mathrm{island}}=W_{\mathrm{mem}}\)</td><td><code>2.582696e-04</code></td><td>m</td></tr>
+<tr><td>absorber_island_area_m2</td><td><a href="project.html#membrane-geometry-formulas">\(A_{\mathrm{island}}\)</a></td><td>\(A_{\mathrm{island}}=L_{\mathrm{island}}W_{\mathrm{island}}\)</td><td><code>6.670318e-08</code></td><td>m^2</td></tr>
+<tr><td>membrane_volume_m3</td><td><a href="project.html#membrane-geometry-formulas">\(V_{\mathrm{mem}}\)</a></td><td>\(V_{\mathrm{mem}}=L_{\mathrm{mem}}W_{\mathrm{mem}}t_{\mathrm{mem}}\)</td><td><code>2.001095e-14</code></td><td>m^3</td></tr>
+<tr><td>membrane_length_m</td><td><a href="project.html#membrane-geometry-formulas">\(L_{\mathrm{mem}}\)</a></td><td>\(L_{\mathrm{mem}}=L_{\mathrm{abs}}+L_{\mathrm{KID}}+\Delta_{\mathrm{mem}}\)</td><td><code>2.582696e-04</code></td><td>m</td></tr>
+<tr><td>membrane_width_m</td><td><a href="project.html#membrane-geometry-formulas">\(W_{\mathrm{mem}}\)</a></td><td>\(W_{\mathrm{mem}}=W_{\mathrm{abs}}+W_{\mathrm{KID}}+\Delta_{\mathrm{mem}}\)</td><td><code>2.582696e-04</code></td><td>m</td></tr>
+<tr><td>membrane_span_m</td><td><a href="project.html#membrane-geometry-formulas">\(S_{\mathrm{mem}}\)</a></td><td>\(S_{\mathrm{mem}}=\max(L_{\mathrm{mem}},W_{\mathrm{mem}})\)</td><td><code>2.582696e-04</code></td><td>m</td></tr>
+<tr><td>leg_length_m</td><td><a href="physics.html#leg-geometry-formulas">\(L_{\mathrm{leg}}\)</a></td><td>\(L_{\mathrm{leg}}=\dfrac{N_{\mathrm{leg}}\kappa_{\mathrm{leg}}w_{\mathrm{leg}}t_{\mathrm{leg}}}{G}\)</td><td><code>9.360000e-05</code></td><td>m</td></tr>
 <tr><td>leg_thickness_m</td><td><a href="physics.html#leg-geometry-formulas">\(t_{\mathrm{leg}}\)</a></td><td>\(t_{\mathrm{leg}}=t_{\mathrm{mem}}\)</td><td><code>3.000000e-07</code></td><td>m</td></tr>
       </table>
     </section>
@@ -179,20 +179,20 @@
       <h3>Derived Thermal</h3>
       <table>
         <tr><th>Quantity</th><th>Symbol</th><th>Formula</th><th>Value</th><th>Units</th></tr>
-        <tr><td>C_eV_per_mK</td><td><a href="physics.html#thermal-derived-formulas">\(C_{\mathrm{eV/mK}}\)</a></td><td>\(C_{\mathrm{eV/mK}}=\dfrac{C}{q_e\cdot 10^3}\)</td><td><code>3</code></td><td>eV/mK</td></tr>
-<tr><td>C_ho_eV_per_mK</td><td><a href="physics.html#thermal-derived-formulas">\(C_{\mathrm{Ho,eV/mK}}\)</a></td><td>\(C_{\mathrm{Ho,eV/mK}}=\dfrac{C_{\mathrm{Ho}}}{q_e\cdot 10^3}\)</td><td><code>3</code></td><td>eV/mK</td></tr>
-<tr><td>G_W_per_K</td><td><a href="physics.html#thermal-derived-formulas">\(G\)</a></td><td>\(G=\dfrac{P_0}{\Delta T_{\mathrm{abs-bath,set}}}\)</td><td><code>2.403846e-12</code></td><td>W/K</td></tr>
-<tr><td>deltaT_abs_over_bath_K</td><td><a href="physics.html#thermal-derived-formulas">\(\Delta T_{\mathrm{abs-bath}}\)</a></td><td>\(\Delta T_{\mathrm{abs-bath}}=\dfrac{P_0}{G}\)</td><td><code>0.02</code></td><td>K</td></tr>
-<tr><td>tbath_from_link_K</td><td><a href="physics.html#thermal-derived-formulas">\(T_{\mathrm{bath}}\)</a></td><td>\(T_{\mathrm{bath}}=T_0-\Delta T_{\mathrm{abs-bath}}\)</td><td><code>0.02</code></td><td>K</td></tr>
-<tr><td>deltaT_event_full_absorption_K</td><td><a href="physics.html#thermal-derived-formulas">\(\Delta T_{\mathrm{event}}\)</a></td><td>\(\Delta T_{\mathrm{event}}=\dfrac{E_{\mathrm{Ho}}}{C}\)</td><td><code>0.936226</code></td><td>K</td></tr>
+        <tr><td>C_eV_per_mK</td><td><a href="physics.html#thermal-derived-formulas">\(C_{\mathrm{eV/mK}}\)</a></td><td>\(C_{\mathrm{eV/mK}}=\dfrac{C}{q_e\cdot 10^3}\)</td><td><code>55</code></td><td>eV/mK</td></tr>
+<tr><td>C_ho_eV_per_mK</td><td><a href="physics.html#thermal-derived-formulas">\(C_{\mathrm{Ho,eV/mK}}\)</a></td><td>\(C_{\mathrm{Ho,eV/mK}}=\dfrac{C_{\mathrm{Ho}}}{q_e\cdot 10^3}\)</td><td><code>55</code></td><td>eV/mK</td></tr>
+<tr><td>G_W_per_K</td><td><a href="physics.html#thermal-derived-formulas">\(G\)</a></td><td>\(G=\dfrac{P_0}{\Delta T_{\mathrm{abs-bath,set}}}\)</td><td><code>9.615385e-12</code></td><td>W/K</td></tr>
+<tr><td>deltaT_abs_over_bath_K</td><td><a href="physics.html#thermal-derived-formulas">\(\Delta T_{\mathrm{abs-bath}}\)</a></td><td>\(\Delta T_{\mathrm{abs-bath}}=\dfrac{P_0}{G}\)</td><td><code>0.005</code></td><td>K</td></tr>
+<tr><td>tbath_from_link_K</td><td><a href="physics.html#thermal-derived-formulas">\(T_{\mathrm{bath}}\)</a></td><td>\(T_{\mathrm{bath}}=T_0-\Delta T_{\mathrm{abs-bath}}\)</td><td><code>0.01</code></td><td>K</td></tr>
+<tr><td>deltaT_event_full_absorption_K</td><td><a href="physics.html#thermal-derived-formulas">\(\Delta T_{\mathrm{event}}\)</a></td><td>\(\Delta T_{\mathrm{event}}=\dfrac{E_{\mathrm{Ho}}}{C}\)</td><td><code>0.0510669</code></td><td>K</td></tr>
 <tr><td>ho_decay_energy_eV</td><td><a href="physics.html#thermal-derived-formulas">\(E_{\mathrm{Ho,eV}}\)</a></td><td>\(E_{\mathrm{Ho,eV}}=\dfrac{E_{\mathrm{Ho}}}{q_e}\)</td><td><code>2808.68</code></td><td>eV</td></tr>
-<tr><td>tau_th_s</td><td><a href="physics.html#thermal-derived-formulas">\(\tau_{\mathrm{th}}\)</a></td><td>\(\tau_{\mathrm{th}}=\dfrac{C}{G}\)</td><td><code>1.999516e-04</code></td><td>s</td></tr>
-<tr><td>tau_target_from_rate_s</td><td><a href="physics.html#thermal-derived-formulas">\(\tau_{\mathrm{target}}\)</a></td><td>\(\tau_{\mathrm{target}}=\dfrac{P_{\mathrm{pileup,max}}}{R}\)</td><td><code>1.437713e-04</code></td><td>s</td></tr>
-<tr><td>tau_error_fraction</td><td><a href="physics.html#thermal-derived-formulas">\(\epsilon_{\tau}\)</a></td><td>\(\epsilon_{\tau}=0\)</td><td><code>0.390762</code></td><td>1</td></tr>
-<tr><td>tau_res_s</td><td><a href="physics.html#resonator-derived-formulas">\(\tau_{\mathrm{res}}\)</a></td><td>\(\tau_{\mathrm{res}}=\dfrac{Q_r}{\pi f_0}\)</td><td><code>3.978874e-05</code></td><td>s</td></tr>
-<tr><td>tau_ratio_res_over_th</td><td><a href="physics.html#resonator-derived-formulas">\(\tau_{\mathrm{res}}/\tau_{\mathrm{th}}\)</a></td><td>\(\dfrac{\tau_{\mathrm{res}}}{\tau_{\mathrm{th}}}\)</td><td><code>0.198992</code></td><td>1</td></tr>
-<tr><td>phonon_power_rms_W</td><td><a href="noise-phonon.html#physical-expression">\(P_{\mathrm{ph,RMS}}\)</a></td><td>\(P_{\mathrm{ph,RMS}}=\sqrt{4k_BT_b^2G}\)</td><td><code>3.170177e-19</code></td><td>W</td></tr>
-<tr><td>membrane_heat_capacity_eV_per_mK</td><td><a href="physics.html#thermal-derived-formulas">\(C_{\mathrm{mem,eV/mK}}(T_1)\)</a></td><td>\(C_{\mathrm{mem,eV/mK}}(T_1)=\dfrac{C_{\mathrm{mem}}(T_1)}{q_e\cdot 10^3}\)</td><td><code>8.27973</code></td><td>eV/mK</td></tr>
+<tr><td>tau_th_s</td><td><a href="physics.html#thermal-derived-formulas">\(\tau_{\mathrm{th}}\)</a></td><td>\(\tau_{\mathrm{th}}=\dfrac{C}{G}\)</td><td><code>9.164450e-04</code></td><td>s</td></tr>
+<tr><td>tau_target_from_rate_s</td><td><a href="physics.html#thermal-derived-formulas">\(\tau_{\mathrm{target}}\)</a></td><td>\(\tau_{\mathrm{target}}=\dfrac{P_{\mathrm{pileup,max}}}{R}\)</td><td><code>9.872673e-06</code></td><td>s</td></tr>
+<tr><td>tau_error_fraction</td><td><a href="physics.html#thermal-derived-formulas">\(\epsilon_{\tau}\)</a></td><td>\(\epsilon_{\tau}=0\)</td><td><code>91.8264</code></td><td>1</td></tr>
+<tr><td>tau_res_s</td><td><a href="physics.html#resonator-derived-formulas">\(\tau_{\mathrm{res}}\)</a></td><td>\(\tau_{\mathrm{res}}=\dfrac{Q_r}{\pi f_0}\)</td><td><code>2.273642e-05</code></td><td>s</td></tr>
+<tr><td>tau_ratio_res_over_th</td><td><a href="physics.html#resonator-derived-formulas">\(\tau_{\mathrm{res}}/\tau_{\mathrm{th}}\)</a></td><td>\(\dfrac{\tau_{\mathrm{res}}}{\tau_{\mathrm{th}}}\)</td><td><code>0.0248094</code></td><td>1</td></tr>
+<tr><td>phonon_power_rms_W</td><td><a href="noise-phonon.html#physical-expression">\(P_{\mathrm{ph,RMS}}\)</a></td><td>\(P_{\mathrm{ph,RMS}}=\sqrt{4k_BT_b^2G}\)</td><td><code>2.538736e-19</code></td><td>W</td></tr>
+<tr><td>membrane_heat_capacity_eV_per_mK</td><td><a href="physics.html#thermal-derived-formulas">\(C_{\mathrm{mem,eV/mK}}(T_1)\)</a></td><td>\(C_{\mathrm{mem,eV/mK}}(T_1)=\dfrac{C_{\mathrm{mem}}(T_1)}{q_e\cdot 10^3}\)</td><td><code>9.36739</code></td><td>eV/mK</td></tr>
       </table>
     </section>
     
@@ -203,27 +203,27 @@
         <tr><th>Quantity</th><th>Symbol</th><th>Formula</th><th>Value</th><th>Units</th></tr>
         <tr><td>L_geo_H</td><td><a href="theory.html#kid-lumped-formulas">\(L_g\)</a></td><td>\(L_g\approx \mu_0\ell\left[\ln\!\left(\dfrac{2\ell}{w}\right)+0.5\right]\)</td><td><code>1.220237e-07</code></td><td>H</td></tr>
 <tr><td>L_total_H</td><td><a href="theory.html#kid-lumped-formulas">\(L_{\mathrm{tot}}\)</a></td><td>\(L_{\mathrm{tot}}=\dfrac{L_g}{1-\alpha_k}\)</td><td><code>1.220237e-07</code></td><td>H</td></tr>
-<tr><td>C_res_F</td><td><a href="theory.html#kid-lumped-formulas">\(C_{\mathrm{res}}\)</a></td><td>\(C_{\mathrm{res}}=\dfrac{1}{(2\pi f_0)^2L_{\mathrm{tot}}}\)</td><td><code>2.075850e-13</code></td><td>F</td></tr>
-<tr><td>Z0_res_Ohm</td><td><a href="theory.html#kid-lumped-formulas">\(Z_0\)</a></td><td>\(Z_0=(2\pi f_0)L_{\mathrm{tot}}\)</td><td><code>766.698</code></td><td>Ohm</td></tr>
+<tr><td>C_res_F</td><td><a href="theory.html#kid-lumped-formulas">\(C_{\mathrm{res}}\)</a></td><td>\(C_{\mathrm{res}}=\dfrac{1}{(2\pi f_0)^2L_{\mathrm{tot}}}\)</td><td><code>4.236428e-13</code></td><td>F</td></tr>
+<tr><td>Z0_res_Ohm</td><td><a href="theory.html#kid-lumped-formulas">\(Z_0\)</a></td><td>\(Z_0=(2\pi f_0)L_{\mathrm{tot}}\)</td><td><code>536.688</code></td><td>Ohm</td></tr>
 <tr><td>Z0_readout_Ohm</td><td>\(Z_{\mathrm{readout}}\)</td><td>\(Z_{\mathrm{readout}}=50\,\Omega\)</td><td><code>50</code></td><td>Ohm</td></tr>
 <tr><td>readout_circle_radius_V</td><td>\(r_V\)</td><td>\(r_V=\sqrt{P_0Z_{\mathrm{readout}}}/2\)</td><td><code>7.752171e-07</code></td><td>V</td></tr>
-<tr><td>R0_Ohm</td><td><a href="theory.html#kid-lumped-formulas">\(R_0\)</a></td><td>\(R_0=\dfrac{Z_0}{Q_r}\)</td><td><code>0.00306679</code></td><td>Ohm</td></tr>
+<tr><td>R0_Ohm</td><td><a href="theory.html#kid-lumped-formulas">\(R_0\)</a></td><td>\(R_0=\dfrac{Z_0}{Q_r}\)</td><td><code>0.00536688</code></td><td>Ohm</td></tr>
 <tr><td>P0_W</td><td>\(P_0\)</td><td>\(P_0=\left(P_0/P_g\right)P_g\)</td><td><code>4.807692e-14</code></td><td>W</td></tr>
 <tr><td>P0_undetuned_W</td><td>\(P_{0,x=0}\)</td><td>\(P_{0,x=0}=\dfrac{1}{2}\dfrac{4Q_cQ_i}{(Q_c+Q_i)^2}P_g\)</td><td><code>5.000000e-14</code></td><td>W</td></tr>
 <tr><td>Pg_W</td><td><a href="readout-power-mapping.html#equation-3-mapping">\(P_g\)</a></td><td>\(P_g=\left(P_g/P_{\mathrm{bif}}\right)_{\mathrm{target}}\,P_{\mathrm{bif}}\)</td><td><code>1.000000e-13</code></td><td>W</td></tr>
 <tr><td>pg_to_p0_factor</td><td><a href="readout-power-mapping.html#equation-3-mapping">\(P_0/P_g\)</a></td><td>\(P_0/P_g=\dfrac{1}{2}\dfrac{1}{1+4Q_r^2x^2}\dfrac{4Q_cQ_i}{(Q_c+Q_i)^2}\)</td><td><code>0.480769</code></td><td>1</td></tr>
-<tr><td>Qr</td><td>\(Q_r\)</td><td></td><td><code>1.250000e+05</code></td><td>1</td></tr>
+<tr><td>Qr</td><td>\(Q_r\)</td><td></td><td><code>5.000000e+04</code></td><td>1</td></tr>
 <tr><td>delta_J</td><td><a href="theory.html#gap-formulas">\(\Delta\)</a></td><td>\(\Delta=1.764\,k_BT_c\)</td><td><code>4.870930e-23</code></td><td>J</td></tr>
 <tr><td>eqp_J</td><td><a href="theory.html#gap-formulas">\(E_{qp}\)</a></td><td>\(E_{qp}=\Delta\)</td><td><code>4.870930e-23</code></td><td>J</td></tr>
-<tr><td>johnson_voltage_rms_V</td><td><a href="noise-johnson.html#physical-expression">\(V_{e}\)</a></td><td>\(V_e=\sqrt{4k_BT_0R_0}\)</td><td><code>8.230832e-14</code></td><td>V</td></tr>
-<tr><td>johnson_sv_V2_per_Hz</td><td><a href="noise-johnson.html#physical-expression">\(S_{V,J}\)</a></td><td>\(S_{V,J}=4k_BT_0R_0\)</td><td><code>6.774659e-27</code></td><td>V^2/Hz</td></tr>
+<tr><td>johnson_voltage_rms_V</td><td><a href="noise-johnson.html#physical-expression">\(V_{e}\)</a></td><td>\(V_e=\sqrt{4k_BT_0R_0}\)</td><td><code>6.667736e-14</code></td><td>V</td></tr>
+<tr><td>johnson_sv_V2_per_Hz</td><td><a href="noise-johnson.html#physical-expression">\(S_{V,J}\)</a></td><td>\(S_{V,J}=4k_BT_0R_0\)</td><td><code>4.445870e-27</code></td><td>V^2/Hz</td></tr>
 <tr><td>amplifier_sideband_voltage_asd_V_per_rtHz</td><td>\(V_A\)</td><td>\(V_A=\sqrt{k_BT_AZ_{\mathrm{readout}}}\)</td><td><code>2.995700e-11</code></td><td>V/Hz^(1/2)</td></tr>
 <tr><td>amplifier_normalized_asd_per_rtHz</td><td>\(\sigma_{\mathrm{amp}}\)</td><td>\(\sigma_{\mathrm{amp}}=\sqrt{8k_BT_A/P_0}\)</td><td><code>5.464998e-05</code></td><td>1/Hz^(1/2)</td></tr>
-<tr><td>N_J_scale</td><td><a href="noise-johnson.html#normalized-vector-derivation-eq-18">\(N_{J,\mathrm{scale}}\)</a></td><td>\(N_{J,\mathrm{scale}}=\sqrt{\dfrac{16k_BT_0}{P_0}}\)</td><td><code>1.355699e-05</code></td><td>s^(1/2)</td></tr>
-<tr><td>N_J_thermal_scale</td><td><a href="noise-johnson.html#normalized-vector-derivation-eq-18">\(N_{J,\mathrm{th}}\)</a></td><td>\(N_{J,\mathrm{th}}=\sqrt{4k_BT_0P_0}\)</td><td><code>3.258892e-19</code></td><td>W s^(1/2)</td></tr>
-<tr><td>detuning_pid_transfer_Hz_per_rad</td><td>\(|H_f|\)</td><td></td><td><code>0</code></td><td>Hz/rad</td></tr>
-<tr><td>detuning_pid_transfer_dx_per_rad</td><td>\(|H_x|\)</td><td></td><td><code>0</code></td><td>1/rad</td></tr>
-<tr><td>dx_response_to_event_power_at_f_demod</td><td>\(|dx/P|\)</td><td></td><td><code>0</code></td><td>1/W</td></tr>
+<tr><td>N_J_scale</td><td><a href="noise-johnson.html#normalized-vector-derivation-eq-18">\(N_{J,\mathrm{scale}}\)</a></td><td>\(N_{J,\mathrm{scale}}=\sqrt{\dfrac{16k_BT_0}{P_0}}\)</td><td><code>8.301927e-06</code></td><td>s^(1/2)</td></tr>
+<tr><td>N_J_thermal_scale</td><td><a href="noise-johnson.html#normalized-vector-derivation-eq-18">\(N_{J,\mathrm{th}}\)</a></td><td>\(N_{J,\mathrm{th}}=\sqrt{4k_BT_0P_0}\)</td><td><code>1.995656e-19</code></td><td>W s^(1/2)</td></tr>
+<tr><td>detuning_pid_transfer_Hz_per_rad</td><td>\(|H_f|\)</td><td></td><td><code>1.000000e+05</code></td><td>Hz/rad</td></tr>
+<tr><td>detuning_pid_transfer_dx_per_rad</td><td>\(|H_x|\)</td><td></td><td><code>1.428571e-04</code></td><td>1/rad</td></tr>
+<tr><td>dx_response_to_event_power_at_f_demod</td><td>\(|dx/P|\)</td><td></td><td><code>4.449915e+09</code></td><td>1/W</td></tr>
       </table>
     </section>
     
@@ -232,27 +232,27 @@
       <h3>Derived TLS</h3>
       <table>
         <tr><th>Quantity</th><th>Symbol</th><th>Formula</th><th>Value</th><th>Units</th></tr>
-        <tr><td>sphi_johnson_full_per_hz</td><td><a href="noise-johnson.html#role-in-nep-and-electronic-noise-scaling">\(S_{\phi,J}^{\mathrm{full}}\)</a></td><td>\(S_{\phi,J}^{\mathrm{full}}=\left|[Y_{J,A}]_{\phi}\right|^2+\left|[Y_{J,\phi}]_{\phi}\right|^2\)</td><td><code>2.024038e-12</code></td><td>1/Hz</td></tr>
-<tr><td>sphi_tls_per_hz</td><td><a href="noise-tls.html#use-in-total-budget">\(S_{\phi,\mathrm{TLS}}\)</a></td><td>\(S_{\phi,\mathrm{TLS}}=\left|[Y_{\mathrm{TLS}}]_{\phi}\right|^2\)</td><td><code>1.013439e-08</code></td><td>1/Hz</td></tr>
-<tr><td>asd_phi_tls_per_rtHz</td><td><a href="noise-tls.html#use-in-total-budget">\(\sqrt{S_{\phi,\mathrm{TLS}}}\)</a></td><td>\(\sqrt{S_{\phi,\mathrm{TLS}}}\)</td><td><code>1.006697e-04</code></td><td>1/Hz^(1/2)</td></tr>
-<tr><td>sphi_amplifier_per_hz</td><td>\(S_{\phi,\mathrm{amp}}\)</td><td>\(S_{\phi,\mathrm{amp}}=\left|[Y_{\mathrm{amp},A}]_{\phi}\right|^2+\left|[Y_{\mathrm{amp},\phi}]_{\phi}\right|^2\)</td><td><code>2.986620e-09</code></td><td>1/Hz</td></tr>
-<tr><td>asd_phi_amplifier_per_rtHz</td><td>\(\sqrt{S_{\phi,\mathrm{amp}}}\)</td><td>\(\sqrt{S_{\phi,\mathrm{amp}}}\)</td><td><code>5.464998e-05</code></td><td>1/Hz^(1/2)</td></tr>
-<tr><td>asd_phi_tls_100hz_model_per_rtHz</td><td><a href="project.html#core-rule-checks">\(\sqrt{S_{\phi,\mathrm{TLS}}}(100\,\mathrm{Hz})\)</a></td><td>\(\sqrt{S_{\phi,\mathrm{TLS}}}(100\,\mathrm{Hz})=f_0\left|d\phi/df\right|_{\delta f}\sqrt{\left(S_f/f_0^2\right)_{\mathrm{TLS}}(100\,\mathrm{Hz})}\)</td><td><code>2.403846e-04</code></td><td>1/Hz^(1/2)</td></tr>
-<tr><td>passive_tls_iq_transfer_phi_100hz_abs</td><td><a href="noise-tls.html">\(|H_{\mathrm{TLS,passive}}(100\,\mathrm{Hz})|\)</a></td><td>\(|H_{\mathrm{TLS,passive}}|=\left|[M_{\mathrm{passive}}^{-1}(0,i)^T]_{\phi}\right|\)</td><td><code>0.480641</code></td><td>1</td></tr>
-<tr><td>tls_iq_source_asd_100hz_per_rtHz</td><td><a href="noise-tls.html">\(\sqrt{S_{N,\mathrm{TLS}}}(100\,\mathrm{Hz})\)</a></td><td>\(\sqrt{S_{N,\mathrm{TLS}}}(100\,\mathrm{Hz})=\dfrac{4\sqrt{S_{V,\mathrm{USB},\mathrm{TLS}}}(100\,\mathrm{Hz})}{I_0R_0}\)</td><td><code>5.000000e-04</code></td><td>1/Hz^(1/2)</td></tr>
-<tr><td>dphi_df_detuning_per_hz</td><td><a href="noise-johnson-sf.html">\(\left|d\phi/df\right|_{x}\)</a></td><td>\(\left|d\phi/df\right|_{x}\approx\dfrac{4Q_r/f_0}{1+(2Q_rx)^2}\)</td><td><code>4.807692e-04</code></td><td>rad/Hz</td></tr>
-<tr><td>sf_over_f0sq_johnson_full</td><td><a href="noise-johnson-sf.html">\(\left(S_f/f_0^2\right)_{J,\mathrm{full}}\)</a></td><td>\(\left(S_f/f_0^2\right)_{J,\mathrm{full}}=\dfrac{S_{\phi,J}^{\mathrm{full}}}{f_0^2\left|d\phi/df\right|_{\delta f}^2}\)</td><td><code>8.756798e-24</code></td><td>1/Hz</td></tr>
-<tr><td>sf_over_f0sq_johnson_simple</td><td><a href="noise-johnson-sf.html">\(\left(S_f/f_0^2\right)_{J,\mathrm{simple}}\)</a></td><td>\(\left(S_f/f_0^2\right)_{J,\mathrm{simple}}=\dfrac{S_{\phi,J}^{\mathrm{full}}}{(4Q_r)^2}\)</td><td><code>8.096152e-24</code></td><td>1/Hz</td></tr>
-<tr><td>sf_over_f0sq_tls_model</td><td><a href="noise-tls.html#design-scaling-and-geometry-controls">\(\left(S_f/f_0^2\right)_{\mathrm{TLS}}\)</a></td><td>\(\left(S_f/f_0^2\right)_{\mathrm{TLS}}(\nu)=\dfrac{1}{4}S_{\delta C/C,\mathrm{TLS}}(\nu)\)</td><td><code>2.500000e-18</code></td><td>1/Hz</td></tr>
-<tr><td>sf_over_f0sq_tls_1hz</td><td><a href="tls-capacitor-to-phase.html#practical-c-to-usb-mapping">\(\left(S_f/f_0^2\right)_{\mathrm{TLS},1\mathrm{Hz}}\)</a></td><td>\(\left(S_f/f_0^2\right)_{\mathrm{TLS},1\mathrm{Hz}}=\dfrac{1}{4}S_{\delta C/C,\mathrm{TLS}}(1\,\mathrm{Hz})\)</td><td><code>2.500000e-18</code></td><td>1/Hz</td></tr>
-<tr><td>I0_rms_A</td><td><a href="tls-capacitor-to-phase.html#practical-c-to-usb-mapping">\(I_0\)</a></td><td>\(I_0=\sqrt{P_0/R_0}\)</td><td><code>3.959371e-06</code></td><td>A</td></tr>
-<tr><td>s_deltaC_tls_1hz_F2_per_Hz</td><td><a href="tls-capacitor-to-phase.html#practical-c-to-usb-mapping">\(S_{\delta C,\mathrm{TLS}}(1\,\mathrm{Hz})\)</a></td><td>\(S_{\delta C,\mathrm{TLS}}(1\,\mathrm{Hz})=4C_0^2\left(S_f/f_0^2\right)_{\mathrm{TLS},1\mathrm{Hz}}\)</td><td><code>4.309153e-43</code></td><td>F^2/Hz</td></tr>
-<tr><td>asd_deltaC_tls_1hz_F_per_rtHz</td><td><a href="tls-capacitor-to-phase.html#practical-c-to-usb-mapping">\(\sqrt{S_{\delta C,\mathrm{TLS}}}(1\,\mathrm{Hz})\)</a></td><td>\(\sqrt{S_{\delta C,\mathrm{TLS}}}(1\,\mathrm{Hz})\)</td><td><code>6.564414e-22</code></td><td>F/Hz^(1/2)</td></tr>
-<tr><td>s_deltaC_over_C_tls_100hz_per_Hz</td><td><a href="tls-capacitor-to-phase.html#practical-c-to-usb-mapping">\(S_{\delta C/C,\mathrm{TLS}}(100\,\mathrm{Hz})\)</a></td><td>\(S_{\delta C/C,\mathrm{TLS}}(100\,\mathrm{Hz})=4\left(S_f/f_0^2\right)_{\mathrm{TLS}}(100\,\mathrm{Hz})\)</td><td><code>1.000000e-18</code></td><td>1/Hz</td></tr>
-<tr><td>sv_usb_tls_1hz_V2_per_Hz</td><td><a href="tls-capacitor-to-phase.html#practical-c-to-usb-mapping">\(S_{V,\mathrm{USB},\mathrm{TLS}}(1\,\mathrm{Hz})\)</a></td><td>\(S_{V,\mathrm{USB},\mathrm{TLS}}(1\,\mathrm{Hz})=\dfrac{I_0^2}{\omega_0^2C_0^2}\left(S_f/f_0^2\right)_{\mathrm{TLS},1\mathrm{Hz}}\)</td><td><code>2.303779e-23</code></td><td>V^2/Hz</td></tr>
-<tr><td>asd_v_usb_tls_1hz_V_per_rtHz</td><td><a href="tls-capacitor-to-phase.html#practical-c-to-usb-mapping">\(\sqrt{S_{V,\mathrm{USB},\mathrm{TLS}}}(1\,\mathrm{Hz})\)</a></td><td>\(\sqrt{S_{V,\mathrm{USB},\mathrm{TLS}}}(1\,\mathrm{Hz})\)</td><td><code>4.799770e-12</code></td><td>V/Hz^(1/2)</td></tr>
-<tr><td>sv_usb_johnson_V2_per_Hz</td><td><a href="noise-johnson.html#sideband-vector-derivation-eq-17">\(S_{V,\mathrm{USB},J}\)</a></td><td>\(S_{V,\mathrm{USB},J}=\dfrac{1}{2}S_{V,J}\)</td><td><code>3.387330e-27</code></td><td>V^2/Hz</td></tr>
-<tr><td>asd_v_usb_johnson_V_per_rtHz</td><td><a href="noise-johnson.html#sideband-vector-derivation-eq-17">\(\sqrt{S_{V,\mathrm{USB},J}}\)</a></td><td>\(\sqrt{S_{V,\mathrm{USB},J}}\)</td><td><code>5.820077e-14</code></td><td>V/Hz^(1/2)</td></tr>
+        <tr><td>sphi_johnson_full_per_hz</td><td><a href="noise-johnson.html#role-in-nep-and-electronic-noise-scaling">\(S_{\phi,J}^{\mathrm{full}}\)</a></td><td>\(S_{\phi,J}^{\mathrm{full}}=\left|[Y_{J,A}]_{\phi}\right|^2+\left|[Y_{J,\phi}]_{\phi}\right|^2\)</td><td><code>7.591934e-14</code></td><td>1/Hz</td></tr>
+<tr><td>sphi_tls_per_hz</td><td><a href="noise-tls.html#use-in-total-budget">\(S_{\phi,\mathrm{TLS}}\)</a></td><td>\(S_{\phi,\mathrm{TLS}}=\left|[Y_{\mathrm{TLS}}]_{\phi}\right|^2\)</td><td><code>9.796381e-10</code></td><td>1/Hz</td></tr>
+<tr><td>asd_phi_tls_per_rtHz</td><td><a href="noise-tls.html#use-in-total-budget">\(\sqrt{S_{\phi,\mathrm{TLS}}}\)</a></td><td>\(\sqrt{S_{\phi,\mathrm{TLS}}}\)</td><td><code>3.129917e-05</code></td><td>1/Hz^(1/2)</td></tr>
+<tr><td>sphi_amplifier_per_hz</td><td>\(S_{\phi,\mathrm{amp}}\)</td><td>\(S_{\phi,\mathrm{amp}}=\left|[Y_{\mathrm{amp},A}]_{\phi}\right|^2+\left|[Y_{\mathrm{amp},\phi}]_{\phi}\right|^2\)</td><td><code>3.328271e-10</code></td><td>1/Hz</td></tr>
+<tr><td>asd_phi_amplifier_per_rtHz</td><td>\(\sqrt{S_{\phi,\mathrm{amp}}}\)</td><td>\(\sqrt{S_{\phi,\mathrm{amp}}}\)</td><td><code>1.824355e-05</code></td><td>1/Hz^(1/2)</td></tr>
+<tr><td>asd_phi_tls_100hz_model_per_rtHz</td><td><a href="project.html#core-rule-checks">\(\sqrt{S_{\phi,\mathrm{TLS}}}(100\,\mathrm{Hz})\)</a></td><td>\(\sqrt{S_{\phi,\mathrm{TLS}}}(100\,\mathrm{Hz})=f_0\left|d\phi/df\right|_{\delta f}\sqrt{\left(S_f/f_0^2\right)_{\mathrm{TLS}}(100\,\mathrm{Hz})}\)</td><td><code>2.884615e-04</code></td><td>1/Hz^(1/2)</td></tr>
+<tr><td>passive_tls_iq_transfer_phi_100hz_abs</td><td><a href="noise-tls.html">\(|H_{\mathrm{TLS,passive}}(100\,\mathrm{Hz})|\)</a></td><td>\(|H_{\mathrm{TLS,passive}}|=\left|[M_{\mathrm{passive}}^{-1}(0,i)^T]_{\phi}\right|\)</td><td><code>0.480728</code></td><td>1</td></tr>
+<tr><td>tls_iq_source_asd_100hz_per_rtHz</td><td><a href="noise-tls.html">\(\sqrt{S_{N,\mathrm{TLS}}}(100\,\mathrm{Hz})\)</a></td><td>\(\sqrt{S_{N,\mathrm{TLS}}}(100\,\mathrm{Hz})=\dfrac{4\sqrt{S_{V,\mathrm{USB},\mathrm{TLS}}}(100\,\mathrm{Hz})}{I_0R_0}\)</td><td><code>6.000000e-04</code></td><td>1/Hz^(1/2)</td></tr>
+<tr><td>dphi_df_detuning_per_hz</td><td><a href="noise-johnson-sf.html">\(\left|d\phi/df\right|_{x}\)</a></td><td>\(\left|d\phi/df\right|_{x}\approx\dfrac{4Q_r/f_0}{1+(2Q_rx)^2}\)</td><td><code>2.747253e-04</code></td><td>rad/Hz</td></tr>
+<tr><td>sf_over_f0sq_johnson_full</td><td><a href="noise-johnson-sf.html">\(\left(S_f/f_0^2\right)_{J,\mathrm{full}}\)</a></td><td>\(\left(S_f/f_0^2\right)_{J,\mathrm{full}}=\dfrac{S_{\phi,J}^{\mathrm{full}}}{f_0^2\left|d\phi/df\right|_{\delta f}^2}\)</td><td><code>2.052859e-24</code></td><td>1/Hz</td></tr>
+<tr><td>sf_over_f0sq_johnson_simple</td><td><a href="noise-johnson-sf.html">\(\left(S_f/f_0^2\right)_{J,\mathrm{simple}}\)</a></td><td>\(\left(S_f/f_0^2\right)_{J,\mathrm{simple}}=\dfrac{S_{\phi,J}^{\mathrm{full}}}{(4Q_r)^2}\)</td><td><code>1.897984e-24</code></td><td>1/Hz</td></tr>
+<tr><td>sf_over_f0sq_tls_model</td><td><a href="noise-tls.html#design-scaling-and-geometry-controls">\(\left(S_f/f_0^2\right)_{\mathrm{TLS}}\)</a></td><td>\(\left(S_f/f_0^2\right)_{\mathrm{TLS}}(\nu)=\dfrac{1}{4}S_{\delta C/C,\mathrm{TLS}}(\nu)\)</td><td><code>2.250000e-17</code></td><td>1/Hz</td></tr>
+<tr><td>sf_over_f0sq_tls_1hz</td><td><a href="tls-capacitor-to-phase.html#practical-c-to-usb-mapping">\(\left(S_f/f_0^2\right)_{\mathrm{TLS},1\mathrm{Hz}}\)</a></td><td>\(\left(S_f/f_0^2\right)_{\mathrm{TLS},1\mathrm{Hz}}=\dfrac{1}{4}S_{\delta C/C,\mathrm{TLS}}(1\,\mathrm{Hz})\)</td><td><code>2.250000e-17</code></td><td>1/Hz</td></tr>
+<tr><td>I0_rms_A</td><td><a href="tls-capacitor-to-phase.html#practical-c-to-usb-mapping">\(I_0\)</a></td><td>\(I_0=\sqrt{P_0/R_0}\)</td><td><code>2.993003e-06</code></td><td>A</td></tr>
+<tr><td>s_deltaC_tls_1hz_F2_per_Hz</td><td><a href="tls-capacitor-to-phase.html#practical-c-to-usb-mapping">\(S_{\delta C,\mathrm{TLS}}(1\,\mathrm{Hz})\)</a></td><td>\(S_{\delta C,\mathrm{TLS}}(1\,\mathrm{Hz})=4C_0^2\left(S_f/f_0^2\right)_{\mathrm{TLS},1\mathrm{Hz}}\)</td><td><code>1.615259e-41</code></td><td>F^2/Hz</td></tr>
+<tr><td>asd_deltaC_tls_1hz_F_per_rtHz</td><td><a href="tls-capacitor-to-phase.html#practical-c-to-usb-mapping">\(\sqrt{S_{\delta C,\mathrm{TLS}}}(1\,\mathrm{Hz})\)</a></td><td>\(\sqrt{S_{\delta C,\mathrm{TLS}}}(1\,\mathrm{Hz})\)</td><td><code>4.019029e-21</code></td><td>F/Hz^(1/2)</td></tr>
+<tr><td>s_deltaC_over_C_tls_100hz_per_Hz</td><td><a href="tls-capacitor-to-phase.html#practical-c-to-usb-mapping">\(S_{\delta C/C,\mathrm{TLS}}(100\,\mathrm{Hz})\)</a></td><td>\(S_{\delta C/C,\mathrm{TLS}}(100\,\mathrm{Hz})=4\left(S_f/f_0^2\right)_{\mathrm{TLS}}(100\,\mathrm{Hz})\)</td><td><code>9.000000e-18</code></td><td>1/Hz</td></tr>
+<tr><td>sv_usb_tls_1hz_V2_per_Hz</td><td><a href="tls-capacitor-to-phase.html#practical-c-to-usb-mapping">\(S_{V,\mathrm{USB},\mathrm{TLS}}(1\,\mathrm{Hz})\)</a></td><td>\(S_{V,\mathrm{USB},\mathrm{TLS}}(1\,\mathrm{Hz})=\dfrac{I_0^2}{\omega_0^2C_0^2}\left(S_f/f_0^2\right)_{\mathrm{TLS},1\mathrm{Hz}}\)</td><td><code>5.805524e-23</code></td><td>V^2/Hz</td></tr>
+<tr><td>asd_v_usb_tls_1hz_V_per_rtHz</td><td><a href="tls-capacitor-to-phase.html#practical-c-to-usb-mapping">\(\sqrt{S_{V,\mathrm{USB},\mathrm{TLS}}}(1\,\mathrm{Hz})\)</a></td><td>\(\sqrt{S_{V,\mathrm{USB},\mathrm{TLS}}}(1\,\mathrm{Hz})\)</td><td><code>7.619399e-12</code></td><td>V/Hz^(1/2)</td></tr>
+<tr><td>sv_usb_johnson_V2_per_Hz</td><td><a href="noise-johnson.html#sideband-vector-derivation-eq-17">\(S_{V,\mathrm{USB},J}\)</a></td><td>\(S_{V,\mathrm{USB},J}=\dfrac{1}{2}S_{V,J}\)</td><td><code>2.222935e-27</code></td><td>V^2/Hz</td></tr>
+<tr><td>asd_v_usb_johnson_V_per_rtHz</td><td><a href="noise-johnson.html#sideband-vector-derivation-eq-17">\(\sqrt{S_{V,\mathrm{USB},J}}\)</a></td><td>\(\sqrt{S_{V,\mathrm{USB},J}}\)</td><td><code>4.714801e-14</code></td><td>V/Hz^(1/2)</td></tr>
       </table>
     </section>
     
@@ -261,10 +261,10 @@
       <h3>Noise M Ratios</h3>
       <table>
         <tr><th>Quantity</th><th>Symbol</th><th>Formula</th><th>Value</th><th>Units</th></tr>
-        <tr><td>M_e</td><td><a href="noise-electronic.html#noise-vector-derivation-eq-19">\(M_e\)</a></td><td>\(M_e=\sqrt{\dfrac{E_{qp}}{k_BT_0}}\)</td><td><code>9.39149</code></td><td>1</td></tr>
-<tr><td>m_phonon_over_johnson_phi</td><td><a href="noise-phonon.html#physical-expression">\(M_{\mathrm{ph}/J,\phi}\)</a></td><td>\(M_{\mathrm{ph}/J,\phi}=\dfrac{|[Y_{ph}]_{\phi}|}{|[Y_{J,\phi}]_{\phi}|}\)</td><td><code>33.1382</code></td><td>1</td></tr>
-<tr><td>m_phonon_over_tls_phi</td><td><a href="project.html#core-rule-checks">\(M_{\mathrm{ph}/\mathrm{TLS},\phi}\)</a></td><td>\(M_{\mathrm{ph}/\mathrm{TLS},\phi}=\dfrac{\sqrt{S_{\phi,\mathrm{ph}}}^{\,\mathrm{simple}}}{\sqrt{S_{\phi,\mathrm{TLS}}}(100\,\mathrm{Hz})}\)</td><td><code>0.89678</code></td><td>1</td></tr>
-<tr><td>m_usb_tls_over_johnson_1hz</td><td><a href="tls-capacitor-to-phase.html#practical-c-to-usb-mapping">\(M_{\mathrm{USB},\mathrm{TLS}/J}(1\,\mathrm{Hz})\)</a></td><td>\(M_{\mathrm{USB},\mathrm{TLS}/J}(1\,\mathrm{Hz})=\dfrac{\sqrt{S_{V,\mathrm{USB},\mathrm{TLS}}(1\,\mathrm{Hz})}}{\sqrt{S_{V,\mathrm{USB},J}}}\)</td><td><code>82.4692</code></td><td>1</td></tr>
+        <tr><td>M_e</td><td><a href="noise-electronic.html#noise-vector-derivation-eq-19">\(M_e\)</a></td><td>\(M_e=\sqrt{\dfrac{E_{qp}}{k_BT_0}}\)</td><td><code>15.3362</code></td><td>1</td></tr>
+<tr><td>m_phonon_over_johnson_phi</td><td><a href="noise-phonon.html#physical-expression">\(M_{\mathrm{ph}/J,\phi}\)</a></td><td>\(M_{\mathrm{ph}/J,\phi}=\dfrac{|[Y_{ph}]_{\phi}|}{|[Y_{J,\phi}]_{\phi}|}\)</td><td><code>57.744</code></td><td>1</td></tr>
+<tr><td>m_phonon_over_tls_phi</td><td><a href="project.html#core-rule-checks">\(M_{\mathrm{ph}/\mathrm{TLS},\phi}\)</a></td><td>\(M_{\mathrm{ph}/\mathrm{TLS},\phi}=\dfrac{\sqrt{S_{\phi,\mathrm{ph}}}^{\,\mathrm{simple}}}{\sqrt{S_{\phi,\mathrm{TLS}}}(100\,\mathrm{Hz})}\)</td><td><code>0.797953</code></td><td>1</td></tr>
+<tr><td>m_usb_tls_over_johnson_1hz</td><td><a href="tls-capacitor-to-phase.html#practical-c-to-usb-mapping">\(M_{\mathrm{USB},\mathrm{TLS}/J}(1\,\mathrm{Hz})\)</a></td><td>\(M_{\mathrm{USB},\mathrm{TLS}/J}(1\,\mathrm{Hz})=\dfrac{\sqrt{S_{V,\mathrm{USB},\mathrm{TLS}}(1\,\mathrm{Hz})}}{\sqrt{S_{V,\mathrm{USB},J}}}\)</td><td><code>161.606</code></td><td>1</td></tr>
       </table>
     </section>
     
@@ -273,23 +273,24 @@
       <h3>Design Verification</h3>
       <table>
         <tr><th>Quantity</th><th>Symbol</th><th>Formula</th><th>Value</th><th>Units</th></tr>
-        <tr><td>tau_res_s</td><td><a href="physics.html#resonator-derived-formulas">\(\tau_{\mathrm{res}}\)</a></td><td>\(\tau_{\mathrm{res}}=\dfrac{Q_r}{\pi f_0}\)</td><td><code>3.978874e-05</code></td><td>s</td></tr>
-<tr><td>tau_th_s</td><td><a href="physics.html#thermal-derived-formulas">\(\tau_{\mathrm{th}}\)</a></td><td>\(\tau_{\mathrm{th}}=\dfrac{C}{G}\)</td><td><code>1.999516e-04</code></td><td>s</td></tr>
-<tr><td>core_rule1_left_ratio</td><td><a href="project.html#core-rule-checks">\(\tau_{qp}/\tau_{\mathrm{res}}\)</a></td><td>\(\dfrac{\tau_{qp}}{\tau_{\mathrm{res}}}\)</td><td><code>0.00125664</code></td><td>1</td></tr>
-<tr><td>core_rule1_right_ratio</td><td><a href="project.html#core-rule-checks">\(\tau_{\mathrm{res}}/\tau_{\mathrm{th}}\)</a></td><td>\(\dfrac{\tau_{\mathrm{res}}}{\tau_{\mathrm{th}}}\)</td><td><code>0.198992</code></td><td>1</td></tr>
-<tr><td>core_rule2_ratio</td><td><a href="project.html#core-rule-checks">\(\tau_{\mathrm{res}}/\tau_{\mathrm{th}}\)</a></td><td>\(\dfrac{\tau_{\mathrm{res}}}{\tau_{\mathrm{th}}}\)</td><td><code>0.198992</code></td><td>1</td></tr>
-<tr><td>thermal_energy_fluct_rms_eV</td><td><a href="simple-estimates.html">\(\sigma_{E,\mathrm{th,eV}}\)</a></td><td>\(\sigma_{E,\mathrm{th,eV}}=\sigma_{E,\mathrm{th}}/q_e\)</td><td><code>0.0203379</code></td><td>eV</td></tr>
-<tr><td>deltaT_event_full_absorption_K</td><td><a href="physics.html#thermal-derived-formulas">\(\Delta T_{\mathrm{event}}\)</a></td><td>\(\Delta T_{\mathrm{event}}=\dfrac{E_{\mathrm{Ho}}}{C}\)</td><td><code>0.936226</code></td><td>K</td></tr>
-<tr><td>dL1_dT_H_per_K</td><td><a href="project.html#core-rule-checks">\(dL_1/dT_1\)</a></td><td>\(\dfrac{dL_1}{dT_1}\propto\dfrac{\alpha_{\phi1}L_1}{T_1}\)</td><td><code>8.297614e-10</code></td><td>H/K</td></tr>
-<tr><td>deltaL1_event_H</td><td><a href="project.html#core-rule-checks">\(\Delta L_{1,\mathrm{event}}\)</a></td><td>\(\Delta L_{1,\mathrm{event}}=\dfrac{dL_1}{dT_1}\Delta T_{\mathrm{event}}\)</td><td><code>7.768445e-10</code></td><td>H</td></tr>
-<tr><td>p_bifurcation_W</td><td><a href="bifurcation-limit.html#bifurcation-model">\(P_{\mathrm{bif}}\)</a></td><td>\(P_{\mathrm{bif}}=\dfrac{Q_c\omega_0E_*}{2Q_r^3}\)</td><td><code>5.760000e-14</code></td><td>W</td></tr>
-<tr><td>mt_eig1_per_s</td><td><a href="mt-stability.html#stability-criterion">\(\lambda_1(M_t)\)</a></td><td>\(\lambda_1(M_t)\)</td><td><code>-3992.61 + 2.259485e+04i</code></td><td>1/s</td></tr>
-<tr><td>mt_eig2_per_s</td><td><a href="mt-stability.html#stability-criterion">\(\lambda_2(M_t)\)</a></td><td>\(\lambda_2(M_t)\)</td><td><code>-3992.61 - 2.259485e+04i</code></td><td>1/s</td></tr>
-<tr><td>mt_eig3_per_s</td><td><a href="mt-stability.html#stability-criterion">\(\lambda_3(M_t)\)</a></td><td>\(\lambda_3(M_t)\)</td><td><code>-4.703141e+04 + 3.637979e-12i</code></td><td>1/s</td></tr>
+        <tr><td>tau_res_s</td><td><a href="physics.html#resonator-derived-formulas">\(\tau_{\mathrm{res}}\)</a></td><td>\(\tau_{\mathrm{res}}=\dfrac{Q_r}{\pi f_0}\)</td><td><code>2.273642e-05</code></td><td>s</td></tr>
+<tr><td>tau_th_s</td><td><a href="physics.html#thermal-derived-formulas">\(\tau_{\mathrm{th}}\)</a></td><td>\(\tau_{\mathrm{th}}=\dfrac{C}{G}\)</td><td><code>9.164450e-04</code></td><td>s</td></tr>
+<tr><td>core_rule1_left_ratio</td><td><a href="project.html#core-rule-checks">\(\tau_{qp}/\tau_{\mathrm{res}}\)</a></td><td>\(\dfrac{\tau_{qp}}{\tau_{\mathrm{res}}}\)</td><td><code>0.00219911</code></td><td>1</td></tr>
+<tr><td>core_rule1_right_ratio</td><td><a href="project.html#core-rule-checks">\(\tau_{\mathrm{res}}/\tau_{\mathrm{th}}\)</a></td><td>\(\dfrac{\tau_{\mathrm{res}}}{\tau_{\mathrm{th}}}\)</td><td><code>0.0248094</code></td><td>1</td></tr>
+<tr><td>core_rule2_ratio</td><td><a href="project.html#core-rule-checks">\(\tau_{\mathrm{res}}/\tau_{\mathrm{th}}\)</a></td><td>\(\dfrac{\tau_{\mathrm{res}}}{\tau_{\mathrm{th}}}\)</td><td><code>0.0248094</code></td><td>1</td></tr>
+<tr><td>thermal_energy_fluct_rms_eV</td><td><a href="simple-estimates.html">\(\sigma_{E,\mathrm{th,eV}}\)</a></td><td>\(\sigma_{E,\mathrm{th,eV}}=\sigma_{E,\mathrm{th}}/q_e\)</td><td><code>0.0326557</code></td><td>eV</td></tr>
+<tr><td>deltaT_event_full_absorption_K</td><td><a href="physics.html#thermal-derived-formulas">\(\Delta T_{\mathrm{event}}\)</a></td><td>\(\Delta T_{\mathrm{event}}=\dfrac{E_{\mathrm{Ho}}}{C}\)</td><td><code>0.0510669</code></td><td>K</td></tr>
+<tr><td>event_peak_temperature_K</td><td>\(T_{\mathrm{event,peak}}\)</td><td></td><td><code>0.0660669</code></td><td>K</td></tr>
+<tr><td>dL1_dT_H_per_K</td><td><a href="project.html#core-rule-checks">\(dL_1/dT_1\)</a></td><td>\(\dfrac{dL_1}{dT_1}\propto\dfrac{\alpha_{\phi1}L_1}{T_1}\)</td><td><code>1.106349e-08</code></td><td>H/K</td></tr>
+<tr><td>deltaL1_event_H</td><td><a href="project.html#core-rule-checks">\(\Delta L_{1,\mathrm{event}}\)</a></td><td>\(\Delta L_{1,\mathrm{event}}=\dfrac{dL_1}{dT_1}\Delta T_{\mathrm{event}}\)</td><td><code>5.649778e-10</code></td><td>H</td></tr>
+<tr><td>p_bifurcation_W</td><td><a href="bifurcation-limit.html#bifurcation-model">\(P_{\mathrm{bif}}\)</a></td><td>\(P_{\mathrm{bif}}=\dfrac{Q_c\omega_0E_*}{2Q_r^3}\)</td><td><code>2.520000e-13</code></td><td>W</td></tr>
+<tr><td>mt_eig1_per_s</td><td><a href="mt-stability.html#stability-criterion">\(\lambda_1(M_t)\)</a></td><td>\(\lambda_1(M_t)\)</td><td><code>-622.374 + 434.99i</code></td><td>1/s</td></tr>
+<tr><td>mt_eig2_per_s</td><td><a href="mt-stability.html#stability-criterion">\(\lambda_2(M_t)\)</a></td><td>\(\lambda_2(M_t)\)</td><td><code>-1468.28 - 407.325i</code></td><td>1/s</td></tr>
+<tr><td>mt_eig3_per_s</td><td><a href="mt-stability.html#stability-criterion">\(\lambda_3(M_t)\)</a></td><td>\(\lambda_3(M_t)\)</td><td><code>-4.570576e+04 + 6.45123i</code></td><td>1/s</td></tr>
 <tr><td>mt_eig4_per_s</td><td><a href="mt-stability.html#stability-criterion">\(\lambda_4(M_t)\)</a></td><td>\(\lambda_4(M_t)\)</td><td><code>n/a</code></td><td>1/s</td></tr>
-<tr><td>mt_max_real_part_per_s</td><td><a href="mt-stability.html#stability-criterion">\(\max\Re[\lambda(M_t)]\)</a></td><td>\(\max\Re[\lambda(M_t)]\)</td><td><code>-3992.61</code></td><td>1/s</td></tr>
-<tr><td>bifurcation_power_ratio</td><td><a href="bifurcation-limit.html#operating-margin">\(P_{0,x=0}/P_{\mathrm{bif}}\)</a></td><td>\(\dfrac{P_{0,x=0}}{P_{\mathrm{bif}}}\)</td><td><code>0.868056</code></td><td>1</td></tr>
-<tr><td>mt_pulse_shortening_ratio</td><td><a href="mt-stability.html#pulse-shortening">\(\rho_{\mathrm{short}}\)</a></td><td>\(\rho_{\mathrm{short}}=\dfrac{G/C}{\min_i\left(-\Re[\lambda_i(M_t)]\right)}\ \mathrm{if\ stable}\)</td><td><code>1.25262</code></td><td>1</td></tr>
+<tr><td>mt_max_real_part_per_s</td><td><a href="mt-stability.html#stability-criterion">\(\max\Re[\lambda(M_t)]\)</a></td><td>\(\max\Re[\lambda(M_t)]\)</td><td><code>-622.374</code></td><td>1/s</td></tr>
+<tr><td>bifurcation_power_ratio</td><td><a href="bifurcation-limit.html#operating-margin">\(P_{0,x=0}/P_{\mathrm{bif}}\)</a></td><td>\(\dfrac{P_{0,x=0}}{P_{\mathrm{bif}}}\)</td><td><code>0.198413</code></td><td>1</td></tr>
+<tr><td>mt_pulse_shortening_ratio</td><td><a href="mt-stability.html#pulse-shortening">\(\rho_{\mathrm{short}}\)</a></td><td>\(\rho_{\mathrm{short}}=\dfrac{G/C}{\min_i\left(-\Re[\lambda_i(M_t)]\right)}\ \mathrm{if\ stable}\)</td><td><code>1.75324</code></td><td>1</td></tr>
       </table>
     </section>
     
@@ -298,18 +299,19 @@
       <h3>Pass/Fail Checks</h3>
       <table>
         <tr><th>Quantity</th><th>Symbol</th><th>Formula</th><th>Value</th><th>Units</th></tr>
-        <tr><td>core_rule1_ok</td><td><a href="project.html#core-rule-checks">\(\mathbb{1}_{\mathrm{rule1}}\)</a></td><td>\(\text{Pass if } \tau_{qp}/\tau_{\mathrm{res}}<0.1\)</td><td><code><span class="fail">Fail</span></code></td><td>1</td></tr>
+        <tr><td>core_rule1_ok</td><td><a href="project.html#core-rule-checks">\(\mathbb{1}_{\mathrm{rule1}}\)</a></td><td>\(\text{Pass if } \tau_{qp}/\tau_{\mathrm{res}}<0.1\)</td><td><code><span class="pass">Pass</span></code></td><td>1</td></tr>
 <tr><td>core_rule2_ok</td><td><a href="project.html#core-rule-checks">\(\mathbb{1}_{\mathrm{rule2}}\)</a></td><td>\(\text{Pass if } \tau_{\mathrm{res}}/\tau_{\mathrm{th}}<1\)</td><td><code><span class="pass">Pass</span></code></td><td>1</td></tr>
 <tr><td>core_rule3_ok</td><td><a href="project.html#core-rule-checks">\(\mathbb{1}_{\mathrm{rule3}}\)</a></td><td>\(\text{Pass if } \sqrt{S_{\phi,\mathrm{ph}}}^{\,\mathrm{simple}}>\sqrt{S_{\phi,\mathrm{TLS}}}(100\,\mathrm{Hz})\)</td><td><code><span class="fail">Fail</span></code></td><td>1</td></tr>
 <tr><td>core_rule4_ok</td><td><a href="project.html#core-rule-checks">\(\mathbb{1}_{\mathrm{rule4}}\)</a></td><td>\(\text{Pass if } P_{0,x=0} \lt P_{\mathrm{bif}}\)</td><td><code><span class="pass">Pass</span></code></td><td>1</td></tr>
-<tr><td>core_rule5_ok</td><td><a href="project.html#core-rule-checks">\(\mathbb{1}_{\mathrm{rule5}}\)</a></td><td>\(\text{Pass if } P_{0,x=0}/P_{\mathrm{bif}} \gt 0.5\)</td><td><code><span class="pass">Pass</span></code></td><td>1</td></tr>
+<tr><td>core_rule5_ok</td><td><a href="project.html#core-rule-checks">\(\mathbb{1}_{\mathrm{rule5}}\)</a></td><td>\(\text{Pass if } P_{0,x=0}/P_{\mathrm{bif}} \gt 0.5\)</td><td><code><span class="fail">Fail</span></code></td><td>1</td></tr>
 <tr><td>core_rule6_ok</td><td><a href="project.html#core-rule-checks">\(\mathbb{1}_{\mathrm{rule6}}\)</a></td><td>\(\text{Pass if } P_{\mathrm{bif,min}}^{\mathrm{typ}} \le P_{\mathrm{bif,dBm}} \le P_{\mathrm{bif,max}}^{\mathrm{typ}}\)</td><td><code><span class="fail">Fail</span></code></td><td>1</td></tr>
 <tr><td>core_rule7_ok</td><td><a href="project.html#core-rule-checks">\(\mathbb{1}_{\mathrm{rule7}}\)</a></td><td>\(\text{Pass if } \Delta T_{\mathrm{event}} \gt 1\,\mathrm{mK}\)</td><td><code><span class="pass">Pass</span></code></td><td>1</td></tr>
-<tr><td>core_rule8_ok</td><td><a href="project.html#core-rule-checks">\(\mathbb{1}_{\mathrm{rule8}}\)</a></td><td>\(\text{Pass if } \Delta T_{\mathrm{event}} \lt 100\,\mathrm{mK}\)</td><td><code><span class="fail">Fail</span></code></td><td>1</td></tr>
+<tr><td>core_rule8_ok</td><td><a href="project.html#core-rule-checks">\(\mathbb{1}_{\mathrm{rule8}}\)</a></td><td>\(\text{Pass if } \Delta T_{\mathrm{event}} \lt 100\,\mathrm{mK}\)</td><td><code><span class="pass">Pass</span></code></td><td>1</td></tr>
 <tr><td>core_rule9_ok</td><td><a href="project.html#core-rule-checks">\(\mathbb{1}_{\mathrm{rule9}}\)</a></td><td>\(\text{Pass if } \sigma_{E,\mathrm{th,eV}} \lt \sigma_{E,\mathrm{target}}\)</td><td><code><span class="pass">Pass</span></code></td><td>1</td></tr>
 <tr><td>core_rule10_ok</td><td><a href="project.html#core-rule-checks">\(\mathbb{1}_{\mathrm{rule10}}\)</a></td><td>\(\text{Pass if } \Delta T_{2,\mathrm{head}} \ge \dfrac{\alpha_{\phi1}R_1}{\alpha_{\phi2}R_2}\Delta T_{1,\mathrm{event}}\ \text{(same-}T\text{ alpha assumption)}\)</td><td><code><span class="pass">Pass</span></code></td><td>1</td></tr>
+<tr><td>core_rule11_ok</td><td><a href="project.html#core-rule-checks">\(\mathbb{1}_{\mathrm{rule11}}\)</a></td><td>\(\text{Pass if } T_0+\Delta T_{\mathrm{event}} \lt T_c\)</td><td><code><span class="pass">Pass</span></code></td><td>1</td></tr>
 <tr><td>core_rule12_ok</td><td><a href="project.html#core-rule-checks">\(\mathbb{1}_{\mathrm{rule12}}\)</a></td><td>\(\text{Pass if } \Re[\lambda_i(M_t)]<0,\ \forall i\)</td><td><code><span class="pass">Pass</span></code></td><td>1</td></tr>
-<tr><td>core_rule13_ok</td><td><a href="project.html#core-rule-checks">\(\mathbb{1}_{\mathrm{rule13}}\)</a></td><td>\(\text{Pass if } P_{\mathrm{pileup,reject}} < 0.5\)</td><td><code><span class="pass">Pass</span></code></td><td>1</td></tr>
+<tr><td>core_rule13_ok</td><td><a href="project.html#core-rule-checks">\(\mathbb{1}_{\mathrm{rule13}}\)</a></td><td>\(\text{Pass if } P_{\mathrm{pileup,reject}} < 0.5\)</td><td><code><span class="fail">Fail</span></code></td><td>1</td></tr>
 <tr><td>core_rule14_ok</td><td><a href="project.html#core-rule-checks">\(\mathbb{1}_{\mathrm{rule14}}\)</a></td><td>\(\text{Pass if } |\mathrm{NEP}_{\phi}(0)/\mathrm{NEP}_{\phi,\mathrm{ph}}(0)-1|\le 0.01\)</td><td><code><span class="fail">Fail</span></code></td><td>1</td></tr>
 <tr><td>core_rule15_ok</td><td><a href="project.html#core-rule-checks">\(\mathbb{1}_{\mathrm{rule15}}\)</a></td><td>\(\text{Pass if } P_{0,x=0}/P_{\mathrm{bif}}<1\)</td><td><code><span class="pass">Pass</span></code></td><td>1</td></tr>
       </table>

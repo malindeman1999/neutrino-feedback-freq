@@ -148,6 +148,7 @@ def main() -> None:
         "deltaT_abs_over_bath_K": "K",
         "tbath_from_link_K": "K",
         "deltaT_event_full_absorption_K": "K",
+        "event_peak_temperature_K": "K",
         "kid2_thermal_headroom_K": "K",
         "kid2_thermal_headroom_over_event_ratio": "1",
         "dL1_dT_H_per_K": "H/K",
@@ -186,6 +187,7 @@ def main() -> None:
         "core_rule8_ok": "1",
         "core_rule9_ok": "1",
         "core_rule10_ok": "1",
+        "core_rule11_ok": "1",
         "core_rule12_ok": "1",
         "core_rule13_ok": "1",
         "core_rule14_ok": "1",
@@ -343,6 +345,7 @@ def main() -> None:
         "deltaT_abs_over_bath_K": r"\(\Delta T_{\mathrm{abs-bath}}\)",
         "tbath_from_link_K": r"\(T_{\mathrm{bath}}\)",
         "deltaT_event_full_absorption_K": r"\(\Delta T_{\mathrm{event}}\)",
+        "event_peak_temperature_K": r"\(T_{\mathrm{event,peak}}\)",
         "kid2_thermal_headroom_K": r"\(\Delta T_{2,\mathrm{head}}\)",
         "kid2_thermal_headroom_over_event_ratio": r"\(\Delta T_{2,\mathrm{head}}/\Delta T_{\mathrm{event}}\)",
         "dL1_dT_H_per_K": r"\(dL_1/dT_1\)",
@@ -381,6 +384,7 @@ def main() -> None:
         "core_rule8_ok": r"\(\mathbb{1}_{\mathrm{rule8}}\)",
         "core_rule9_ok": r"\(\mathbb{1}_{\mathrm{rule9}}\)",
         "core_rule10_ok": r"\(\mathbb{1}_{\mathrm{rule10}}\)",
+        "core_rule11_ok": r"\(\mathbb{1}_{\mathrm{rule11}}\)",
         "core_rule12_ok": r"\(\mathbb{1}_{\mathrm{rule12}}\)",
         "core_rule13_ok": r"\(\mathbb{1}_{\mathrm{rule13}}\)",
         "core_rule14_ok": r"\(\mathbb{1}_{\mathrm{rule14}}\)",
@@ -509,6 +513,7 @@ def main() -> None:
         "core_rule8_ok": r"\(\text{Pass if } \Delta T_{\mathrm{event}} \lt 100\,\mathrm{mK}\)",
         "core_rule9_ok": r"\(\text{Pass if } \sigma_{E,\mathrm{th,eV}} \lt \sigma_{E,\mathrm{target}}\)",
         "core_rule10_ok": r"\(\text{Pass if } \Delta T_{2,\mathrm{head}} \ge \dfrac{\alpha_{\phi1}R_1}{\alpha_{\phi2}R_2}\Delta T_{1,\mathrm{event}}\ \text{(same-}T\text{ alpha assumption)}\)",
+        "core_rule11_ok": r"\(\text{Pass if } T_0+\Delta T_{\mathrm{event}} \lt T_c\)",
         "core_rule12_ok": r"\(\text{Pass if } \Re[\lambda_i(M_t)]<0,\ \forall i\)",
         "core_rule13_ok": r"\(\text{Pass if } P_{\mathrm{pileup,reject}} < 0.5\)",
         "core_rule14_ok": r"\(\text{Pass if } |\mathrm{NEP}_{\phi}(0)/\mathrm{NEP}_{\phi,\mathrm{ph}}(0)-1|\le 0.01\)",
@@ -679,6 +684,7 @@ def main() -> None:
         "core_rule8_ok": {"deltaT_event_full_absorption_K"},
         "core_rule9_ok": {"thermal_energy_fluct_rms_eV", "thermal_energy_resolution_target_eV"},
         "core_rule10_ok": {"deltaL2_compensation_headroom_H", "deltaL1_event_H"},
+        "core_rule11_ok": {"event_peak_temperature_K", "Tc_K"},
         "core_rule12_ok": {"mt_stable"},
         "core_rule13_ok": {"pileup_probability_max"},
         "core_rule14_ok": {"nep_phi_0hz_over_phonon_ratio"},
@@ -794,6 +800,7 @@ def main() -> None:
         "core_rule8_ok": "project.html#core-rule-checks",
         "core_rule9_ok": "project.html#core-rule-checks",
         "core_rule10_ok": "project.html#core-rule-checks",
+        "core_rule11_ok": "project.html#core-rule-checks",
         "core_rule12_ok": "project.html#core-rule-checks",
         "core_rule13_ok": "project.html#core-rule-checks",
         "core_rule14_ok": "project.html#core-rule-checks",
@@ -1128,6 +1135,7 @@ def main() -> None:
             "core_rule2_ratio",
             "thermal_energy_fluct_rms_eV",
             "deltaT_event_full_absorption_K",
+            "event_peak_temperature_K",
             "dL1_dT_H_per_K",
             "deltaL1_event_H",
             "p_bifurcation_W",
@@ -1150,6 +1158,7 @@ def main() -> None:
             "core_rule8_ok",
             "core_rule9_ok",
             "core_rule10_ok",
+            "core_rule11_ok",
             "core_rule12_ok",
             "core_rule13_ok",
             "core_rule14_ok",
@@ -1357,12 +1366,14 @@ def main() -> None:
         <tr><td>Rule 8</td><td><code>{_pf_html(model_outputs['core_rule8_ok'])}</code></td></tr>
         <tr><td>Rule 9</td><td><code>{_pf_html(model_outputs['core_rule9_ok'])}</code></td></tr>
         <tr><td>Rule 10</td><td><code>{_pf_html(model_outputs['core_rule10_ok'])}</code></td></tr>
+        <tr><td>Rule 11</td><td><code>{_pf_html(model_outputs['core_rule11_ok'])}</code></td></tr>
         <tr><td>Rule 12</td><td><code>{_pf_html(model_outputs['core_rule12_ok'])}</code></td></tr>
         <tr><td>Rule 13</td><td><code>{_pf_html(model_outputs['core_rule13_ok'])}</code></td></tr>
         <tr><td>Rule 14</td><td><code>{_pf_html(model_outputs['core_rule14_ok'])}</code></td></tr>
         <tr><td>Rule 15</td><td><code>{_pf_html(model_outputs['core_rule15_ok'])}</code></td></tr>
         <tr><td><strong>Bifurcation Metrics</strong></td><td></td></tr>
         <tr><td>\\(\\Delta T_{{event}}\\)</td><td><code>{_fmt(model_outputs['deltaT_event_full_absorption_K'])}</code> K</td></tr>
+        <tr><td>\\(T_{{event,peak}}\\)</td><td><code>{_fmt(model_outputs['event_peak_temperature_K'])}</code> K</td></tr>
         <tr><td>\\(P_{{bif}}\\)</td><td><code>{_fmt(model_outputs['p_bifurcation_W'])}</code> W</td></tr>
         <tr><td>\\(P_{{bif,dBm}}\\)</td><td><code>{_fmt(model_outputs['p_bifurcation_dBm'])}</code> dBm</td></tr>
         <tr><td>\\(P_{{0,x=0}}/P_{{bif}}\\)</td><td><code>{_fmt(model_outputs['bifurcation_power_ratio'])}</code></td></tr>

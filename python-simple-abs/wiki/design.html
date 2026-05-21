@@ -39,17 +39,17 @@
       <h2>Setpoints and Readout</h2>
       <table>
         <tr><th>Parameter</th><th>Value</th></tr>
-        <tr><td>\\(T_0\\)</td><td><code>0.04</code> K</td></tr>
-        <tr><td>\\(T_b\\)</td><td><code>0.02</code> K</td></tr>
-        <tr><td>\\(f_0\\)</td><td><code>1.000000e+09</code> Hz</td></tr>
-        <tr><td>Detuning</td><td><code>0.1</code> widths (<code>800</code> Hz)</td></tr>
-        <tr><td>Detuning PID gain \(K_f\)</td><td><code>0</code> Hz/rad</td></tr>
+        <tr><td>\\(T_0\\)</td><td><code>0.015</code> K</td></tr>
+        <tr><td>\\(T_b\\)</td><td><code>0.01</code> K</td></tr>
+        <tr><td>\\(f_0\\)</td><td><code>7.000000e+08</code> Hz</td></tr>
+        <tr><td>Detuning</td><td><code>0.1</code> widths (<code>1400</code> Hz)</td></tr>
+        <tr><td>Detuning PID gain \(K_f\)</td><td><code>-1.000000e+05</code> Hz/rad</td></tr>
         <tr><td>Integrator time \(\tau_i\)</td><td><code>0</code> s</td></tr>
-        <tr><td>Derivative time \(\tau_d\)</td><td><code>0</code> s</td></tr>
+        <tr><td>Derivative time \(\tau_d\)</td><td><code>0.001</code> s</td></tr>
         <tr><td>Derivative filter \(N_d\)</td><td><code>10</code></td></tr>
         <tr><td>NEP sufficiency threshold</td><td><code>10</code> %</td></tr>
         <tr><td>Demod frequency</td><td><code>0</code> Hz</td></tr>
-        <tr><td>\\(P_{0,x=0}/P_{bif}\\)</td><td><code>0.868056</code></td></tr>
+        <tr><td>\\(P_{0,x=0}/P_{bif}\\)</td><td><code>0.198413</code></td></tr>
         <tr><td>\\(P_g\\)</td><td><code>1.000000e-13</code> W</td></tr>
         <tr><td>\\(P_0\\)</td><td><code>4.807692e-14</code> W</td></tr>
         <tr><td>\\(P_{0,x=0}\\)</td><td><code>5.000000e-14</code> W</td></tr>
@@ -61,12 +61,12 @@
       <h2>Source and Geometry Inputs</h2>
       <table>
         <tr><th>Parameter</th><th>Value</th></tr>
-        <tr><td>Count rate \\(R\\)</td><td><code>3.47775</code> Hz</td></tr>
-        <tr><td>Pileup rejection probability</td><td><code>0.0227162</code></td></tr>
-        <tr><td>NEP sufficient frequency</td><td><code>302.7</code> Hz</td></tr>
-        <tr><td>NEP sufficient time</td><td><code>0.0033036</code> s</td></tr>
-        <tr><td>Ho/Au atomic fraction \\(x_{Ho/Au}\\)</td><td><code>1</code></td></tr>
-        <tr><td>Ho activity \\(A_{Ho}\\)</td><td><code>1.562396e+17</code> Hz/m^3</td></tr>
+        <tr><td>Count rate \\(R\\)</td><td><code>50.6448</code> Hz</td></tr>
+        <tr><td>Pileup rejection probability</td><td><code>0.52056</code></td></tr>
+        <tr><td>NEP sufficient frequency</td><td><code>137.784</code> Hz</td></tr>
+        <tr><td>NEP sufficient time</td><td><code>0.00725776</code> s</td></tr>
+        <tr><td>Ho/Au atomic fraction \\(x_{Ho/Au}\\)</td><td><code>0.03</code></td></tr>
+        <tr><td>Ho activity \\(A_{Ho}\\)</td><td><code>8.305172e+15</code> Hz/m^3</td></tr>
         <tr><td>Ho event energy \\(E_{Ho}\\)</td><td><code>4.500000e-16</code> J (<code>2808.68</code> eV)</td></tr>
         <tr><td>KID footprint \\(L_{KID},W_{KID}\\)</td><td><code>2.200000e-04</code> m, <code>2.200000e-04</code> m</td></tr>
         <tr><td>Membrane margin \\(\\Delta_{mem}\\)</td><td><code>2.000000e-05</code> m</td></tr>
@@ -84,12 +84,12 @@
       <h2>Derived Thermal Nominals</h2>
       <table>
         <tr><th>Quantity</th><th>Value</th></tr>
-        <tr><td>\\(C\\)</td><td><code>4.806530e-16</code> J/K</td></tr>
-        <tr><td>\\(C_{eV/mK}\\)</td><td><code>3</code> eV/mK</td></tr>
-        <tr><td>\\(C_{Ho,eV/mK}\\)</td><td><code>3</code> eV/mK</td></tr>
-        <tr><td>\\(G\\)</td><td><code>2.403846e-12</code> W/K</td></tr>
-        <tr><td>\\(\\tau_{th}\\)</td><td><code>1.999516e-04</code> s</td></tr>
-        <tr><td>\\(\\Delta T_{event}\\)</td><td><code>0.936226</code> K</td></tr>
+        <tr><td>\\(C\\)</td><td><code>8.811971e-15</code> J/K</td></tr>
+        <tr><td>\\(C_{eV/mK}\\)</td><td><code>55</code> eV/mK</td></tr>
+        <tr><td>\\(C_{Ho,eV/mK}\\)</td><td><code>55</code> eV/mK</td></tr>
+        <tr><td>\\(G\\)</td><td><code>9.615385e-12</code> W/K</td></tr>
+        <tr><td>\\(\\tau_{th}\\)</td><td><code>9.164450e-04</code> s</td></tr>
+        <tr><td>\\(\\Delta T_{event}\\)</td><td><code>0.0510669</code> K</td></tr>
       </table>
     </section>
 
@@ -97,30 +97,32 @@
       <h2>Design Verification</h2>
       <table>
         <tr><th>Check</th><th>Value</th></tr>
-        <tr><td>\\(\\tau_{res}\\)</td><td><code>3.978874e-05</code> s</td></tr>
-        <tr><td>\\(\\tau_{th}\\)</td><td><code>1.999516e-04</code> s</td></tr>
+        <tr><td>\\(\\tau_{res}\\)</td><td><code>2.273642e-05</code> s</td></tr>
+        <tr><td>\\(\\tau_{th}\\)</td><td><code>9.164450e-04</code> s</td></tr>
         <tr><td><strong>Rule Statuses</strong></td><td><strong>Pass/Fail</strong></td></tr>
-        <tr><td>Rule 1</td><td><code><span class="fail">Fail</span></code></td></tr>
+        <tr><td>Rule 1</td><td><code><span class="pass">Pass</span></code></td></tr>
         <tr><td>Rule 2</td><td><code><span class="pass">Pass</span></code></td></tr>
         <tr><td>Rule 3</td><td><code><span class="fail">Fail</span></code></td></tr>
         <tr><td>Rule 4</td><td><code><span class="pass">Pass</span></code></td></tr>
-        <tr><td>Rule 5</td><td><code><span class="pass">Pass</span></code></td></tr>
+        <tr><td>Rule 5</td><td><code><span class="fail">Fail</span></code></td></tr>
         <tr><td>Rule 6</td><td><code><span class="fail">Fail</span></code></td></tr>
         <tr><td>Rule 7</td><td><code><span class="pass">Pass</span></code></td></tr>
-        <tr><td>Rule 8</td><td><code><span class="fail">Fail</span></code></td></tr>
+        <tr><td>Rule 8</td><td><code><span class="pass">Pass</span></code></td></tr>
         <tr><td>Rule 9</td><td><code><span class="pass">Pass</span></code></td></tr>
         <tr><td>Rule 10</td><td><code><span class="pass">Pass</span></code></td></tr>
+        <tr><td>Rule 11</td><td><code><span class="pass">Pass</span></code></td></tr>
         <tr><td>Rule 12</td><td><code><span class="pass">Pass</span></code></td></tr>
-        <tr><td>Rule 13</td><td><code><span class="pass">Pass</span></code></td></tr>
+        <tr><td>Rule 13</td><td><code><span class="fail">Fail</span></code></td></tr>
         <tr><td>Rule 14</td><td><code><span class="fail">Fail</span></code></td></tr>
         <tr><td>Rule 15</td><td><code><span class="pass">Pass</span></code></td></tr>
         <tr><td><strong>Bifurcation Metrics</strong></td><td></td></tr>
-        <tr><td>\\(\\Delta T_{event}\\)</td><td><code>0.936226</code> K</td></tr>
-        <tr><td>\\(P_{bif}\\)</td><td><code>5.760000e-14</code> W</td></tr>
-        <tr><td>\\(P_{bif,dBm}\\)</td><td><code>-102.396</code> dBm</td></tr>
-        <tr><td>\\(P_{0,x=0}/P_{bif}\\)</td><td><code>0.868056</code></td></tr>
-        <tr><td>\\(\\max \\Re[\\lambda(M_t)]\\)</td><td><code>-3992.61</code> 1/s</td></tr>
-        <tr><td>\\(\\rho_{short}\\)</td><td><code>1.25262</code></td></tr>
+        <tr><td>\\(\\Delta T_{event}\\)</td><td><code>0.0510669</code> K</td></tr>
+        <tr><td>\\(T_{event,peak}\\)</td><td><code>0.0660669</code> K</td></tr>
+        <tr><td>\\(P_{bif}\\)</td><td><code>2.520000e-13</code> W</td></tr>
+        <tr><td>\\(P_{bif,dBm}\\)</td><td><code>-95.986</code> dBm</td></tr>
+        <tr><td>\\(P_{0,x=0}/P_{bif}\\)</td><td><code>0.198413</code></td></tr>
+        <tr><td>\\(\\max \\Re[\\lambda(M_t)]\\)</td><td><code>-622.374</code> 1/s</td></tr>
+        <tr><td>\\(\\rho_{short}\\)</td><td><code>1.75324</code></td></tr>
       </table>
       <p>Stability details: <a href="mt-stability.html">Mt Stability</a>.</p>
     </section>

@@ -68,6 +68,7 @@ INPUT_SECTIONS = [
             "kinetic_inductance_fraction",
             "alpha_A",
             "alpha_phi",
+            "Tc_K",
         ],
     ),
 ]
@@ -99,6 +100,7 @@ LABELS = {
     "kinetic_inductance_fraction": "kinetic frac",
     "alpha_A": "alpha_A",
     "alpha_phi": "alpha_phi",
+    "Tc_K": "Tc [K]",
     "feedback_heater_gain_W_per_rad": "Kp [W/rad]",
     "feedback_heater_derivative_gain_W_s_per_rad": "Kd [W*s/rad]",
 }
@@ -114,6 +116,7 @@ RULE_SPECS: list[tuple[str, str]] = [
     ("Rule 8", "core_rule8_ok"),
     ("Rule 9", "core_rule9_ok"),
     ("Rule 10", "core_rule10_ok"),
+    ("Rule 11", "core_rule11_ok"),
     ("Rule 12", "core_rule12_ok"),
     ("Rule 13", "core_rule13_ok"),
     ("Rule 14", "core_rule14_ok"),

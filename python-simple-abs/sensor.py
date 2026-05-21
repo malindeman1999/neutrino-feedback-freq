@@ -107,10 +107,10 @@ class SensorInputs:
 class Version1SensorInputs(SensorInputs):
     """Primary project preset (version 1 configuration)."""
 
-    T0_K: float = 0.040
-    Tb_K: float = 0.020
-    heat_capacity_eV_per_mK: float = 3.0
-    ho_in_au_atomic_fraction: float = 1.0
+    T0_K: float = 0.015
+    Tb_K: float = 0.010
+    heat_capacity_eV_per_mK: float = 55.0
+    ho_in_au_atomic_fraction: float = 0.03
     ho_decay_energy_J: float = 4.5e-16
     kid_length_m: float = 220e-6
     kid_width_m: float = 220e-6
@@ -122,17 +122,17 @@ class Version1SensorInputs(SensorInputs):
     cv_absorber_J_per_m3K: float = 0.075
     kappa_leg_W_per_mK: float = 1.5e-3
     thermal_link_exponent_n: float = 3.0
-    asd_deltaC_over_C_tls_100hz_per_rtHz: float = 1.0e-9
+    asd_deltaC_over_C_tls_100hz_per_rtHz: float = 3.0e-9
     tls_beta: float = 0.5
-    f0_Hz: float = 1.0e9
-    Qi: float = 250000.0
-    Qc: float = 250000.0
+    f0_Hz: float = 700.0e6
+    Qi: float = 100000.0
+    Qc: float = 100000.0
     tau_qp_s: float = 5.0e-8
     kinetic_inductance_fraction: float = 0.0
     kid_trace_length_m: float = 10.0e-3
     kid_trace_width_m: float = 2.0e-6
     alpha_A: float = 0.1
-    alpha_phi: float = 68.0
+    alpha_phi: float = 136.0
     beta_A: float = 0.0
     beta_phi: float = 0.0
     Tc_K: float = 2.0
@@ -142,9 +142,9 @@ class Version1SensorInputs(SensorInputs):
     pbif_typical_max_dBm: float = -70.0
     thermal_energy_resolution_target_eV: float = 0.1
     detuning_widths: float = 0.1
-    detuning_pid_gain_Hz_per_rad: float = 0.0
+    detuning_pid_gain_Hz_per_rad: float = -100000.0
     detuning_pid_integrator_time_s: float = 0.0
-    detuning_pid_derivative_time_s: float = 0.0
+    detuning_pid_derivative_time_s: float = 1.0e-3
     detuning_pid_derivative_filter_factor: float = 10.0
     amplifier_noise_temperature_K: float = 1.3
     nep_sufficiency_percent: float = 10.0
@@ -351,6 +351,11 @@ class Sensor:
     def deltaT_event_full_absorption_K(self) -> float:
         """KID1 island temperature step for the configured event-power partition."""
         return self.event_power_fraction_kid1_clamped * self.ho_decay_energy_J / self.C_J_per_K
+
+    @cached_property
+    def event_peak_temperature_K(self) -> float:
+        """KID1 peak temperature after the configured event-power partition."""
+        return self.T0_K + self.deltaT_event_full_absorption_K
 
     @cached_property
     def event_power_fraction_kid1_clamped(self) -> float:
@@ -1958,6 +1963,13 @@ class Sensor:
         return bool(lhs >= rhs)
 
     @cached_property
+    def core_rule11_ok(self) -> bool:
+        """Rule 11: event peak temperature must stay below the superconductor Tc."""
+        if not np.isfinite(self.event_peak_temperature_K) or not np.isfinite(self.Tc_K):
+            return False
+        return bool(self.event_peak_temperature_K < self.Tc_K)
+
+    @cached_property
     def core_rule12_ok(self) -> bool:
         """Rule 12: Mt eigenvalues must all have negative real part."""
         return bool(self.mt_stable)
@@ -2037,6 +2049,7 @@ class Sensor:
             "deltaT_abs_over_bath_K": self.deltaT_abs_over_bath_K,
             "tbath_from_link_K": self.tbath_from_link_K,
             "deltaT_event_full_absorption_K": self.deltaT_event_full_absorption_K,
+            "event_peak_temperature_K": self.event_peak_temperature_K,
             "deltaT2_event_full_absorption_K": self.deltaT2_event_full_absorption_K,
             "kid2_thermal_headroom_K": self.kid2_thermal_headroom_K,
             "kid2_thermal_headroom_over_event_ratio": self.kid2_thermal_headroom_over_event_ratio,
@@ -2075,6 +2088,7 @@ class Sensor:
             "core_rule8_ok": float(self.core_rule8_ok),
             "core_rule9_ok": float(self.core_rule9_ok),
             "core_rule10_ok": float(self.core_rule10_ok),
+            "core_rule11_ok": float(self.core_rule11_ok),
             "core_rule12_ok": float(self.core_rule12_ok),
             "core_rule13_ok": float(self.core_rule13_ok),
             "core_rule14_ok": float(self.core_rule14_ok),
