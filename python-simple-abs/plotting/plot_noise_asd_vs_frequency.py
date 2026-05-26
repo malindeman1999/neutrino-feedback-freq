@@ -20,6 +20,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from sensor import Sensor, Version1SensorInputs
+from pileup_sweep import generate_pulse_sweep_dataset
 
 
 PLOT_DIR = Path(__file__).resolve().parent
@@ -217,6 +218,7 @@ class NoiseGui:
         self.entry_vars: dict[str, tk.StringVar] = {}
         self.entry_widgets: dict[str, ttk.Entry] = {}
         self.event_windows: list["EventResponseWindow"] = []
+        self.pulse_sweep_windows: list["PulseSweepWindow"] = []
 
         self._build_layout()
         self._apply_ui_state(self.startup_ui_state)
@@ -338,6 +340,9 @@ class NoiseGui:
         ttk.Button(button_frame, text="Restore", command=self._restore_last_loaded).grid(row=1, column=1, padx=2, pady=2, sticky="ew")
         ttk.Button(button_frame, text="Event Response", command=self._open_event_response).grid(
             row=2, column=0, columnspan=3, padx=2, pady=2, sticky="ew"
+        )
+        ttk.Button(button_frame, text="Pulse Sweeps", command=self._open_pulse_sweeps).grid(
+            row=3, column=0, columnspan=3, padx=2, pady=2, sticky="ew"
         )
         for i in range(3):
             button_frame.columnconfigure(i, weight=1)
@@ -774,6 +779,7 @@ class NoiseGui:
         self._update_rule_indicators(sensor)
         self._draw()
         self._sync_event_windows(sensor)
+        self._sync_pulse_sweep_windows(sensor)
 
     def _update_rule_indicators(self, s: Sensor) -> None:
         style = ttk.Style(self.root)
@@ -951,6 +957,30 @@ class NoiseGui:
 
     def _on_event_window_close(self, win: "EventResponseWindow") -> None:
         self.event_windows = [w for w in self.event_windows if (w is not win and not w.is_closed)]
+
+    def _open_pulse_sweeps(self) -> None:
+        try:
+            self.current = self._read_fields()
+            sensor = self._build_sensor(self.current)
+            win = PulseSweepWindow(self.root, sensor, on_close=self._on_pulse_sweep_window_close)
+            self.pulse_sweep_windows.append(win)
+        except Exception as exc:
+            self._set_status(f"Pulse sweeps failed: {exc}")
+
+    def _sync_pulse_sweep_windows(self, sensor: Sensor) -> None:
+        alive: list["PulseSweepWindow"] = []
+        for win in self.pulse_sweep_windows:
+            if win.is_closed:
+                continue
+            try:
+                win.update_sensor(sensor)
+                alive.append(win)
+            except Exception:
+                continue
+        self.pulse_sweep_windows = alive
+
+    def _on_pulse_sweep_window_close(self, win: "PulseSweepWindow") -> None:
+        self.pulse_sweep_windows = [w for w in self.pulse_sweep_windows if (w is not win and not w.is_closed)]
 
     def run(self) -> None:
         startup = self.last_loaded_name if self.last_loaded_name else "defaults"
@@ -1224,6 +1254,154 @@ class EventResponseWindow:
                 self.status.set(f"Median |FFT-matrix|/matrix: {err:.3e}")
         else:
             self.status.set("")
+
+
+class PulseSweepWindow:
+    def __init__(self, parent: tk.Tk, sensor: Sensor, on_close=None) -> None:
+        self.sensor = sensor
+        self.on_close = on_close
+        self.dataset: dict[str, object] | None = None
+        self.is_closed = False
+        self.win = tk.Toplevel(parent)
+        self.win.title("Pile-Up Pulse Sweep Generator")
+        self.win.geometry("1120x700")
+        self.win.protocol("WM_DELETE_WINDOW", self._handle_close)
+        self.field_vars: dict[str, tk.StringVar] = {
+            "n_single": tk.StringVar(value="100"),
+            "n_double": tk.StringVar(value="100"),
+            "n_noise": tk.StringVar(value="200"),
+            "n_energies": tk.StringVar(value="10"),
+            "minimum_energy_eV": tk.StringVar(value="0.001"),
+            "start_span_fraction": tk.StringVar(value="0.2"),
+            "minimum_fft_frequency_hz": tk.StringVar(value="10"),
+            "random_seed": tk.StringVar(value=""),
+        }
+        self.status = tk.StringVar(value="Generate sweeps to preview the noise ASD before saving.")
+        self._build()
+
+    def _build(self) -> None:
+        self.win.columnconfigure(0, weight=1)
+        self.win.columnconfigure(1, weight=0)
+        self.win.rowconfigure(0, weight=1)
+
+        plot_frame = ttk.Frame(self.win, padding=8)
+        plot_frame.grid(row=0, column=0, sticky="nsew")
+        self.fig = Figure(figsize=(8.5, 6.0), dpi=100)
+        self.ax = self.fig.add_subplot(111)
+        self.canvas = FigureCanvasTkAgg(self.fig, master=plot_frame)
+        self.canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+        NavigationToolbar2Tk(self.canvas, plot_frame).update()
+
+        controls = ttk.Frame(self.win, padding=8)
+        controls.grid(row=0, column=1, sticky="ns")
+        ttk.Label(controls, text="Phi Pulse Sweeps", font=("Segoe UI", 11, "bold")).grid(
+            row=0, column=0, columnspan=2, sticky="w", pady=(0, 8)
+        )
+        specs = [
+            ("Single sweeps", "n_single"),
+            ("Double sweeps", "n_double"),
+            ("Noise sweeps", "n_noise"),
+            ("Energy levels", "n_energies"),
+            ("Min energy [eV]", "minimum_energy_eV"),
+            ("Start/lag span [tau]", "start_span_fraction"),
+            ("Min FFT freq [Hz]", "minimum_fft_frequency_hz"),
+            ("Random seed", "random_seed"),
+        ]
+        fields = ttk.LabelFrame(controls, text="Generation", padding=5)
+        fields.grid(row=1, column=0, columnspan=2, sticky="ew", pady=(0, 8))
+        for row, (label, key) in enumerate(specs):
+            ttk.Label(fields, text=label, width=21).grid(row=row, column=0, sticky="w", padx=(0, 5), pady=2)
+            ttk.Entry(fields, textvariable=self.field_vars[key], width=13).grid(row=row, column=1, sticky="ew", pady=2)
+
+        ttk.Button(controls, text="Generate / Preview", command=self._generate).grid(
+            row=2, column=0, columnspan=2, sticky="ew", pady=2
+        )
+        self.save_button = ttk.Button(controls, text="Save Dataset", command=self._save, state=tk.DISABLED)
+        self.save_button.grid(row=3, column=0, columnspan=2, sticky="ew", pady=2)
+        ttk.Label(controls, textvariable=self.status, wraplength=270, foreground="#333").grid(
+            row=4, column=0, columnspan=2, sticky="w", pady=(8, 0)
+        )
+
+    def _arguments(self) -> dict[str, int | float | None]:
+        seed_text = self.field_vars["random_seed"].get().strip()
+        return {
+            "n_single": int(self.field_vars["n_single"].get()),
+            "n_double": int(self.field_vars["n_double"].get()),
+            "n_noise": int(self.field_vars["n_noise"].get()),
+            "n_energies": int(self.field_vars["n_energies"].get()),
+            "minimum_energy_eV": float(self.field_vars["minimum_energy_eV"].get()),
+            "start_span_fraction": float(self.field_vars["start_span_fraction"].get()),
+            "minimum_fft_frequency_hz": float(self.field_vars["minimum_fft_frequency_hz"].get()),
+            "random_seed": None if not seed_text else int(seed_text),
+        }
+
+    def _generate(self) -> None:
+        try:
+            self.status.set("Generating sweeps and computing the noise ASD...")
+            self.win.update_idletasks()
+            self.dataset = generate_pulse_sweep_dataset(self.sensor, **self._arguments())
+            noise = self.dataset["noise"]
+            freqs = np.asarray(self.dataset["frequencies_hz"], dtype=float)
+            model_asd = np.asarray(noise["model_asd_phi_rad_per_rtHz"], dtype=float)
+            estimated_asd = np.asarray(noise["estimated_asd_phi_rad_per_rtHz"], dtype=float)
+            valid = freqs > 0.0
+            self.ax.clear()
+            self.ax.loglog(freqs[valid], model_asd[valid], color="tab:blue", label="Model ASD used to generate noise")
+            self.ax.loglog(freqs[valid], estimated_asd[valid], color="tab:orange", alpha=0.85, label="ASD from noise sweeps")
+            self.ax.set_title("Generated Phi Noise Verification")
+            self.ax.set_xlabel("Frequency [Hz]")
+            self.ax.set_ylabel("Phase ASD [rad/rtHz]")
+            self.ax.grid(True, which="both", alpha=0.25)
+            self.ax.legend(loc="best")
+            self.canvas.draw_idle()
+            generation = self.dataset["generation"]
+            self.save_button.configure(state=tk.NORMAL)
+            self.status.set(
+                f"Preview ready: N={int(generation['n_samples'])}, dt={float(generation['dt_s']):.3g} s, "
+                f"df={float(generation['minimum_fft_frequency_hz']):.3g} Hz, "
+                f"tau={float(generation['tau_decay_s']):.3g} s. Save stores noise/single/double separately."
+            )
+        except Exception as exc:
+            self.dataset = None
+            self.save_button.configure(state=tk.DISABLED)
+            self.status.set(f"Generation failed: {exc}")
+
+    def _save(self) -> None:
+        if self.dataset is None:
+            self.status.set("Generate a preview before saving.")
+            return
+        path = filedialog.asksaveasfilename(
+            parent=self.win,
+            title="Save pulse sweep dataset",
+            initialdir=SAVES_DIR,
+            initialfile="pileup_phi_sweeps.pkl",
+            defaultextension=".pkl",
+            filetypes=[("Pickle files", "*.pkl"), ("All files", "*.*")],
+        )
+        if not path:
+            return
+        try:
+            with open(path, "wb") as f:
+                pickle.dump(self.dataset, f, protocol=pickle.HIGHEST_PROTOCOL)
+            self.status.set(f"Saved {Path(path).name}. Run analyze_pileup_optimal_filter.py on this file.")
+        except Exception as exc:
+            self.status.set(f"Save failed: {exc}")
+
+    def update_sensor(self, sensor: Sensor) -> None:
+        if self.is_closed:
+            return
+        self.sensor = sensor
+        self.dataset = None
+        self.save_button.configure(state=tk.DISABLED)
+        self.status.set("Model settings changed. Generate a new preview before saving.")
+
+    def _handle_close(self) -> None:
+        self.is_closed = True
+        try:
+            if callable(self.on_close):
+                self.on_close(self)
+        finally:
+            self.win.destroy()
 
 
 if __name__ == "__main__":
