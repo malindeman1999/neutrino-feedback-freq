@@ -1010,7 +1010,7 @@ class EventResponseWindow:
 
         varf = ttk.LabelFrame(ctl, text="Variable", padding=4)
         varf.grid(row=3, column=0, sticky="ew", pady=(0, 6))
-        names = [("r", "r"), ("phi", "phi"), ("T1", "T1"), ("dx", "dx")]
+        names = [("r", "r"), ("phi", "phi"), ("df/f", "dff"), ("T1", "T1"), ("dx", "dx")]
         for i, (lbl, v) in enumerate(names):
             ttk.Radiobutton(varf, text=lbl, variable=self.var_var, value=v, command=self._draw).grid(row=i, column=0, sticky="w")
 
@@ -1029,10 +1029,14 @@ class EventResponseWindow:
             return ("1", "1·s")
         if var == "phi":
             return ("rad", "rad*s")
+        if var == "dff":
+            return ("1", "1*s")
         if var == "dx":
             return ("1", "1*s")
         return ("K", "K*s")
 
+    def _phi_to_dff_scale(self) -> float:
+        return float(self.sensor.f0_Hz * self.sensor.dphi_df_detuning_per_hz)
 
     def _var_time_series(self, var: str) -> np.ndarray:
         if var in ("r", "phi", "T1", "dx"):
@@ -1040,6 +1044,12 @@ class EventResponseWindow:
             if idx >= self.y_t.shape[0]:
                 return np.zeros_like(self.t_s, dtype=complex)
             return self.y_t[idx]
+        if var == "dff":
+            phi = self._var_time_series("phi")
+            scale = self._phi_to_dff_scale()
+            if abs(scale) <= 0.0:
+                return np.zeros_like(self.t_s, dtype=complex)
+            return phi / scale
         return np.zeros_like(self.t_s, dtype=complex)
 
     def _recompute_and_draw(self) -> None:
@@ -1120,6 +1130,7 @@ class EventResponseWindow:
             var_name = "phi"
             idx = self._var_index(var_name)
         unit_t, unit_f = self._var_units(var_name)
+        var_label = "df/f" if var_name == "dff" else var_name
         y_series = self._var_time_series(var_name)
         self.ax.clear()
         if self.domain_var.get() == "Time":
@@ -1158,8 +1169,8 @@ class EventResponseWindow:
                 else:
                     self.ax.plot(t_ms, y, color="tab:blue")
                 self.ax.set_xlabel("Time [ms]")
-            self.ax.set_ylabel(f"{var_name}(t) [{unit_t}]")
-            self.ax.set_title(f"Ho Event Response: {var_name}(t)")
+            self.ax.set_ylabel(f"{var_label}(t) [{unit_t}]")
+            self.ax.set_title(f"Ho Event Response: {var_label}(t)")
         else:
             dt = float(self.t_s[1] - self.t_s[0])
             if var_name == "L_terms":
@@ -1184,9 +1195,16 @@ class EventResponseWindow:
             if idx >= 0 and var_name != "L_terms":
                 ym = np.abs(self.h_f_matrix[idx])
                 self.ax.loglog(self.freq_hz[1:], ym[1:], color="tab:blue", label="Matrix responsivity")
+            if var_name == "dff":
+                phi_idx = self._var_index("phi")
+                ym_phi = np.abs(self.h_f_matrix[phi_idx])
+                scale = abs(self._phi_to_dff_scale())
+                if scale > 0.0:
+                    ym_dff = ym_phi / scale
+                    self.ax.loglog(self.freq_hz[1:], ym_dff[1:], color="tab:blue", label="Matrix responsivity")
             self.ax.set_xlabel("Frequency [Hz]")
-            self.ax.set_ylabel(f"|{var_name}(f)| [{unit_f}]")
-            self.ax.set_title(f"Ho Event Response: {var_name}(f)")
+            self.ax.set_ylabel(f"|{var_label}(f)| [{unit_f}]")
+            self.ax.set_title(f"Ho Event Response: {var_label}(f)")
             self.ax.legend(loc="best")
         self.ax.grid(True, which="both", alpha=0.25)
         self.canvas.draw_idle()
